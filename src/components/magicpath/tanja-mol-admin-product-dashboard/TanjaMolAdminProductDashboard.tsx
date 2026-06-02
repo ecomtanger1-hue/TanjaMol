@@ -97,7 +97,7 @@ export const TanjaMolAdminProductDashboard = ({
         </aside>
 
         <main className="min-w-0">
-          <header className="sticky top-0 z-30 border-b border-[#d9dfd8] bg-[#f8f7f1]/94 backdrop-blur">
+          <header className="sticky top-0 z-30 border-b border-[#d9dfd8] bg-[#f8f7f1]/94">
             <div className="mx-auto flex min-h-[72px] max-w-[1440px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
               <div className="min-w-0">
                 <p className="text-xs font-black text-[#0f7d55]">نظرة عامة</p>

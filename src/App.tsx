@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState, type CSSProperties, type FormEvent } from 'react';
 import { CODTangerArabicStoreLanding } from './components/storefront/CODTangerArabicStoreLanding';
 import { TanjaMolArabicCODProductPage } from './components/product/TanjaMolArabicCODProductPage';
 import { TanjaMolAdminProductDashboard } from './components/magicpath/tanja-mol-admin-product-dashboard/TanjaMolAdminProductDashboard';
@@ -26,6 +26,7 @@ import {
   parseSearchQuery,
   productRoute,
   products as seedProducts,
+  searchProducts,
   type CartItem,
   type OrderDraft,
   type Product,
@@ -72,6 +73,7 @@ export function App() {
   const [orders, setOrders] = useState<StoredOrder[]>(() => readStored<StoredOrder[]>(ORDERS_KEY, []));
   const [settings, setSettings] = useState<StoreSettings>(() => ({ ...defaultSettings, ...readStored<Partial<StoreSettings>>(SETTINGS_KEY, {}) }));
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [directItem, setDirectItem] = useState<CartItem | null>(null);
   const [notice, setNotice] = useState('');
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(() => readStored<boolean>(ADMIN_AUTH_KEY, false));
@@ -83,6 +85,7 @@ export function App() {
       setRoute(getRoute());
       setDirectItem(null);
       setIsCartOpen(false);
+      setIsSearchOpen(false);
       scrollToPageTop();
     };
 
@@ -123,6 +126,7 @@ export function App() {
     setRoute(nextRoute);
     setDirectItem(null);
     setIsCartOpen(false);
+    setIsSearchOpen(false);
     scrollToPageTop();
   };
 
@@ -140,7 +144,7 @@ export function App() {
       return [...current, item];
     });
     setDirectItem(null);
-    setIsCartOpen(true);
+    setIsCartOpen(false);
     setNotice('تمت الإضافة للسلة');
   };
 
@@ -212,6 +216,10 @@ export function App() {
     onOpenCart: () => {
       setDirectItem(null);
       setIsCartOpen(true);
+    },
+    onOpenSearch: () => {
+      setIsSearchOpen(true);
+      setIsCartOpen(false);
     },
     onOpenProduct: (slug: string) => navigate(productRoute(slug)),
     onAddToCart: addToCart,
@@ -291,6 +299,7 @@ export function App() {
             setDirectItem(null);
             setIsCartOpen(true);
           }}
+          onOpenSearch={commonProps.onOpenSearch}
           onAddToCart={addToCart}
           onOrderProduct={orderProduct}
           onOpenProduct={(slug) => navigate(productRoute(slug))}
@@ -301,13 +310,13 @@ export function App() {
 
     if (categoryId) return <CategoryPage categoryId={categoryId} {...commonProps} />;
     if (route.startsWith('#/search')) return <SearchResultsPage query={searchQuery} {...commonProps} />;
-    if (route === '#/about') return <InfoPage page="about" cartCount={cartCount} onNavigate={navigate} onOpenCart={commonProps.onOpenCart} settings={settings} />;
-    if (route === '#/contact') return <InfoPage page="contact" cartCount={cartCount} onNavigate={navigate} onOpenCart={commonProps.onOpenCart} settings={settings} />;
-    if (route === '#/faq') return <InfoPage page="faq" cartCount={cartCount} onNavigate={navigate} onOpenCart={commonProps.onOpenCart} settings={settings} />;
-    if (route === '#/shipping') return <InfoPage page="shipping" cartCount={cartCount} onNavigate={navigate} onOpenCart={commonProps.onOpenCart} settings={settings} />;
-    if (route === '#/returns') return <InfoPage page="returns" cartCount={cartCount} onNavigate={navigate} onOpenCart={commonProps.onOpenCart} settings={settings} />;
-    if (route === '#/privacy') return <InfoPage page="privacy" cartCount={cartCount} onNavigate={navigate} onOpenCart={commonProps.onOpenCart} settings={settings} />;
-    if (route === '#/terms') return <InfoPage page="terms" cartCount={cartCount} onNavigate={navigate} onOpenCart={commonProps.onOpenCart} settings={settings} />;
+    if (route === '#/about') return <InfoPage page="about" cartCount={cartCount} onNavigate={navigate} onOpenCart={commonProps.onOpenCart} onOpenSearch={commonProps.onOpenSearch} settings={settings} />;
+    if (route === '#/contact') return <InfoPage page="contact" cartCount={cartCount} onNavigate={navigate} onOpenCart={commonProps.onOpenCart} onOpenSearch={commonProps.onOpenSearch} settings={settings} />;
+    if (route === '#/faq') return <InfoPage page="faq" cartCount={cartCount} onNavigate={navigate} onOpenCart={commonProps.onOpenCart} onOpenSearch={commonProps.onOpenSearch} settings={settings} />;
+    if (route === '#/shipping') return <InfoPage page="shipping" cartCount={cartCount} onNavigate={navigate} onOpenCart={commonProps.onOpenCart} onOpenSearch={commonProps.onOpenSearch} settings={settings} />;
+    if (route === '#/returns') return <InfoPage page="returns" cartCount={cartCount} onNavigate={navigate} onOpenCart={commonProps.onOpenCart} onOpenSearch={commonProps.onOpenSearch} settings={settings} />;
+    if (route === '#/privacy') return <InfoPage page="privacy" cartCount={cartCount} onNavigate={navigate} onOpenCart={commonProps.onOpenCart} onOpenSearch={commonProps.onOpenSearch} settings={settings} />;
+    if (route === '#/terms') return <InfoPage page="terms" cartCount={cartCount} onNavigate={navigate} onOpenCart={commonProps.onOpenCart} onOpenSearch={commonProps.onOpenSearch} settings={settings} />;
 
     if (route === '#/' || route === '') {
       return (
@@ -315,7 +324,7 @@ export function App() {
           products={catalogProducts}
           cartCount={cartCount}
           onOpenCart={commonProps.onOpenCart}
-          onOpenSearch={() => navigate('#/search')}
+          onOpenSearch={commonProps.onOpenSearch}
           onOpenProduct={(slug) => navigate(productRoute(slug))}
           onAddToCart={addToCart}
           onOrderProduct={orderProduct}
@@ -325,7 +334,7 @@ export function App() {
       );
     }
 
-    return <NotFoundPage cartCount={cartCount} onNavigate={navigate} onOpenCart={commonProps.onOpenCart} />;
+    return <NotFoundPage cartCount={cartCount} onNavigate={navigate} onOpenCart={commonProps.onOpenCart} onOpenSearch={commonProps.onOpenSearch} />;
   }, [activeProduct, cartCount, catalogProducts, categoryId, commonProps, isAdminLoggedIn, orders, productSlug, route, searchQuery, settings]);
 
   return (
@@ -343,6 +352,12 @@ export function App() {
         onRemove={removeCartItem}
         onPlaceOrder={placeOrderFromForm}
       />
+      <SearchPanel
+        open={isSearchOpen}
+        products={catalogProducts}
+        onClose={() => setIsSearchOpen(false)}
+        onOpenProduct={(slug) => navigate(productRoute(slug))}
+      />
       <Notice message={notice} />
     </>
   );
@@ -357,11 +372,82 @@ function readStored<T>(key: string, fallback: T): T {
   }
 }
 
+function SearchPanel({
+  open,
+  products,
+  onClose,
+  onOpenProduct,
+}: {
+  open: boolean;
+  products: Product[];
+  onClose: () => void;
+  onOpenProduct: (slug: string) => void;
+}) {
+  const [query, setQuery] = useState('');
+  const results = useMemo(() => query.trim() ? searchProducts(products, query).slice(0, 8) : [], [products, query]);
+
+  useEffect(() => {
+    if (!open) return;
+    setQuery('');
+    window.setTimeout(() => document.getElementById('tm-search-panel-input')?.focus(), 60);
+  }, [open]);
+
+  if (!open) return null;
+
+  return (
+    <div dir="rtl" className="tm-modal-backdrop fixed inset-0 z-[90] bg-[#102118]/46 px-4 pt-20" role="dialog" aria-modal="true" aria-label="البحث" onClick={onClose}>
+      <div className="tm-panel tm-panel-pop mx-auto w-full max-w-[720px] p-3 sm:p-4" onClick={event => event.stopPropagation()}>
+        <div className="flex items-center gap-2">
+          <label className="sr-only" htmlFor="tm-search-panel-input">بحث</label>
+          <input
+            id="tm-search-panel-input"
+            value={query}
+            onChange={event => setQuery(event.target.value)}
+            className="tm-field h-12 flex-1 bg-[var(--tm-surface-white)] text-right"
+            placeholder="ابحث عن منتج"
+            type="search"
+          />
+          <button type="button" onClick={onClose} className="tm-press tm-button-secondary px-4 text-sm" aria-label="إغلاق البحث">
+            إغلاق
+          </button>
+        </div>
+
+        {query.trim() ? (
+          <div className="tm-stagger-list mt-3 grid max-h-[62vh] gap-2 overflow-y-auto">
+            {results.length ? results.map((product, index) => (
+              <button
+                key={product.id}
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onOpenProduct(product.slug);
+                }}
+                className="tm-press tm-stagger-item tm-panel-white grid grid-cols-[64px_1fr_auto] items-center gap-3 p-2 text-right"
+                style={{ '--tm-stagger-delay': `${Math.min(index, 7) * 38}ms` } as CSSProperties}
+                aria-label={`فتح ${product.title}`}
+              >
+                <img src={product.image} alt={product.title} className="h-16 w-16 rounded-md object-cover" loading="lazy" decoding="async" width="128" height="128" sizes="64px" />
+                <span className="min-w-0">
+                  <span className="tm-text-ink block truncate font-heading text-base font-black">{product.title}</span>
+                  <span className="tm-text-muted mt-1 block text-xs font-bold">{product.category}</span>
+                </span>
+                <span className="tm-num tm-price-text whitespace-nowrap font-heading text-lg font-black">{product.priceLabel}</span>
+              </button>
+            )) : (
+              <div className="tm-panel-white tm-text-muted p-4 text-center text-sm font-bold">لا توجد نتائج مطابقة</div>
+            )}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function Notice({ message }: { message: string }) {
   if (!message) return null;
 
   return (
-    <div className="tm-ui-label fixed inset-x-0 top-4 z-[100] mx-auto w-fit max-w-[90vw] rounded-md bg-[#102118] px-4 py-3 text-sm text-white shadow-[0_18px_48px_-22px_rgba(23,32,27,0.65)]" role="status">
+    <div className="tm-toast-slide fixed inset-x-0 top-4 z-[100] mx-auto w-fit max-w-[90vw] rounded-md bg-[#102118] px-4 py-3 text-sm font-black text-white shadow-[0_18px_48px_-22px_rgba(23,32,27,0.65)]" role="status">
       {message}
     </div>
   );

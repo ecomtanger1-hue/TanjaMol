@@ -257,7 +257,7 @@ export const TanjaMolAddProductPage = ({
         <AdminRail onOpenDashboard={onOpenDashboard} />
 
         <main className="min-w-0 lg:col-start-2 lg:row-start-1">
-          <header className="sticky top-0 z-30 border-b border-[#d9dfd8] bg-[#f8f7f1]/96 backdrop-blur">
+          <header className="sticky top-0 z-30 border-b border-[#d9dfd8] bg-[#f8f7f1]/96">
             <div className="mx-auto flex min-h-[76px] max-w-[1280px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
               <div className="min-w-0">
                 <p className="text-[11px] font-black text-[#6a746d]">المنتجات / إضافة منتج</p>
@@ -726,8 +726,8 @@ function PublishModal({
   onView: () => void;
 }) {
   return (
-    <div className="fixed inset-0 z-[100] grid place-items-center bg-[#102118]/70 p-4 backdrop-blur" role="dialog" aria-modal="true">
-      <div className="w-full max-w-[460px] rounded-lg bg-[#fffdf8] p-5 text-right shadow-[0_24px_80px_rgba(0,0,0,0.28)]">
+    <div className="fixed inset-0 z-[100] grid place-items-center bg-[#102118]/70 p-4" role="dialog" aria-modal="true" onClick={onDashboard}>
+      <div className="w-full max-w-[460px] rounded-lg bg-[#fffdf8] p-5 text-right shadow-[0_24px_80px_rgba(0,0,0,0.28)]" onClick={event => event.stopPropagation()}>
         <p className="font-heading text-3xl font-black">تم نشر المنتج</p>
         <p className="mt-3 text-sm font-bold leading-7 text-[#5f6861]">{product.title} أصبح منشورا في المتجر.</p>
         <div className="mt-5 grid gap-2 sm:grid-cols-2">
