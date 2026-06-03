@@ -176,20 +176,22 @@ function generateVariantsFromOptions(groups: VariantOptionDraft[], current: Prod
     if (!label) return [];
     return group.values
       .filter(value => value.label.trim())
-      .map(value => ({ groupLabel: label, valueLabel: value.label.trim() }));
+      .map(value => ({ groupId: group.id, valueId: value.id, groupLabel: label, valueLabel: value.label.trim() }));
   });
 
   if (!rows.length) return [];
 
   return rows.map((row, index) => {
+    const stableId = `variant-${row.groupId}-${row.valueId}`;
     const existing = current.find(variant => {
+      if (variant.id === stableId) return true;
       const existingValue = variant.optionValues?.[row.groupLabel];
       return existingValue === row.valueLabel || (!variant.optionValues && variant.name === row.valueLabel);
     });
     const name = row.valueLabel;
 
     return {
-      id: existing?.id || `variant-${Date.now()}-${index}`,
+      id: existing?.id || stableId,
       name,
       sku: existing?.sku || makeVariantSku(`${row.groupLabel}-${name}`, index),
       priceLabel: existing?.priceLabel || priceLabel(defaultPrice),
@@ -757,7 +759,7 @@ export const TanjaMolAddProductPage = ({
                   }> = groupVariants.map(variant => {
                     const valueLabel = groupLabel ? variant.optionValues?.[groupLabel] : '';
                     const matchedValue = group.values.find(value => value.label === valueLabel) || group.values.find(value => value.label.trim() && variant.name.includes(value.label.trim()));
-                    return { id: variant.id, variant, value: matchedValue, valueLabel: valueLabel || matchedValue?.label || variant.name };
+                    return { id: matchedValue?.id || variant.id, variant, value: matchedValue, valueLabel: valueLabel || matchedValue?.label || variant.name };
                   });
                   const valueOnlyRows: Array<{
                     id: string;
@@ -779,7 +781,6 @@ export const TanjaMolAddProductPage = ({
                               <th className="whitespace-nowrap px-3 py-3 text-right">نوع المتغير</th>
                               <th className="whitespace-nowrap px-3 py-3 text-right">القيمة</th>
                               {supportsColor ? <th className="px-4 py-3 text-right">اللون</th> : null}
-                              <th className="whitespace-nowrap px-3 py-3 text-right">الاسم</th>
                               <th className="whitespace-nowrap px-3 py-3 text-right">SKU</th>
                               <th className="whitespace-nowrap px-3 py-3 text-right">السعر</th>
                               <th className="whitespace-nowrap px-3 py-3 text-right">المخزون</th>
@@ -806,7 +807,7 @@ export const TanjaMolAddProductPage = ({
                                       </div>
                                     </td>
                                   ) : null}
-                                  <td className="w-[130px] px-3 py-3">
+                                  <td className="w-[190px] px-3 py-3">
                                     <input
                                       value={row.value?.label ?? row.valueLabel}
                                       onChange={event => {
@@ -817,7 +818,7 @@ export const TanjaMolAddProductPage = ({
                                         if (row.variant) updateVariant(row.variant.id, { name: event.target.value });
                                       }}
                                       placeholder={typeConfig?.examples[valueIndex] || 'قيمة'}
-                                      className="w-[112px] rounded-md bg-[#fbfaf6] px-3 py-2 text-sm font-black text-[#17201b] outline-none focus:ring-1 focus:ring-[#0f7d55]"
+                                      className="w-[172px] rounded-md bg-[#fbfaf6] px-3 py-2 text-sm font-black text-[#17201b] outline-none focus:ring-1 focus:ring-[#0f7d55]"
                                     />
                                   </td>
                                   {supportsColor ? (
@@ -834,9 +835,6 @@ export const TanjaMolAddProductPage = ({
                                       </div>
                                     </td>
                                   ) : null}
-                                  <td className="w-[150px] px-3 py-3">
-                                    <input value={row.variant?.name || ''} disabled={!row.variant} onChange={event => row.variant ? updateVariant(row.variant.id, { name: event.target.value }) : undefined} className="w-[132px] rounded-md bg-[#fbfaf6] px-3 py-2 text-sm font-black text-[#17201b] outline-none focus:ring-1 focus:ring-[#0f7d55] disabled:text-[#9aa39c]" />
-                                  </td>
                                   <td className="w-[150px] px-3 py-3">
                                     <input value={row.variant?.sku || ''} disabled={!row.variant} onChange={event => row.variant ? updateVariant(row.variant.id, { sku: event.target.value }) : undefined} className="tm-admin-num w-[132px] rounded-md bg-[#fbfaf6] px-3 py-2 text-sm font-black text-[#17201b] outline-none focus:ring-1 focus:ring-[#0f7d55] disabled:text-[#9aa39c]" />
                                   </td>
@@ -875,7 +873,7 @@ export const TanjaMolAddProductPage = ({
                                     <button type="button" onClick={() => removeVariantOption(group.id)} className="tm-admin-press min-h-[32px] rounded-md bg-[#fff1d5] px-3 text-xs font-black text-[#9a5a00]">حذف النوع</button>
                                   </div>
                                 </td>
-                                <td colSpan={supportsColor ? 9 : 8} className="px-3 py-3">
+                                <td colSpan={supportsColor ? 8 : 7} className="px-3 py-3">
                                   <button type="button" onClick={() => addVariantOptionValue(group.id)} className="tm-admin-press min-h-[42px] w-full rounded-md border border-dashed border-[#bfcac1] bg-[#fbfaf6] px-3 text-sm font-black text-[#65716a]">
                                     أضف أول قيمة
                                   </button>

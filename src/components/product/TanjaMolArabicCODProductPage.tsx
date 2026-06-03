@@ -310,12 +310,13 @@ export const TanjaMolArabicCODProductPage = ({
                         <p className="tm-ui-label text-sm">{group.label}</p>
                         <p className="tm-small-copy min-w-0 truncate text-[#6b746d]">{selected ? getVariantLabel(group, selected) : ''}</p>
                       </div>
-                      <div className="grid grid-cols-3 gap-2">
+                      <div className="flex w-full items-stretch gap-2">
                         {groupVariants.map(variant => {
                           const variantColor = getVariantColor(group, variant);
                           const isSelected = selectedId === variant.id;
                           const isSoldOut = variant.stock <= 0;
-                          return <button key={variant.id} type="button" disabled={isSoldOut} aria-pressed={isSelected} onClick={() => setSelectedVariantIds(current => ({ ...current, [group.id]: variant.id }))} className={`tm-press tm-touch tm-ui-label flex min-w-0 items-center justify-center gap-2 rounded-md border px-3 text-sm ${isSelected ? 'border-[#0f7d55] bg-[#e9f8ef] text-[#0f7d55]' : 'border-[#d9e1dc] bg-white text-[#17201b]'} ${isSoldOut ? 'cursor-not-allowed opacity-45' : ''}`}>
+                          const compactChoices = groupVariants.length > 3;
+                          return <button key={variant.id} type="button" disabled={isSoldOut} aria-pressed={isSelected} onClick={() => setSelectedVariantIds(current => ({ ...current, [group.id]: variant.id }))} className={`tm-press tm-touch tm-ui-label flex min-w-0 flex-1 basis-0 items-center justify-center gap-1.5 rounded-md border ${compactChoices ? 'px-1.5 text-xs sm:px-2 sm:text-sm' : 'px-3 text-sm'} ${isSelected ? 'border-[#0f7d55] bg-[#e9f8ef] text-[#0f7d55]' : 'border-[#d9e1dc] bg-white text-[#17201b]'} ${isSoldOut ? 'cursor-not-allowed opacity-45' : ''}`}>
                             {variantColor ? <span className="h-3.5 w-3.5 shrink-0 rounded-full border border-black/10" style={{ backgroundColor: variantColor }} /> : null}
                             <span className="min-w-0 truncate">{getVariantLabel(group, variant)}</span>
                           </button>;
