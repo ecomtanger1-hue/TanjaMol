@@ -651,7 +651,7 @@ export const TanjaMolAddProductPage = ({
           </header>
 
           <div className="mx-auto grid max-w-[1280px] gap-4 px-4 py-5 sm:px-6 lg:px-8">
-            <AdminSection title="البيانات الأساسية" badge="مطلوب">
+            <AdminSection title="البيانات الأساسية" badge="مطلوب" defaultOpen={false}>
               <div className="grid gap-4 lg:grid-cols-2">
                 <TextField label="اسم المنتج" value={title} onChange={value => {
                   setTitle(value);
@@ -672,7 +672,7 @@ export const TanjaMolAddProductPage = ({
               </div>
             </AdminSection>
 
-            <AdminSection title="السعر والمخزون والتوصيل">
+            <AdminSection title="السعر والمخزون والتوصيل" defaultOpen={false}>
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <TextField label="السعر الحالي" value={price} onChange={setPrice} numeric />
                 <TextField label="السعر قبل التخفيض" value={oldPrice} onChange={setOldPrice} numeric />
@@ -689,7 +689,7 @@ export const TanjaMolAddProductPage = ({
               </div>
             </AdminSection>
 
-            <AdminSection title="معرض المنتج" action={
+            <AdminSection title="معرض المنتج" defaultOpen={false} action={
               <>
                 <input id={uploadInputId} ref={uploadInputRef} type="file" accept="image/*" multiple className="sr-only" onChange={event => void handleImageUpload(event.target.files)} />
                 <label htmlFor={uploadInputId} className="tm-admin-press inline-grid min-h-[36px] cursor-pointer place-items-center rounded-md bg-[#102118] px-3 text-xs font-black text-white">
@@ -891,7 +891,7 @@ export const TanjaMolAddProductPage = ({
               </div>
             </AdminSection>
 
-            <AdminSection title="تفاصيل المنتج المصورة" action={<button type="button" onClick={addDetailBlock} className="tm-admin-press min-h-[36px] rounded-md bg-[#00a66c] px-3 text-xs font-black text-white">إضافة بلوك</button>}>
+            <AdminSection title="تفاصيل المنتج المصورة" defaultOpen={false} action={<button type="button" onClick={addDetailBlock} className="tm-admin-press min-h-[36px] rounded-md bg-[#00a66c] px-3 text-xs font-black text-white">إضافة بلوك</button>}>
               <div className="rounded-md border border-[#dfe5df] bg-[#fbfaf6] p-3">
                 <div className="grid gap-4">
                   {details.map((detail, index) => (
@@ -947,7 +947,7 @@ export const TanjaMolAddProductPage = ({
               </div>
             </AdminSection>
 
-            <AdminSection title="المواصفات" action={<button type="button" onClick={addSpec} className="tm-admin-press min-h-[36px] rounded-md bg-[#00a66c] px-3 text-xs font-black text-white">إضافة مواصفة</button>}>
+            <AdminSection title="المواصفات" defaultOpen={false} action={<button type="button" onClick={addSpec} className="tm-admin-press min-h-[36px] rounded-md bg-[#00a66c] px-3 text-xs font-black text-white">إضافة مواصفة</button>}>
               <div className="grid gap-3">
                 {specs.map(spec => (
                   <div key={spec.id} className="grid gap-3 sm:grid-cols-[160px_minmax(0,1fr)_80px]">
@@ -959,7 +959,7 @@ export const TanjaMolAddProductPage = ({
               </div>
             </AdminSection>
 
-            <AdminSection title="التقييمات">
+            <AdminSection title="التقييمات" defaultOpen={false}>
               <div className="grid gap-4 sm:grid-cols-2">
                 <TextField label="متوسط التقييم" value={rating} onChange={setRating} numeric />
                 <TextField label="عدد التقييمات" value={reviewCount} onChange={setReviewCount} numeric />
