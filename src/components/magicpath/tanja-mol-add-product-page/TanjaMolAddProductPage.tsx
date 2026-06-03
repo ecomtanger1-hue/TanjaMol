@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from 'react';
 import {
   AlignCenter,
   AlignLeft,
@@ -253,33 +253,59 @@ export const TanjaMolAddProductPage = ({
   const detailHistoryRef = useRef<DetailDraft[][]>([]);
   const detailFutureRef = useRef<DetailDraft[][]>([]);
   const originalSlug = product?.slug;
-  const [title, setTitle] = useState('ساعة ذكية مقاومة للماء');
-  const [slug, setSlug] = useState('smart-waterproof-watch');
-  const [category, setCategory] = useState(categories[2]?.title || categories[0]?.title || 'الإلكترونيات');
-  const [shortDescription, setShortDescription] = useState('تتبع النشاط والمكالمات والتنبيهات اليومية، مناسبة للاستعمال في العمل والرياضة والتنقل داخل المدينة.');
-  const [price, setPrice] = useState('249 درهم');
-  const [oldPrice, setOldPrice] = useState('360 درهم');
-  const [stock, setStock] = useState('38');
-  const [delivery, setDelivery] = useState('24 إلى 48 ساعة');
-  const [badge, setBadge] = useState('متوفر الآن');
-  const [gallery, setGallery] = useState<string[]>([fallbackImage]);
-  const [variantsEnabled, setVariantsEnabled] = useState(true);
-  const [variantOptions, setVariantOptions] = useState<VariantOptionDraft[]>(initialVariantOptions);
-  const [variants, setVariants] = useState<ProductVariant[]>(initialVariants);
-  const [details, setDetails] = useState<DetailDraft[]>(initialDetails);
+  const [title, setTitle] = useState('');
+  const [slug, setSlug] = useState('');
+  const [category, setCategory] = useState(categories[0]?.title || '');
+  const [shortDescription, setShortDescription] = useState('');
+  const [price, setPrice] = useState('');
+  const [oldPrice, setOldPrice] = useState('');
+  const [stock, setStock] = useState('');
+  const [delivery, setDelivery] = useState('');
+  const [badge, setBadge] = useState('');
+  const [gallery, setGallery] = useState<string[]>([]);
+  const [variantsEnabled, setVariantsEnabled] = useState(false);
+  const [variantOptions, setVariantOptions] = useState<VariantOptionDraft[]>([]);
+  const [variants, setVariants] = useState<ProductVariant[]>([]);
+  const [details, setDetails] = useState<DetailDraft[]>([]);
   const [activeDetail, setActiveDetail] = useState(0);
-  const [specs, setSpecs] = useState<SpecDraft[]>(initialSpecs);
+  const [specs, setSpecs] = useState<SpecDraft[]>([]);
   const [reviewsEnabled, setReviewsEnabled] = useState(true);
   const [manualReviewsEnabled, setManualReviewsEnabled] = useState(true);
   const [showRelated, setShowRelated] = useState(true);
   const [showPolicies, setShowPolicies] = useState(true);
-  const [rating, setRating] = useState('4.8');
-  const [reviewCount, setReviewCount] = useState('127');
+  const [rating, setRating] = useState('');
+  const [reviewCount, setReviewCount] = useState('');
   const [draftSaved, setDraftSaved] = useState(false);
   const [publishedProduct, setPublishedProduct] = useState<Product | null>(null);
 
   useEffect(() => {
-    if (!product) return;
+    if (!product) {
+      setTitle('');
+      setSlug('');
+      setCategory(categories[0]?.title || '');
+      setShortDescription('');
+      setPrice('');
+      setOldPrice('');
+      setStock('');
+      setDelivery('');
+      setBadge('');
+      setGallery([]);
+      setVariantsEnabled(false);
+      setVariantOptions([]);
+      setVariants([]);
+      setDetails([]);
+      setActiveDetail(0);
+      detailHistoryRef.current = [];
+      detailFutureRef.current = [];
+      setSpecs([]);
+      setReviewsEnabled(true);
+      setManualReviewsEnabled(true);
+      setShowRelated(true);
+      setShowPolicies(true);
+      setRating('');
+      setReviewCount('');
+      return;
+    }
 
     setTitle(product.title);
     setSlug(product.slug);
@@ -316,6 +342,18 @@ export const TanjaMolAddProductPage = ({
     specs.some(spec => spec.label.trim() && spec.value.trim()),
   ];
   const readiness = Math.round((readinessItems.filter(Boolean).length / readinessItems.length) * 100);
+  const basicSummary = title.trim() ? `${title.trim()} · ${category}` : 'اسم المنتج والقسم والرابط';
+  const pricingSummary = `${priceLabel(price)} · مخزون ${Number(stock) || 0}`;
+  const gallerySummary = cleanGallery.length ? `${cleanGallery.length} صورة مضافة` : 'أضف صورة واحدة على الأقل';
+  const variantsSummary = variantsEnabled ? `${variantOptions.length} نوع · ${variants.length} قيمة` : 'المتغيرات غير مفعلة';
+  const detailsSummary = details.length ? `${details.length} بلوك مصور` : 'أضف بلوكات الشرح المصور';
+  const specsSummary = `${specs.filter(spec => spec.label.trim() && spec.value.trim()).length} مواصفة`;
+  const reviewsSummary = reviewsEnabled ? `مفعلة · ${rating} من ${reviewCount} تقييم` : 'التقييمات مخفية';
+  const visibilitySummary = [
+    reviewsEnabled ? 'تقييمات' : '',
+    showRelated ? 'منتجات مقترحة' : '',
+    showPolicies ? 'سياسات' : '',
+  ].filter(Boolean).join(' · ') || 'كل عناصر الظهور مخفية';
 
   const previewProduct = useMemo<Product>(() => ({
     id: slug || makeSlug(title),
@@ -618,8 +656,20 @@ export const TanjaMolAddProductPage = ({
     setPublishedProduct(previewProduct);
   };
 
+  const handleFormKeyDown = (event: KeyboardEvent<HTMLFormElement>) => {
+    if (event.key !== 'Enter') return;
+    const target = event.target as HTMLElement;
+    const tagName = target.tagName.toLowerCase();
+    const submitTrigger = target.closest('button[type="submit"]');
+    if (submitTrigger || tagName === 'textarea' || target.isContentEditable) return;
+    if (tagName === 'input' || tagName === 'select') {
+      event.preventDefault();
+      target.blur();
+    }
+  };
+
   return (
-    <form dir="rtl" onSubmit={submitProduct} className="min-h-screen w-full bg-[#f4f2eb] text-[#17201b]">
+    <form dir="rtl" onSubmit={submitProduct} onKeyDown={handleFormKeyDown} className="min-h-screen w-full bg-[#f4f2eb] text-[#17201b]">
       <div className="grid min-h-screen lg:grid-cols-[76px_minmax(0,1fr)]">
         <AdminRail onOpenDashboard={onOpenDashboard} />
 
@@ -653,7 +703,7 @@ export const TanjaMolAddProductPage = ({
           </header>
 
           <div className="mx-auto grid max-w-[1280px] gap-4 px-4 py-5 sm:px-6 lg:px-8">
-            <AdminSection title="البيانات الأساسية" badge="مطلوب" defaultOpen={false}>
+            <AdminSection title="البيانات الأساسية" badge="مطلوب" summary={basicSummary} status={title.trim() && slug.trim() ? 'done' : 'missing'} defaultOpen={false}>
               <div className="grid gap-4 lg:grid-cols-2">
                 <TextField label="اسم المنتج" value={title} onChange={value => {
                   setTitle(value);
@@ -674,7 +724,7 @@ export const TanjaMolAddProductPage = ({
               </div>
             </AdminSection>
 
-            <AdminSection title="السعر والمخزون والتوصيل" defaultOpen={false}>
+            <AdminSection title="السعر والمخزون والتوصيل" summary={pricingSummary} status={parsePrice(price) > 0 ? 'done' : 'missing'} defaultOpen={false}>
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <TextField label="السعر الحالي" value={price} onChange={setPrice} numeric />
                 <TextField label="السعر قبل التخفيض" value={oldPrice} onChange={setOldPrice} numeric />
@@ -691,7 +741,7 @@ export const TanjaMolAddProductPage = ({
               </div>
             </AdminSection>
 
-            <AdminSection title="معرض المنتج" defaultOpen={false} action={
+            <AdminSection title="معرض المنتج" summary={gallerySummary} status={cleanGallery.length ? 'done' : 'missing'} defaultOpen={false} action={
               <>
                 <input id={uploadInputId} ref={uploadInputRef} type="file" accept="image/*" multiple className="sr-only" onChange={event => void handleImageUpload(event.target.files)} />
                 <label htmlFor={uploadInputId} className="tm-admin-press inline-grid min-h-[36px] cursor-pointer place-items-center rounded-md bg-[#102118] px-3 text-xs font-black text-white">
@@ -719,7 +769,7 @@ export const TanjaMolAddProductPage = ({
               </div>
             </AdminSection>
 
-            <AdminSection title="المتغيرات" defaultOpen={false} action={
+            <AdminSection title="المتغيرات" summary={variantsSummary} status={variantsEnabled && variants.some(variant => variant.enabled) ? 'done' : 'neutral'} defaultOpen={false} action={
               <div className="flex items-center gap-3">
                 <label className="flex items-center gap-2 text-sm font-extrabold">
                   <input type="checkbox" checked={variantsEnabled} onChange={event => setVariantsEnabled(event.target.checked)} className="h-4 w-4 accent-[#00a66c]" />
@@ -889,7 +939,7 @@ export const TanjaMolAddProductPage = ({
               </div>
             </AdminSection>
 
-            <AdminSection title="تفاصيل المنتج المصورة" defaultOpen={false} action={<button type="button" onClick={addDetailBlock} className="tm-admin-press min-h-[36px] rounded-md bg-[#00a66c] px-3 text-xs font-black text-white">إضافة بلوك</button>}>
+            <AdminSection title="تفاصيل المنتج المصورة" summary={detailsSummary} status={details.some(detail => detail.text.trim()) ? 'done' : 'missing'} defaultOpen={false} action={<button type="button" onClick={addDetailBlock} className="tm-admin-press min-h-[36px] rounded-md bg-[#00a66c] px-3 text-xs font-black text-white">إضافة بلوك</button>}>
               <div className="rounded-md border border-[#dfe5df] bg-[#fbfaf6] p-3">
                 <div className="grid gap-4">
                   {details.map((detail, index) => (
@@ -945,7 +995,7 @@ export const TanjaMolAddProductPage = ({
               </div>
             </AdminSection>
 
-            <AdminSection title="المواصفات" defaultOpen={false} action={<button type="button" onClick={addSpec} className="tm-admin-press min-h-[36px] rounded-md bg-[#00a66c] px-3 text-xs font-black text-white">إضافة مواصفة</button>}>
+            <AdminSection title="المواصفات" summary={specsSummary} status={specs.some(spec => spec.label.trim() && spec.value.trim()) ? 'done' : 'missing'} defaultOpen={false} action={<button type="button" onClick={addSpec} className="tm-admin-press min-h-[36px] rounded-md bg-[#00a66c] px-3 text-xs font-black text-white">إضافة مواصفة</button>}>
               <div className="grid gap-3">
                 {specs.map(spec => (
                   <div key={spec.id} className="grid gap-3 sm:grid-cols-[160px_minmax(0,1fr)_80px]">
@@ -957,14 +1007,14 @@ export const TanjaMolAddProductPage = ({
               </div>
             </AdminSection>
 
-            <AdminSection title="التقييمات" defaultOpen={false}>
+            <AdminSection title="التقييمات" summary={reviewsSummary} status={reviewsEnabled ? 'done' : 'neutral'} defaultOpen={false}>
               <div className="grid gap-4 sm:grid-cols-2">
                 <TextField label="متوسط التقييم" value={rating} onChange={setRating} numeric />
                 <TextField label="عدد التقييمات" value={reviewCount} onChange={setReviewCount} numeric />
               </div>
             </AdminSection>
 
-            <AdminSection title="إعدادات الظهور" defaultOpen={false}>
+            <AdminSection title="إعدادات الظهور" summary={visibilitySummary} status="neutral" defaultOpen={false}>
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {([
                   ['إظهار التقييمات', reviewsEnabled, setReviewsEnabled],
@@ -980,7 +1030,7 @@ export const TanjaMolAddProductPage = ({
               </div>
             </AdminSection>
 
-            <AdminSection title="معاينة مصغرة" defaultOpen={false}>
+            <AdminSection title="معاينة مصغرة" summary="شكل سريع قبل النشر" status="neutral" defaultOpen={false}>
               <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
                 <div className="grid aspect-[4/3] place-items-center overflow-hidden rounded-md bg-[#eef3ef] text-sm font-black text-[#65716a]">
                   <img src={previewProduct.image} alt={previewProduct.title} className="h-full w-full object-cover" />
@@ -1149,31 +1199,46 @@ function RichTextEditor({
 function AdminSection({
   title,
   badge,
+  summary,
+  status = 'neutral',
   action,
   defaultOpen = true,
   children,
 }: {
   title: string;
   badge?: string;
+  summary?: string;
+  status?: 'done' | 'missing' | 'neutral';
   action?: ReactNode;
   defaultOpen?: boolean;
   children: ReactNode;
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const statusLabel = status === 'done' ? 'جاهز' : status === 'missing' ? 'يحتاج إكمال' : 'اختياري';
+  const statusClass =
+    status === 'done' ? 'bg-[#e7f8ee] text-[#0f7d55]' :
+    status === 'missing' ? 'bg-[#fff1d5] text-[#9a5a00]' :
+    'bg-[#eef3ef] text-[#65716a]';
 
   return (
-    <section className="tm-admin-surface rounded-md bg-white p-4 sm:p-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <button type="button" onClick={() => setIsOpen(current => !current)} className="tm-admin-press flex min-h-[38px] items-center gap-3 text-right">
-          <span className={`grid h-8 w-8 place-items-center rounded-md bg-[#eef3ef] text-[#102118] transition-transform ${isOpen ? 'rotate-180' : ''}`}>
+    <section className={`tm-admin-surface overflow-hidden rounded-md bg-white transition-shadow ${isOpen ? 'shadow-[0_16px_44px_-32px_rgba(16,33,24,0.45)]' : ''}`}>
+      <div className="flex flex-wrap items-center justify-between gap-3 p-3 sm:p-4">
+        <button type="button" aria-expanded={isOpen} onClick={() => setIsOpen(current => !current)} className="tm-admin-press flex min-h-[48px] min-w-0 flex-1 items-center gap-3 rounded-md px-1 text-right">
+          <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-md bg-[#eef3ef] text-[#102118] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
             <AdminIcon name="chevron" />
           </span>
-          <span className="font-heading text-[22px] font-black leading-tight">{title}</span>
-          {badge ? <span className="rounded-md bg-[#e7f8ee] px-3 py-1 text-xs font-black text-[#0f7d55]">{badge}</span> : null}
+          <span className="min-w-0">
+            <span className="flex flex-wrap items-center gap-2">
+              <span className="font-heading text-[20px] font-black leading-tight sm:text-[22px]">{title}</span>
+              {badge ? <span className="rounded-md bg-[#e7f8ee] px-3 py-1 text-xs font-black text-[#0f7d55]">{badge}</span> : null}
+              <span className={`rounded-md px-2.5 py-1 text-[11px] font-black ${statusClass}`}>{statusLabel}</span>
+            </span>
+            {summary ? <span className="mt-1 block truncate text-xs font-bold text-[#65716a] sm:text-sm">{summary}</span> : null}
+          </span>
         </button>
-        {action ? <div>{action}</div> : null}
+        {action ? <div className="shrink-0">{action}</div> : null}
       </div>
-      {isOpen ? <div className="mt-4">{children}</div> : null}
+      {isOpen ? <div className="border-t border-[#e4e9e4] p-3 sm:p-4">{children}</div> : null}
     </section>
   );
 }
