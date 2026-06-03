@@ -3,6 +3,7 @@ import { CODTangerArabicStoreLanding } from './components/storefront/CODTangerAr
 import { TanjaMolArabicCODProductPage } from './components/product/TanjaMolArabicCODProductPage';
 import { TanjaMolAdminProductDashboard } from './components/magicpath/tanja-mol-admin-product-dashboard/TanjaMolAdminProductDashboard';
 import { TanjaMolAddProductPage } from './components/magicpath/tanja-mol-add-product-page/TanjaMolAddProductPage';
+import { AdminProductsPage } from './components/admin/AdminProductsPage';
 import {
   AdminCustomerDetailPage,
   AdminLogin,
@@ -37,6 +38,8 @@ import {
 const CART_KEY = 'tanjamol.cart.v1';
 const ORDERS_KEY = 'tanjamol.orders.v1';
 const ADMIN_PRODUCTS_KEY = 'tanjamol.admin.products.v1';
+const ADMIN_DELETED_PRODUCTS_KEY = 'tanjamol.admin.deletedProducts.v1';
+const ADMIN_HIDDEN_PRODUCTS_KEY = 'tanjamol.admin.hiddenProducts.v1';
 const SETTINGS_KEY = 'tanjamol.settings.v1';
 const ADMIN_AUTH_KEY = 'tanjamol.admin.auth.v1';
 
@@ -64,11 +67,9 @@ function getRoute() {
 
 export function App() {
   const [route, setRoute] = useState(getRoute);
-  const [catalogProducts, setCatalogProducts] = useState<Product[]>(() => {
-    const customProducts = readStored<Product[]>(ADMIN_PRODUCTS_KEY, []);
-    const customSlugs = new Set(customProducts.map(product => product.slug));
-    return [...customProducts, ...seedProducts.filter(product => !customSlugs.has(product.slug))];
-  });
+  const [customProducts, setCustomProducts] = useState<Product[]>(() => readStored<Product[]>(ADMIN_PRODUCTS_KEY, []));
+  const [deletedProductSlugs, setDeletedProductSlugs] = useState<string[]>(() => readStored<string[]>(ADMIN_DELETED_PRODUCTS_KEY, []));
+  const [hiddenProductSlugs, setHiddenProductSlugs] = useState<string[]>(() => readStored<string[]>(ADMIN_HIDDEN_PRODUCTS_KEY, []));
   const [cart, setCart] = useState<CartItem[]>(() => readStored<CartItem[]>(CART_KEY, []));
   const [orders, setOrders] = useState<StoredOrder[]>(() => readStored<StoredOrder[]>(ORDERS_KEY, []));
   const [settings, setSettings] = useState<StoreSettings>(() => ({ ...defaultSettings, ...readStored<Partial<StoreSettings>>(SETTINGS_KEY, {}) }));
@@ -119,7 +120,20 @@ export function App() {
   const productSlug = parseProductSlug(route);
   const categoryId = parseCategoryId(route);
   const searchQuery = parseSearchQuery(route);
-  const activeProduct = catalogProducts.find(product => product.slug === productSlug) || catalogProducts[0];
+  const adminProducts = useMemo(() => {
+    const deleted = new Set(deletedProductSlugs);
+    const customSlugs = new Set(customProducts.map(product => product.slug));
+
+    return [
+      ...customProducts.filter(product => !deleted.has(product.slug)),
+      ...seedProducts.filter(product => !deleted.has(product.slug) && !customSlugs.has(product.slug)),
+    ];
+  }, [customProducts, deletedProductSlugs]);
+  const storefrontProducts = useMemo(() => {
+    const hidden = new Set(hiddenProductSlugs);
+    return adminProducts.filter(product => !hidden.has(product.slug));
+  }, [adminProducts, hiddenProductSlugs]);
+  const activeProduct = productSlug ? storefrontProducts.find(product => product.slug === productSlug) : undefined;
 
   const navigate = (nextRoute: string) => {
     window.history.pushState(null, '', nextRoute);
@@ -210,7 +224,7 @@ export function App() {
 
   const commonProps = {
     cartCount,
-    products: catalogProducts,
+    products: storefrontProducts,
     settings,
     onNavigate: navigate,
     onOpenCart: () => {
@@ -227,14 +241,55 @@ export function App() {
     onPlaceOrder: placeOrderFromForm,
   };
 
-  const saveProduct = (product: Product) => {
-    setCatalogProducts(current => {
-      const next = [product, ...current.filter(item => item.slug !== product.slug)];
-      const customProducts = next.filter(item => !seedProducts.some(seed => seed.slug === item.slug));
-      localStorage.setItem(ADMIN_PRODUCTS_KEY, JSON.stringify(customProducts));
+  const saveProduct = (product: Product, previousSlug = product.slug) => {
+    setCustomProducts(current => {
+      const next = [product, ...current.filter(item => item.slug !== product.slug && item.slug !== previousSlug)];
+      localStorage.setItem(ADMIN_PRODUCTS_KEY, JSON.stringify(next));
+      return next;
+    });
+    setDeletedProductSlugs(current => {
+      const next = current.filter(slug => slug !== product.slug && slug !== previousSlug);
+      localStorage.setItem(ADMIN_DELETED_PRODUCTS_KEY, JSON.stringify(next));
+      return next;
+    });
+    setHiddenProductSlugs(current => {
+      const next = current.filter(slug => slug !== product.slug);
+      localStorage.setItem(ADMIN_HIDDEN_PRODUCTS_KEY, JSON.stringify(next));
       return next;
     });
     setNotice('تم نشر المنتج');
+  };
+
+  const deleteProduct = (product: Product) => {
+    const confirmed = window.confirm(`حذف "${product.title}" من الإدارة والمتجر؟`);
+    if (!confirmed) return;
+
+    setCustomProducts(current => {
+      const next = current.filter(item => item.slug !== product.slug);
+      localStorage.setItem(ADMIN_PRODUCTS_KEY, JSON.stringify(next));
+      return next;
+    });
+    setDeletedProductSlugs(current => {
+      const next = Array.from(new Set([...current, product.slug]));
+      localStorage.setItem(ADMIN_DELETED_PRODUCTS_KEY, JSON.stringify(next));
+      return next;
+    });
+    setHiddenProductSlugs(current => {
+      const next = current.filter(slug => slug !== product.slug);
+      localStorage.setItem(ADMIN_HIDDEN_PRODUCTS_KEY, JSON.stringify(next));
+      return next;
+    });
+    setNotice('تم حذف المنتج');
+  };
+
+  const toggleProductVisibility = (slug: string) => {
+    setHiddenProductSlugs(current => {
+      const isHidden = current.includes(slug);
+      const next = isHidden ? current.filter(item => item !== slug) : [...current, slug];
+      localStorage.setItem(ADMIN_HIDDEN_PRODUCTS_KEY, JSON.stringify(next));
+      setNotice(isHidden ? 'تم إظهار المنتج' : 'تم إخفاء المنتج');
+      return next;
+    });
   };
 
   const renderedPage = useMemo(() => {
@@ -249,9 +304,10 @@ export function App() {
     if (route === '#/admin') {
       return (
         <TanjaMolAdminProductDashboard
-          products={catalogProducts}
+          products={adminProducts}
           orders={orders}
           onAddProduct={() => navigate('#/admin/products/new')}
+          onOpenProducts={() => navigate('#/admin/products')}
           onOpenStorefront={() => navigate('#/')}
           onOpenProduct={(slug) => navigate(productRoute(slug))}
           onOpenOrders={() => navigate('#/admin/orders')}
@@ -260,11 +316,54 @@ export function App() {
       );
     }
 
+    if (route === '#/admin/products') {
+      return (
+        <AdminProductsPage
+          products={adminProducts}
+          orders={orders}
+          hiddenSlugs={hiddenProductSlugs}
+          onNavigate={navigate}
+          onDeleteProduct={deleteProduct}
+          onToggleVisibility={toggleProductVisibility}
+        />
+      );
+    }
+
+    if (route.startsWith('#/admin/products/') && route.endsWith('/edit')) {
+      const slug = decodeURIComponent(route.replace('#/admin/products/', '').replace('/edit', ''));
+      const editProduct = adminProducts.find(product => product.slug === slug);
+      if (!editProduct) {
+        return (
+          <AdminProductsPage
+            products={adminProducts}
+            orders={orders}
+            hiddenSlugs={hiddenProductSlugs}
+            onNavigate={navigate}
+            onDeleteProduct={deleteProduct}
+            onToggleVisibility={toggleProductVisibility}
+          />
+        );
+      }
+
+      return (
+        <TanjaMolAddProductPage
+          key={`edit-${editProduct.slug}`}
+          product={editProduct}
+          products={adminProducts}
+          onBack={() => navigate('#/admin/products')}
+          onOpenDashboard={() => navigate('#/admin')}
+          onOpenProduct={(nextSlug) => navigate(productRoute(nextSlug))}
+          onCreateProduct={saveProduct}
+        />
+      );
+    }
+
     if (route === '#/admin/products/new') {
       return (
         <TanjaMolAddProductPage
-          products={catalogProducts}
-          onBack={() => navigate('#/admin')}
+          key="new-product"
+          products={adminProducts}
+          onBack={() => navigate('#/admin/products')}
           onOpenDashboard={() => navigate('#/admin')}
           onOpenProduct={(slug) => navigate(productRoute(slug))}
           onCreateProduct={saveProduct}
@@ -289,11 +388,15 @@ export function App() {
     }
 
     if (productSlug) {
+      if (!activeProduct) {
+        return <NotFoundPage cartCount={cartCount} onNavigate={navigate} onOpenCart={commonProps.onOpenCart} onOpenSearch={commonProps.onOpenSearch} />;
+      }
+
       return (
         <TanjaMolArabicCODProductPage
           key={activeProduct.id}
           product={activeProduct}
-          products={catalogProducts}
+          products={storefrontProducts}
           cartCount={cartCount}
           onOpenCart={() => {
             setDirectItem(null);
@@ -321,7 +424,7 @@ export function App() {
     if (route === '#/' || route === '') {
       return (
         <CODTangerArabicStoreLanding
-          products={catalogProducts}
+          products={storefrontProducts}
           cartCount={cartCount}
           onOpenCart={commonProps.onOpenCart}
           onOpenSearch={commonProps.onOpenSearch}
@@ -335,7 +438,7 @@ export function App() {
     }
 
     return <NotFoundPage cartCount={cartCount} onNavigate={navigate} onOpenCart={commonProps.onOpenCart} onOpenSearch={commonProps.onOpenSearch} />;
-  }, [activeProduct, cartCount, catalogProducts, categoryId, commonProps, isAdminLoggedIn, orders, productSlug, route, searchQuery, settings]);
+  }, [activeProduct, adminProducts, cartCount, categoryId, commonProps, hiddenProductSlugs, isAdminLoggedIn, orders, productSlug, route, searchQuery, settings, storefrontProducts]);
 
   return (
     <>
@@ -354,7 +457,7 @@ export function App() {
       />
       <SearchPanel
         open={isSearchOpen}
-        products={catalogProducts}
+        products={storefrontProducts}
         onClose={() => setIsSearchOpen(false)}
         onOpenProduct={(slug) => navigate(productRoute(slug))}
       />

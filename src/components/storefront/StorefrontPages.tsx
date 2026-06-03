@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
 import { Grid3X3, Home, Menu, Search, ShoppingCart, X } from 'lucide-react';
 import {
   categories,
@@ -16,6 +16,7 @@ import {
   type StoredOrder,
 } from '../../storefrontRuntime';
 import { ProductCard } from './ProductCard';
+import { AdminSidebar } from '../admin/AdminLayout';
 
 type StoreActions = {
   cartCount: number;
@@ -594,7 +595,7 @@ export function AdminSettingsPage({
   );
 }
 
-function PageShell({ cartCount, onNavigate, onOpenCart, onOpenSearch, children }: { cartCount: number; onNavigate: (route: string) => void; onOpenCart: () => void; onOpenSearch: () => void; children: React.ReactNode }) {
+function PageShell({ cartCount, onNavigate, onOpenCart, onOpenSearch, children }: { cartCount: number; onNavigate: (route: string) => void; onOpenCart: () => void; onOpenSearch: () => void; children: ReactNode }) {
   return (
     <div dir="rtl" className="min-h-screen overflow-x-hidden bg-[var(--tm-bg)] pb-[calc(76px+env(safe-area-inset-bottom))] pt-16 text-[var(--tm-ink)] md:pb-0">
       <SiteHeader cartCount={cartCount} onNavigate={onNavigate} onOpenCart={onOpenCart} onOpenSearch={onOpenSearch} />
@@ -665,7 +666,7 @@ function ProductGrid({ products, columns = 'lg:grid-cols-3', ...props }: StoreAc
   );
 }
 
-function AdminShell({ title, onNavigate, children }: { title: string; onNavigate: (route: string) => void; children: React.ReactNode }) {
+function AdminShell({ title, onNavigate, children }: { title: string; onNavigate: (route: string) => void; children: ReactNode }) {
   const nav = [
     ['لوحة التحكم', '#/admin'],
     ['إضافة منتج', '#/admin/products/new'],
@@ -676,8 +677,9 @@ function AdminShell({ title, onNavigate, children }: { title: string; onNavigate
 
   return (
     <div dir="rtl" className="min-h-screen bg-[#f4f2eb] text-[#17201b]">
-      <div className="grid min-h-screen lg:grid-cols-[248px_minmax(0,1fr)]">
-        <aside className="hidden border-l border-[#d9dfd8] bg-[#102118] text-white lg:block">
+      <AdminSidebar onNavigate={onNavigate} />
+      <div className="grid min-h-screen lg:grid-cols-[76px_minmax(0,1fr)]">
+        <aside className="hidden">
           <div className="sticky top-0 flex h-screen flex-col px-4 py-5">
             <button type="button" onClick={() => onNavigate('#/')} className="flex items-center gap-3 px-2 text-right">
               <span className="grid h-11 w-11 place-items-center rounded-md bg-[#00a66c] font-heading text-lg font-black">TM</span>
@@ -692,7 +694,7 @@ function AdminShell({ title, onNavigate, children }: { title: string; onNavigate
             </nav>
           </div>
         </aside>
-        <main className="min-w-0">
+        <main className="min-w-0 lg:col-start-2">
           <header className="sticky top-0 z-30 border-b border-[#d9dfd8] bg-[#f8f7f1]/94">
             <div className="mx-auto flex min-h-[72px] max-w-[1440px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
               <h1 className="truncate font-heading text-2xl font-black sm:text-3xl">{title}</h1>

@@ -1,13 +1,36 @@
-import { useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react';
+import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
+  Bold,
+  Eraser,
+  Heading2,
+  Heading3,
+  Image as ImageIcon,
+  Italic,
+  Link,
+  List,
+  ListOrdered,
+  Palette,
+  Redo2,
+  Table,
+  Underline,
+  Undo2,
+  Video,
+  type LucideIcon,
+} from 'lucide-react';
 import { categories } from '../../../storefrontRuntime';
-import type { Product, ProductDetailBlock, ProductVariant } from '../../../storefrontRuntime';
+import type { Product, ProductDetailBlock, ProductVariant, ProductVariantOption } from '../../../storefrontRuntime';
+import { AdminSidebar } from '../../admin/AdminLayout';
 
 type AddProductProps = {
+  product?: Product;
   products: Product[];
   onBack: () => void;
   onOpenDashboard: () => void;
   onOpenProduct: (slug: string) => void;
-  onCreateProduct: (product: Product) => void;
+  onCreateProduct: (product: Product, previousSlug?: string) => void;
 };
 
 type SpecDraft = {
@@ -17,6 +40,8 @@ type SpecDraft = {
 };
 
 type DetailDraft = ProductDetailBlock;
+type EditorAction = 'undo' | 'redo' | 'bold' | 'italic' | 'underline' | 'paragraph' | 'heading' | 'heading3' | 'textLarge' | 'alignRight' | 'alignCenter' | 'alignLeft' | 'list' | 'orderedList' | 'table' | 'link' | 'clear' | 'image' | 'video';
+type VariantOptionDraft = ProductVariantOption;
 
 const fallbackImage = 'https://images.unsplash.com/photo-1607083206968-13611e3d76db?auto=format&fit=crop&w=1200&q=85';
 
@@ -28,14 +53,62 @@ const navItems = [
   { label: 'الإعدادات', icon: 'settings' },
 ] as const;
 
-const toolbar = ['B', 'I', 'U', 'H2', '18px', 'يمين', 'وسط', 'يسار', 'قائمة', 'جدول', 'رابط', 'صورة', 'فيديو'];
 const uploadInputId = 'tm-product-gallery-upload';
+const editorToolbar: Array<{ title: string; action: EditorAction; icon: LucideIcon }> = [
+  { title: 'تراجع', action: 'undo', icon: Undo2 },
+  { title: 'إعادة', action: 'redo', icon: Redo2 },
+  { title: 'غامق', action: 'bold', icon: Bold },
+  { title: 'مائل', action: 'italic', icon: Italic },
+  { title: 'تحته خط', action: 'underline', icon: Underline },
+  { title: 'محاذاة يمين', action: 'alignRight', icon: AlignRight },
+  { title: 'محاذاة وسط', action: 'alignCenter', icon: AlignCenter },
+  { title: 'محاذاة يسار', action: 'alignLeft', icon: AlignLeft },
+  { title: 'قائمة نقطية', action: 'list', icon: List },
+  { title: 'قائمة مرقمة', action: 'orderedList', icon: ListOrdered },
+  { title: 'جدول', action: 'table', icon: Table },
+  { title: 'رابط', action: 'link', icon: Link },
+  { title: 'مسح التنسيق', action: 'clear', icon: Eraser },
+  { title: 'صورة', action: 'image', icon: ImageIcon },
+  { title: 'فيديو', action: 'video', icon: Video },
+];
+const editorFormats = [
+  { label: 'نص عادي', action: 'paragraph' as const, icon: null },
+  { label: 'عنوان H2', action: 'heading' as const, icon: Heading2 },
+  { label: 'عنوان H3', action: 'heading3' as const, icon: Heading3 },
+];
+const editorFontSizes = [
+  { label: '12px', value: '2' },
+  { label: '14px', value: '3' },
+  { label: '18px', value: '4' },
+  { label: '24px', value: '5' },
+  { label: '32px', value: '6' },
+];
 
 const initialVariants: ProductVariant[] = [
   { id: 'variant-1', name: 'أسود', sku: 'TM-WATCH-BLK', priceLabel: '249 درهم', stock: 18, enabled: true },
   { id: 'variant-2', name: 'فضي', sku: 'TM-WATCH-SLV', priceLabel: '249 درهم', stock: 12, enabled: true },
   { id: 'variant-3', name: 'أخضر', sku: 'TM-WATCH-GRN', priceLabel: '259 درهم', stock: 8, enabled: true },
 ];
+
+const commonVariantTypes = [
+  { type: 'color', label: 'اللون', supportsColor: true, examples: ['أسود', 'أبيض', 'أحمر'] },
+  { type: 'size', label: 'المقاس', examples: ['S', 'M', 'L'] },
+  { type: 'material', label: 'الخامة', examples: ['قطن', 'جلد', 'معدن'] },
+  { type: 'capacity', label: 'السعة', examples: ['250ml', '500ml', '1L'] },
+  { type: 'style', label: 'النمط', examples: ['كلاسيكي', 'عصري'] },
+  { type: 'scent', label: 'الرائحة', examples: ['ورد', 'فانيلا'] },
+  { type: 'bundle', label: 'الحزمة', examples: ['قطعة', 'قطعتان'] },
+] as const;
+const initialVariantOptions: VariantOptionDraft[] = [{
+  id: 'option-color',
+  type: 'color',
+  label: 'اللون',
+  values: [
+    { id: 'color-black', label: 'أسود', color: '#17201b' },
+    { id: 'color-silver', label: 'فضي', color: '#b8beb9' },
+    { id: 'color-green', label: 'أخضر', color: '#0f7d55' },
+  ],
+}];
 
 const initialDetails: DetailDraft[] = [
   {
@@ -85,6 +158,75 @@ function priceLabel(value: string) {
   return parsed ? `${parsed} درهم` : value.trim() || '0 درهم';
 }
 
+function makeVariantSku(name: string, index: number) {
+  const suffix = name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9\u0600-\u06ff]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 18)
+    .toUpperCase();
+
+  return `TM-${suffix || 'VAR'}-${index + 1}`;
+}
+
+function generateVariantsFromOptions(groups: VariantOptionDraft[], current: ProductVariant[], defaultPrice: string) {
+  const rows = groups.flatMap(group => {
+    const label = group.label.trim();
+    if (!label) return [];
+    return group.values
+      .filter(value => value.label.trim())
+      .map(value => ({ groupLabel: label, valueLabel: value.label.trim() }));
+  });
+
+  if (!rows.length) return [];
+
+  return rows.map((row, index) => {
+    const existing = current.find(variant => {
+      const existingValue = variant.optionValues?.[row.groupLabel];
+      return existingValue === row.valueLabel || (!variant.optionValues && variant.name === row.valueLabel);
+    });
+    const name = row.valueLabel;
+
+    return {
+      id: existing?.id || `variant-${Date.now()}-${index}`,
+      name,
+      sku: existing?.sku || makeVariantSku(`${row.groupLabel}-${name}`, index),
+      priceLabel: existing?.priceLabel || priceLabel(defaultPrice),
+      stock: existing?.stock ?? 10,
+      enabled: existing?.enabled ?? true,
+      image: existing?.image,
+      optionValues: { [row.groupLabel]: row.valueLabel },
+    };
+  });
+}
+
+function inferVariantOptionsFromVariants(variants: ProductVariant[]): VariantOptionDraft[] {
+  if (!variants.length) return initialVariantOptions;
+  const grouped = new Map<string, Set<string>>();
+  variants.forEach(variant => {
+    if (!variant.optionValues || !Object.keys(variant.optionValues).length) {
+      if (!grouped.has('النوع')) grouped.set('النوع', new Set());
+      grouped.get('النوع')?.add(variant.name);
+      return;
+    }
+    Object.entries(variant.optionValues).forEach(([label, value]) => {
+      if (!grouped.has(label)) grouped.set(label, new Set());
+      grouped.get(label)?.add(value);
+    });
+  });
+
+  return Array.from(grouped.entries()).map(([label, values], groupIndex) => ({
+    id: `option-${Date.now()}-${groupIndex}`,
+    type: 'custom',
+    label,
+    values: Array.from(values).map((value, index) => ({
+      id: `value-${Date.now()}-${groupIndex}-${index}`,
+      label: value,
+    })),
+  }));
+}
+
 function readFiles(files: FileList | null): Promise<string[]> {
   if (!files?.length) return Promise.resolve([]);
 
@@ -97,6 +239,7 @@ function readFiles(files: FileList | null): Promise<string[]> {
 }
 
 export const TanjaMolAddProductPage = ({
+  product,
   products,
   onBack,
   onOpenDashboard,
@@ -104,6 +247,10 @@ export const TanjaMolAddProductPage = ({
   onCreateProduct,
 }: AddProductProps) => {
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
+  const editorRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const detailHistoryRef = useRef<DetailDraft[][]>([]);
+  const detailFutureRef = useRef<DetailDraft[][]>([]);
+  const originalSlug = product?.slug;
   const [title, setTitle] = useState('ساعة ذكية مقاومة للماء');
   const [slug, setSlug] = useState('smart-waterproof-watch');
   const [category, setCategory] = useState(categories[2]?.title || categories[0]?.title || 'الإلكترونيات');
@@ -115,6 +262,7 @@ export const TanjaMolAddProductPage = ({
   const [badge, setBadge] = useState('متوفر الآن');
   const [gallery, setGallery] = useState<string[]>([fallbackImage]);
   const [variantsEnabled, setVariantsEnabled] = useState(true);
+  const [variantOptions, setVariantOptions] = useState<VariantOptionDraft[]>(initialVariantOptions);
   const [variants, setVariants] = useState<ProductVariant[]>(initialVariants);
   const [details, setDetails] = useState<DetailDraft[]>(initialDetails);
   const [activeDetail, setActiveDetail] = useState(0);
@@ -127,6 +275,33 @@ export const TanjaMolAddProductPage = ({
   const [reviewCount, setReviewCount] = useState('127');
   const [draftSaved, setDraftSaved] = useState(false);
   const [publishedProduct, setPublishedProduct] = useState<Product | null>(null);
+
+  useEffect(() => {
+    if (!product) return;
+
+    setTitle(product.title);
+    setSlug(product.slug);
+    setCategory(product.category);
+    setShortDescription(product.description);
+    setPrice(product.priceLabel);
+    setOldPrice(product.oldPrice);
+    setStock(String(product.stock ?? 0));
+    setDelivery(product.delivery || '');
+    setBadge(product.badge);
+    setGallery(product.gallery?.length ? product.gallery : [product.image || fallbackImage]);
+    setVariantsEnabled(Boolean(product.variants?.length));
+    const nextVariantOptions = product.variantOptions?.length ? product.variantOptions : inferVariantOptionsFromVariants(product.variants || []);
+    setVariantOptions(nextVariantOptions);
+    setVariants(product.variants?.length ? generateVariantsFromOptions(nextVariantOptions, product.variants, product.priceLabel) : initialVariants);
+    setDetails(product.details?.length ? product.details : initialDetails);
+    detailHistoryRef.current = [];
+    detailFutureRef.current = [];
+    setSpecs(product.specs?.length ? product.specs.map(([label, value], index) => ({ id: `spec-${index + 1}`, label, value })) : initialSpecs);
+    setReviewsEnabled(product.reviewsEnabled ?? true);
+    setManualReviewsEnabled(product.manualReviewsEnabled ?? true);
+    setShowRelated(product.showRelated ?? true);
+    setShowPolicies(product.showPolicies ?? true);
+  }, [product]);
 
   const cleanGallery = gallery.map(item => item.trim()).filter(Boolean);
   const readinessItems = [
@@ -160,8 +335,9 @@ export const TanjaMolAddProductPage = ({
     showPolicies,
     details: details.map((detail, index) => ({ ...detail, reverse: detail.reverse ?? index % 2 === 1 })),
     specs: specs.filter(spec => spec.label.trim() && spec.value.trim()).map(spec => [spec.label, spec.value] as [string, string]),
+    variantOptions: variantsEnabled ? variantOptions.filter(group => group.label.trim() && group.values.some(value => value.label.trim())) : [],
     variants: variantsEnabled ? variants : [],
-  }), [badge, category, cleanGallery, delivery, details, manualReviewsEnabled, oldPrice, price, reviewsEnabled, shortDescription, showPolicies, showRelated, slug, specs, stock, title, variants, variantsEnabled]);
+  }), [badge, category, cleanGallery, delivery, details, manualReviewsEnabled, oldPrice, price, reviewsEnabled, shortDescription, showPolicies, showRelated, slug, specs, stock, title, variantOptions, variants, variantsEnabled]);
 
   const addVariant = () => {
     const index = variants.length + 1;
@@ -175,6 +351,40 @@ export const TanjaMolAddProductPage = ({
     }]);
   };
 
+  const syncVariantOptions = (updater: (current: VariantOptionDraft[]) => VariantOptionDraft[]) => {
+    setVariantOptions(current => {
+      const next = updater(current);
+      setVariants(currentVariants => generateVariantsFromOptions(next, currentVariants, price));
+      return next;
+    });
+  };
+
+  const addVariantOptionType = (type: string) => {
+    const selected = commonVariantTypes.find(item => item.type === type);
+    const label = selected?.label || 'نوع مخصص';
+    syncVariantOptions(current => [...current, { id: `option-${Date.now()}`, type, label, values: [] }]);
+  };
+
+  const updateVariantOption = (id: string, next: Partial<VariantOptionDraft>) => {
+    syncVariantOptions(current => current.map(group => group.id === id ? { ...group, ...next } : group));
+  };
+
+  const removeVariantOption = (id: string) => {
+    syncVariantOptions(current => current.filter(group => group.id !== id));
+  };
+
+  const addVariantOptionValue = (groupId: string) => {
+    syncVariantOptions(current => current.map(group => group.id === groupId ? { ...group, values: [...group.values, { id: `value-${Date.now()}`, label: '' }] } : group));
+  };
+
+  const updateVariantOptionValue = (groupId: string, valueId: string, next: Partial<VariantOptionDraft['values'][number]>) => {
+    syncVariantOptions(current => current.map(group => group.id === groupId ? { ...group, values: group.values.map(value => value.id === valueId ? { ...value, ...next } : value) } : group));
+  };
+
+  const removeVariantOptionValue = (groupId: string, valueId: string) => {
+    syncVariantOptions(current => current.map(group => group.id === groupId ? { ...group, values: group.values.filter(value => value.id !== valueId) } : group));
+  };
+
   const updateVariant = (id: string, next: Partial<ProductVariant>) => {
     setVariants(current => current.map(variant => variant.id === id ? { ...variant, ...next } : variant));
   };
@@ -183,9 +393,39 @@ export const TanjaMolAddProductPage = ({
     setVariants(current => current.length > 1 ? current.filter(variant => variant.id !== id) : current);
   };
 
+  const setDetailsWithHistory = (updater: (current: DetailDraft[]) => DetailDraft[]) => {
+    setDetails(current => {
+      const next = updater(current);
+      if (next === current) return current;
+      detailHistoryRef.current = [...detailHistoryRef.current.slice(-39), current];
+      detailFutureRef.current = [];
+      return next;
+    });
+  };
+
+  const undoDetailChange = () => {
+    setDetails(current => {
+      const previous = detailHistoryRef.current.pop();
+      if (!previous) return current;
+      detailFutureRef.current = [...detailFutureRef.current.slice(-39), current];
+      setActiveDetail(index => Math.min(index, Math.max(0, previous.length - 1)));
+      return previous;
+    });
+  };
+
+  const redoDetailChange = () => {
+    setDetails(current => {
+      const next = detailFutureRef.current.pop();
+      if (!next) return current;
+      detailHistoryRef.current = [...detailHistoryRef.current.slice(-39), current];
+      setActiveDetail(index => Math.min(index, Math.max(0, next.length - 1)));
+      return next;
+    });
+  };
+
   const addDetailBlock = () => {
     const index = details.length + 1;
-    setDetails(current => [...current, {
+    setDetailsWithHistory(current => [...current, {
       id: `detail-${Date.now()}`,
       title: `بلوك ${index}`,
       text: '',
@@ -197,7 +437,33 @@ export const TanjaMolAddProductPage = ({
   };
 
   const updateDetail = (id: string, next: Partial<DetailDraft>) => {
-    setDetails(current => current.map(detail => detail.id === id ? { ...detail, ...next } : detail));
+    setDetailsWithHistory(current => current.map(detail => detail.id === id ? { ...detail, ...next } : detail));
+  };
+
+  const updateDetailRichText = (id: string, richTextHtml: string, text: string) => {
+    setDetails(current => current.map(detail => detail.id === id ? { ...detail, richTextHtml, text } : detail));
+  };
+
+  const duplicateDetail = (detail: DetailDraft) => {
+    setDetailsWithHistory(current => [...current, { ...detail, id: `detail-${Date.now()}` }]);
+    setActiveDetail(details.length);
+  };
+
+  const deleteDetail = (id: string) => {
+    setDetailsWithHistory(current => current.length > 1 ? current.filter(item => item.id !== id) : current);
+    setActiveDetail(index => Math.max(0, Math.min(index, details.length - 2)));
+  };
+
+  const moveDetail = (id: string, direction: -1 | 1) => {
+    setDetailsWithHistory(current => {
+      const index = current.findIndex(detail => detail.id === id);
+      const nextIndex = index + direction;
+      if (index < 0 || nextIndex < 0 || nextIndex >= current.length) return current;
+      const next = [...current];
+      [next[index], next[nextIndex]] = [next[nextIndex], next[index]];
+      setActiveDetail(nextIndex);
+      return next;
+    });
   };
 
   const addSpec = () => {
@@ -228,17 +494,116 @@ export const TanjaMolAddProductPage = ({
     updateDetail(detailId, { mediaUrl: selectedImage, mediaType: 'image' });
   };
 
-  const applyEditorAction = (action: string) => {
+  const runEditorAction = (action: EditorAction) => {
     const active = details[activeDetail];
     if (!active) return;
-    const wrappers: Record<string, [string, string]> = {
-      B: ['**', '**'],
-      I: ['_', '_'],
-      U: ['<u>', '</u>'],
-    };
-    const [start, end] = wrappers[action] || ['', ''];
-    const suffix = action === 'جدول' ? '\n\n| الميزة | التفاصيل |\n| --- | --- |\n| مثال | اكتب هنا |\n' : action === 'قائمة' ? '\n- نقطة مهمة\n- نقطة ثانية\n' : action === 'رابط' ? ' [رابط](https://example.com)' : action === 'صورة' ? '\n[صورة إضافية]\n' : action === 'فيديو' ? '\n[فيديو شرح]\n' : '';
-    updateDetail(active.id, { text: `${start}${active.text}${end}${suffix}` });
+    if (action === 'undo') {
+      undoDetailChange();
+      return;
+    }
+    if (action === 'redo') {
+      redoDetailChange();
+      return;
+    }
+
+    const updates: Partial<DetailDraft> = {};
+    if (action === 'bold') updates.textBold = !active.textBold;
+    if (action === 'italic') updates.textItalic = !active.textItalic;
+    if (action === 'underline') updates.textUnderline = !active.textUnderline;
+    if (action === 'heading') updates.headingSize = active.headingSize === 'h2' ? 'h3' : 'h2';
+    if (action === 'textLarge') updates.textSize = active.textSize === 'lg' ? 'base' : 'lg';
+    if (action === 'alignRight') updates.textAlign = 'right';
+    if (action === 'alignCenter') updates.textAlign = 'center';
+    if (action === 'alignLeft') updates.textAlign = 'left';
+    if (action === 'image') {
+      updates.mediaType = 'image';
+      updates.mediaUrl = active.mediaUrl || cleanGallery[0] || fallbackImage;
+    }
+    if (action === 'video') updates.mediaType = 'video';
+
+    const suffix =
+      action === 'table' ? '\n\n| الميزة | التفاصيل |\n| --- | --- |\n| مثال | اكتب هنا |\n' :
+      action === 'list' ? '\n- نقطة مهمة\n- نقطة ثانية\n' :
+      action === 'link' ? ' [رابط](https://example.com)' :
+      '';
+
+    updateDetail(active.id, suffix ? { ...updates, text: `${active.text}${suffix}` } : updates);
+  };
+
+  const isEditorActionActive = (action: EditorAction) => {
+    const active = details[activeDetail];
+    if (!active) return false;
+    return (
+      (action === 'bold' && active.textBold) ||
+      (action === 'italic' && active.textItalic) ||
+      (action === 'underline' && active.textUnderline) ||
+      (action === 'heading' && active.headingSize === 'h2') ||
+      (action === 'textLarge' && active.textSize === 'lg') ||
+      (action === 'alignRight' && (active.textAlign || 'right') === 'right') ||
+      (action === 'alignCenter' && active.textAlign === 'center') ||
+      (action === 'alignLeft' && active.textAlign === 'left') ||
+      (action === 'image' && active.mediaType === 'image') ||
+      (action === 'video' && active.mediaType === 'video')
+    );
+  };
+
+  const runRichEditorAction = (action: EditorAction, detailId = details[activeDetail]?.id) => {
+    const active = details.find(detail => detail.id === detailId);
+    if (!active) return;
+    const editor = editorRefs.current[active.id];
+
+    if (action === 'undo' || action === 'redo') {
+      if (editor) {
+        editor.focus();
+        document.execCommand(action);
+        updateDetailRichText(active.id, editor.innerHTML, editor.innerText);
+      }
+      return;
+    }
+
+    if (editor && ['bold', 'italic', 'underline', 'paragraph', 'heading', 'heading3', 'alignRight', 'alignCenter', 'alignLeft', 'list', 'orderedList', 'table', 'link', 'clear'].includes(action)) {
+      editor.focus();
+      if (action === 'bold') document.execCommand('bold');
+      if (action === 'italic') document.execCommand('italic');
+      if (action === 'underline') document.execCommand('underline');
+      if (action === 'paragraph') document.execCommand('formatBlock', false, 'p');
+      if (action === 'heading') document.execCommand('formatBlock', false, 'h2');
+      if (action === 'heading3') document.execCommand('formatBlock', false, 'h3');
+      if (action === 'alignRight') document.execCommand('justifyRight');
+      if (action === 'alignCenter') document.execCommand('justifyCenter');
+      if (action === 'alignLeft') document.execCommand('justifyLeft');
+      if (action === 'list') document.execCommand('insertUnorderedList');
+      if (action === 'orderedList') document.execCommand('insertOrderedList');
+      if (action === 'table') document.execCommand('insertHTML', false, '<table><tbody><tr><th>الميزة</th><th>التفاصيل</th></tr><tr><td>مثال</td><td>اكتب هنا</td></tr></tbody></table>');
+      if (action === 'link') {
+        const href = window.prompt('رابط النص', 'https://example.com');
+        if (href) document.execCommand('createLink', false, href);
+      }
+      if (action === 'clear') document.execCommand('removeFormat');
+      updateDetailRichText(active.id, editor.innerHTML, editor.innerText);
+      return;
+    }
+
+    if (action === 'image') updateDetail(active.id, { mediaType: 'image', mediaUrl: active.mediaUrl || cleanGallery[0] || fallbackImage });
+    if (action === 'video') updateDetail(active.id, { mediaType: 'video' });
+  };
+
+  const applyEditorColor = (detailId: string, color: string) => {
+    const active = details.find(detail => detail.id === detailId);
+    const editor = active ? editorRefs.current[active.id] : null;
+    if (!active || !editor) return;
+    editor.focus();
+    document.execCommand('foreColor', false, color);
+    updateDetailRichText(active.id, editor.innerHTML, editor.innerText);
+  };
+
+  const applyEditorFontSize = (detailId: string, size: string) => {
+    const active = details.find(detail => detail.id === detailId);
+    const editor = active ? editorRefs.current[active.id] : null;
+    if (!active || !editor) return;
+    editor.focus();
+    document.execCommand('fontSize', false, size);
+    updateDetailRichText(active.id, editor.innerHTML, editor.innerText);
   };
 
   const submitProduct = (event: FormEvent<HTMLFormElement>) => {
@@ -247,7 +612,7 @@ export const TanjaMolAddProductPage = ({
       event.currentTarget.reportValidity();
       return;
     }
-    onCreateProduct(previewProduct);
+    onCreateProduct(previewProduct, originalSlug);
     setPublishedProduct(previewProduct);
   };
 
@@ -352,62 +717,183 @@ export const TanjaMolAddProductPage = ({
               </div>
             </AdminSection>
 
-            <AdminSection title="المتغيرات" action={
+            <AdminSection title="المتغيرات" defaultOpen={false} action={
               <div className="flex items-center gap-3">
                 <label className="flex items-center gap-2 text-sm font-extrabold">
                   <input type="checkbox" checked={variantsEnabled} onChange={event => setVariantsEnabled(event.target.checked)} className="h-4 w-4 accent-[#00a66c]" />
                   تفعيل المتغيرات
                 </label>
-                <button type="button" onClick={addVariant} className="tm-admin-press min-h-[36px] rounded-md bg-[#00a66c] px-3 text-xs font-black text-white">
-                  إضافة متغير
-                </button>
+                <select
+                  value=""
+                  onChange={event => {
+                    if (!event.target.value) return;
+                    addVariantOptionType(event.target.value);
+                    event.currentTarget.value = '';
+                  }}
+                  className="min-h-[36px] rounded-md bg-[#00a66c] px-3 text-xs font-black text-white outline-none"
+                  aria-label="إضافة نوع متغير"
+                >
+                  <option value="">إضافة نوع</option>
+                  {commonVariantTypes.map(type => <option key={type.type} value={type.type}>{type.label}</option>)}
+                  <option value="custom">نوع مخصص</option>
+                </select>
               </div>
             }>
-              <div className="overflow-x-auto rounded-md border border-[#dfe5df]">
-                <table className="w-full min-w-[850px] text-sm">
-                  <thead className="bg-[#f4f7f4] text-xs font-black text-[#65716a]">
-                    <tr>
-                      {['الاسم', 'SKU', 'السعر', 'المخزون', 'الصورة', 'الحالة', ''].map(head => <th key={head} className="px-4 py-3 text-right">{head}</th>)}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {variants.map(variant => (
-                      <tr key={variant.id} className="border-t border-[#e4e9e4] bg-white">
-                        <TableInput value={variant.name} onChange={value => updateVariant(variant.id, { name: value })} bold />
-                        <TableInput value={variant.sku} onChange={value => updateVariant(variant.id, { sku: value })} numeric />
-                        <TableInput value={variant.priceLabel} onChange={value => updateVariant(variant.id, { priceLabel: value })} numeric bold />
-                        <TableInput value={String(variant.stock)} onChange={value => updateVariant(variant.id, { stock: Number(value) || 0 })} numeric />
-                        <TableInput value={variant.image || ''} onChange={value => updateVariant(variant.id, { image: value })} placeholder="رابط الصورة" />
-                        <td className="px-3 py-3">
-                          <label className="flex items-center gap-2 rounded-md bg-[#e7f8ee] px-2.5 py-2 text-xs font-black text-[#0f7d55]">
-                            <input type="checkbox" checked={variant.enabled} onChange={event => updateVariant(variant.id, { enabled: event.target.checked })} className="h-4 w-4 accent-[#00a66c]" />
-                            مفعل
-                          </label>
-                        </td>
-                        <td className="px-3 py-3">
-                          <button type="button" onClick={() => removeVariant(variant.id)} className="tm-admin-press min-h-[34px] rounded-md bg-[#fff1d5] px-3 text-xs font-black text-[#9a5a00]">
-                            حذف
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="grid gap-4">
+                {variantOptions.map(group => {
+                  const typeConfig = commonVariantTypes.find(item => item.type === group.type);
+                  const supportsColor = Boolean(typeConfig && 'supportsColor' in typeConfig && typeConfig.supportsColor);
+                  const groupLabel = group.label.trim();
+                  const groupVariants = variants.filter(variant => {
+                    if (!groupLabel) return true;
+                    const optionValue = variant.optionValues?.[groupLabel];
+                    return Boolean(optionValue) || group.values.some(value => value.label.trim() && variant.name.includes(value.label.trim()));
+                  });
+                  const variantRows: Array<{
+                    id: string;
+                    variant?: ProductVariant;
+                    value?: VariantOptionDraft['values'][number];
+                    valueLabel: string;
+                  }> = groupVariants.map(variant => {
+                    const valueLabel = groupLabel ? variant.optionValues?.[groupLabel] : '';
+                    const matchedValue = group.values.find(value => value.label === valueLabel) || group.values.find(value => value.label.trim() && variant.name.includes(value.label.trim()));
+                    return { id: variant.id, variant, value: matchedValue, valueLabel: valueLabel || matchedValue?.label || variant.name };
+                  });
+                  const valueOnlyRows: Array<{
+                    id: string;
+                    variant?: ProductVariant;
+                    value?: VariantOptionDraft['values'][number];
+                    valueLabel: string;
+                  }> = group.values
+                    .filter(value => !variantRows.some(row => row.value?.id === value.id))
+                    .map(value => ({ id: value.id, value, valueLabel: value.label }));
+                  const rows = [...variantRows, ...valueOnlyRows];
+                  const rowSpan = Math.max(rows.length, 1);
+
+                  return (
+                    <article key={group.id} className="overflow-hidden rounded-md border border-[#dfe5df] bg-white">
+                      <div className="overflow-x-auto">
+                        <table className="w-auto min-w-max table-auto text-sm">
+                          <thead className="bg-[#f4f7f4] text-xs font-black text-[#65716a]">
+                            <tr>
+                              <th className="whitespace-nowrap px-3 py-3 text-right">نوع المتغير</th>
+                              <th className="whitespace-nowrap px-3 py-3 text-right">القيمة</th>
+                              {supportsColor ? <th className="px-4 py-3 text-right">اللون</th> : null}
+                              <th className="whitespace-nowrap px-3 py-3 text-right">الاسم</th>
+                              <th className="whitespace-nowrap px-3 py-3 text-right">SKU</th>
+                              <th className="whitespace-nowrap px-3 py-3 text-right">السعر</th>
+                              <th className="whitespace-nowrap px-3 py-3 text-right">المخزون</th>
+                              <th className="whitespace-nowrap px-3 py-3 text-right">الصورة</th>
+                              <th className="whitespace-nowrap px-3 py-3 text-right">الحالة</th>
+                              <th className="whitespace-nowrap px-3 py-3 text-right">إجراء</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {rows.length ? rows.map((row, rowIndex) => {
+                              const valueIndex = row.value ? group.values.findIndex(value => value.id === row.value?.id) : rowIndex;
+                              return (
+                                <tr key={row.id} className="border-t border-[#e4e9e4] bg-white">
+                                  {rowIndex === 0 ? (
+                                    <td rowSpan={rowSpan} className="w-[150px] align-top px-3 py-3">
+                                      <div className="grid gap-2">
+                                        <input
+                                          value={group.label}
+                                          onChange={event => updateVariantOption(group.id, { label: event.target.value })}
+                                          className="w-[130px] rounded-md bg-[#fbfaf6] px-3 py-2 text-sm font-black text-[#17201b] outline-none focus:ring-1 focus:ring-[#0f7d55]"
+                                        />
+                                        <button type="button" onClick={() => addVariantOptionValue(group.id)} className="tm-admin-press min-h-[32px] rounded-md bg-[#102118] px-3 text-xs font-black text-white">إضافة قيمة</button>
+                                        <button type="button" onClick={() => removeVariantOption(group.id)} className="tm-admin-press min-h-[32px] rounded-md bg-[#fff1d5] px-3 text-xs font-black text-[#9a5a00]">حذف النوع</button>
+                                      </div>
+                                    </td>
+                                  ) : null}
+                                  <td className="w-[130px] px-3 py-3">
+                                    <input
+                                      value={row.value?.label ?? row.valueLabel}
+                                      onChange={event => {
+                                        if (row.value) {
+                                          updateVariantOptionValue(group.id, row.value.id, { label: event.target.value });
+                                          return;
+                                        }
+                                        if (row.variant) updateVariant(row.variant.id, { name: event.target.value });
+                                      }}
+                                      placeholder={typeConfig?.examples[valueIndex] || 'قيمة'}
+                                      className="w-[112px] rounded-md bg-[#fbfaf6] px-3 py-2 text-sm font-black text-[#17201b] outline-none focus:ring-1 focus:ring-[#0f7d55]"
+                                    />
+                                  </td>
+                                  {supportsColor ? (
+                                    <td className="w-[92px] px-3 py-3">
+                                      <div className="flex items-center gap-2">
+                                        <input
+                                          type="color"
+                                          value={row.value?.color || '#17201b'}
+                                          onChange={event => row.value ? updateVariantOptionValue(group.id, row.value.id, { color: event.target.value }) : undefined}
+                                          disabled={!row.value}
+                                          className="h-10 w-11 rounded-md border border-[#cfd8d1] bg-white p-1"
+                                          aria-label={`لون ${valueIndex + 1}`}
+                                        />
+                                      </div>
+                                    </td>
+                                  ) : null}
+                                  <td className="w-[150px] px-3 py-3">
+                                    <input value={row.variant?.name || ''} disabled={!row.variant} onChange={event => row.variant ? updateVariant(row.variant.id, { name: event.target.value }) : undefined} className="w-[132px] rounded-md bg-[#fbfaf6] px-3 py-2 text-sm font-black text-[#17201b] outline-none focus:ring-1 focus:ring-[#0f7d55] disabled:text-[#9aa39c]" />
+                                  </td>
+                                  <td className="w-[150px] px-3 py-3">
+                                    <input value={row.variant?.sku || ''} disabled={!row.variant} onChange={event => row.variant ? updateVariant(row.variant.id, { sku: event.target.value }) : undefined} className="tm-admin-num w-[132px] rounded-md bg-[#fbfaf6] px-3 py-2 text-sm font-black text-[#17201b] outline-none focus:ring-1 focus:ring-[#0f7d55] disabled:text-[#9aa39c]" />
+                                  </td>
+                                  <td className="w-[116px] px-3 py-3">
+                                    <input value={row.variant?.priceLabel || ''} disabled={!row.variant} onChange={event => row.variant ? updateVariant(row.variant.id, { priceLabel: event.target.value }) : undefined} className="tm-admin-num w-[98px] rounded-md bg-[#fbfaf6] px-3 py-2 text-sm font-black text-[#17201b] outline-none focus:ring-1 focus:ring-[#0f7d55] disabled:text-[#9aa39c]" />
+                                  </td>
+                                  <td className="w-[86px] px-3 py-3">
+                                    <input value={row.variant ? String(row.variant.stock) : ''} disabled={!row.variant} onChange={event => row.variant ? updateVariant(row.variant.id, { stock: Number(event.target.value) || 0 }) : undefined} className="tm-admin-num w-[68px] rounded-md bg-[#fbfaf6] px-3 py-2 text-sm font-black text-[#17201b] outline-none focus:ring-1 focus:ring-[#0f7d55] disabled:text-[#9aa39c]" />
+                                  </td>
+                                  <td className="w-[150px] px-3 py-3">
+                                    <input value={row.variant?.image || ''} disabled={!row.variant} onChange={event => row.variant ? updateVariant(row.variant.id, { image: event.target.value }) : undefined} placeholder="رابط الصورة" className="w-[132px] rounded-md bg-[#fbfaf6] px-3 py-2 text-sm font-bold text-[#17201b] outline-none focus:ring-1 focus:ring-[#0f7d55] disabled:text-[#9aa39c]" />
+                                  </td>
+                                  <td className="w-[96px] px-3 py-3">
+                                    <label className={`flex min-h-[38px] w-[82px] items-center justify-center gap-2 rounded-md px-2.5 text-xs font-black ${row.variant?.enabled ? 'bg-[#e7f8ee] text-[#0f7d55]' : 'bg-[#eef3ef] text-[#65716a]'}`}>
+                                      <input type="checkbox" checked={row.variant?.enabled ?? false} disabled={!row.variant} onChange={event => row.variant ? updateVariant(row.variant.id, { enabled: event.target.checked }) : undefined} className="h-4 w-4 accent-[#00a66c]" />
+                                      مفعل
+                                    </label>
+                                  </td>
+                                  <td className="w-[76px] px-3 py-3">
+                                    <button type="button" onClick={() => row.value ? removeVariantOptionValue(group.id, row.value.id) : row.variant ? removeVariant(row.variant.id) : undefined} className="tm-admin-press min-h-[34px] rounded-md bg-[#fff1d5] px-3 text-xs font-black text-[#9a5a00]">
+                                      حذف
+                                    </button>
+                                  </td>
+                                </tr>
+                              );
+                            }) : (
+                              <tr>
+                                <td className="w-[150px] align-top px-3 py-3">
+                                  <div className="grid gap-2">
+                                    <input
+                                      value={group.label}
+                                      onChange={event => updateVariantOption(group.id, { label: event.target.value })}
+                                      className="w-[130px] rounded-md bg-[#fbfaf6] px-3 py-2 text-sm font-black text-[#17201b] outline-none focus:ring-1 focus:ring-[#0f7d55]"
+                                    />
+                                    <button type="button" onClick={() => addVariantOptionValue(group.id)} className="tm-admin-press min-h-[32px] rounded-md bg-[#102118] px-3 text-xs font-black text-white">إضافة قيمة</button>
+                                    <button type="button" onClick={() => removeVariantOption(group.id)} className="tm-admin-press min-h-[32px] rounded-md bg-[#fff1d5] px-3 text-xs font-black text-[#9a5a00]">حذف النوع</button>
+                                  </div>
+                                </td>
+                                <td colSpan={supportsColor ? 9 : 8} className="px-3 py-3">
+                                  <button type="button" onClick={() => addVariantOptionValue(group.id)} className="tm-admin-press min-h-[42px] w-full rounded-md border border-dashed border-[#bfcac1] bg-[#fbfaf6] px-3 text-sm font-black text-[#65716a]">
+                                    أضف أول قيمة
+                                  </button>
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             </AdminSection>
 
             <AdminSection title="تفاصيل المنتج المصورة" action={<button type="button" onClick={addDetailBlock} className="tm-admin-press min-h-[36px] rounded-md bg-[#00a66c] px-3 text-xs font-black text-white">إضافة بلوك</button>}>
               <div className="rounded-md border border-[#dfe5df] bg-[#fbfaf6] p-3">
-                <div className="flex flex-wrap items-center gap-2 border-b border-[#dfe5df] pb-3">
-                  {toolbar.map(tool => (
-                    <button key={tool} type="button" onClick={() => applyEditorAction(tool)} className={`tm-admin-press min-h-[32px] rounded px-2.5 text-xs font-black ${tool === 'B' ? 'bg-[#102118] text-white' : 'bg-white text-[#4e5a52] hover:bg-[#eef3ef]'}`}>
-                      {tool}
-                    </button>
-                  ))}
-                  <input className="min-h-[32px] w-24 rounded-md border border-[#cfd8d1] bg-white px-2 text-xs font-bold outline-none focus:border-[#0f7d55]" defaultValue="#17201b" />
-                </div>
-
-                <div className="mt-4 grid gap-4">
+                <div className="grid gap-4">
                   {details.map((detail, index) => (
                     <article key={detail.id} className="rounded-md border border-[#dfe5df] bg-white p-3">
                       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -417,8 +903,10 @@ export const TanjaMolAddProductPage = ({
                         </div>
                         <div className="flex items-center gap-2">
                           <button type="button" onClick={() => updateDetail(detail.id, { reverse: !detail.reverse })} className="tm-admin-press min-h-[32px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">تبديل</button>
-                          <button type="button" onClick={() => setDetails(current => [...current, { ...detail, id: `detail-${Date.now()}` }])} className="tm-admin-press min-h-[32px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">نسخ</button>
-                          <button type="button" onClick={() => setDetails(current => current.length > 1 ? current.filter(item => item.id !== detail.id) : current)} className="tm-admin-press min-h-[32px] rounded-md bg-[#fff1d5] px-3 text-xs font-black text-[#9a5a00]">حذف</button>
+                          <button type="button" onClick={() => moveDetail(detail.id, -1)} className="tm-admin-press min-h-[32px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">فوق</button>
+                          <button type="button" onClick={() => moveDetail(detail.id, 1)} className="tm-admin-press min-h-[32px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">تحت</button>
+                          <button type="button" onClick={() => duplicateDetail(detail)} className="tm-admin-press min-h-[32px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">نسخ</button>
+                          <button type="button" onClick={() => deleteDetail(detail.id)} className="tm-admin-press min-h-[32px] rounded-md bg-[#fff1d5] px-3 text-xs font-black text-[#9a5a00]">حذف</button>
                         </div>
                       </div>
 
@@ -439,7 +927,18 @@ export const TanjaMolAddProductPage = ({
                         </div>
                         <div className={`grid self-start gap-3 ${detail.reverse ? 'lg:col-start-1' : 'lg:col-start-2'} lg:row-start-1 lg:[direction:rtl]`}>
                           <input value={detail.title} onFocus={() => setActiveDetail(index)} onChange={event => updateDetail(detail.id, { title: event.target.value })} className="min-h-[40px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-3 text-sm font-black outline-none focus:border-[#0f7d55]" />
-                          <textarea value={detail.text} onFocus={() => setActiveDetail(index)} onChange={event => updateDetail(detail.id, { text: event.target.value })} className="min-h-[170px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-4 py-3 text-[15px] font-semibold leading-8 outline-none focus:border-[#0f7d55]" />
+                          <BlockEditorToolbar
+                            detailId={detail.id}
+                            onCommand={runRichEditorAction}
+                            onColor={applyEditorColor}
+                            onFontSize={applyEditorFontSize}
+                          />
+                          <RichTextEditor
+                            detail={detail}
+                            onFocus={() => setActiveDetail(index)}
+                            onRegister={element => { editorRefs.current[detail.id] = element; }}
+                            onChange={(html, text) => updateDetailRichText(detail.id, html, text)}
+                          />
                         </div>
                       </div>
                     </article>
@@ -539,6 +1038,115 @@ export const TanjaMolAddProductPage = ({
     </form>
   );
 };
+
+function BlockEditorToolbar({
+  detailId,
+  onCommand,
+  onColor,
+  onFontSize,
+}: {
+  detailId: string;
+  onCommand: (action: EditorAction, detailId?: string) => void;
+  onColor: (detailId: string, color: string) => void;
+  onFontSize: (detailId: string, size: string) => void;
+}) {
+  return (
+    <div className="rounded-md border border-[#dfe5df] bg-[#f4f7f4] p-2">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <select
+          aria-label="نوع النص"
+          onChange={event => onCommand(event.target.value as EditorAction, detailId)}
+          className="min-h-[34px] rounded-md border border-[#cfd8d1] bg-white px-2 text-xs font-black text-[#17201b] outline-none focus:border-[#0f7d55]"
+          defaultValue="paragraph"
+        >
+          {editorFormats.map(format => (
+            <option key={format.action} value={format.action}>{format.label}</option>
+          ))}
+        </select>
+
+        <select
+          aria-label="حجم الخط"
+          onChange={event => onFontSize(detailId, event.target.value)}
+          className="min-h-[34px] rounded-md border border-[#cfd8d1] bg-white px-2 text-xs font-black text-[#17201b] outline-none focus:border-[#0f7d55]"
+          defaultValue="3"
+        >
+          {editorFontSizes.map(size => (
+            <option key={size.value} value={size.value}>{size.label}</option>
+          ))}
+        </select>
+
+        <span className="mx-1 h-7 w-px bg-[#dfe5df]" />
+
+        {editorToolbar.map(tool => {
+          const Icon = tool.icon;
+          return (
+            <button
+              key={tool.action}
+              type="button"
+              title={tool.title}
+              aria-label={tool.title}
+              onMouseDown={event => event.preventDefault()}
+              onClick={() => onCommand(tool.action, detailId)}
+              className="tm-admin-press grid h-9 w-9 place-items-center rounded-md bg-white text-[#4e5a52] shadow-[0_0_0_1px_rgba(16,33,24,0.08)] hover:bg-[#102118] hover:text-white"
+            >
+              <Icon className="h-4 w-4" aria-hidden="true" strokeWidth={2.35} />
+            </button>
+          );
+        })}
+
+        <label title="لون النص" className="tm-admin-press grid h-9 w-9 cursor-pointer place-items-center rounded-md bg-white text-[#4e5a52] shadow-[0_0_0_1px_rgba(16,33,24,0.08)] hover:bg-[#102118] hover:text-white">
+          <Palette className="h-4 w-4" aria-hidden="true" strokeWidth={2.35} />
+          <input type="color" aria-label="لون النص" className="sr-only" defaultValue="#17201b" onChange={event => onColor(detailId, event.target.value)} />
+        </label>
+      </div>
+    </div>
+  );
+}
+
+function plainTextToHtml(text: string) {
+  return text
+    .split('\n')
+    .map(line => line.trim() ? `<p>${line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>` : '<p><br></p>')
+    .join('');
+}
+
+function RichTextEditor({
+  detail,
+  onFocus,
+  onRegister,
+  onChange,
+}: {
+  detail: DetailDraft;
+  onFocus: () => void;
+  onRegister: (element: HTMLDivElement | null) => void;
+  onChange: (html: string, text: string) => void;
+}) {
+  const editorRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    if (document.activeElement === editor) return;
+    editor.innerHTML = detail.richTextHtml || plainTextToHtml(detail.text);
+  }, [detail.id, detail.richTextHtml, detail.text]);
+
+  return (
+    <div
+      ref={element => {
+        editorRef.current = element;
+        onRegister(element);
+      }}
+      contentEditable
+      dir="rtl"
+      role="textbox"
+      aria-multiline="true"
+      suppressContentEditableWarning
+      onFocus={onFocus}
+      onInput={event => onChange(event.currentTarget.innerHTML, event.currentTarget.innerText)}
+      className="min-h-[190px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-4 py-3 text-[15px] font-semibold leading-8 outline-none focus:border-[#0f7d55] focus:ring-2 focus:ring-[#00a66c]/20 [&_a]:font-black [&_a]:text-[#0f7d55] [&_a]:underline [&_b]:font-black [&_font[size='2']]:text-xs [&_font[size='3']]:text-sm [&_font[size='4']]:text-lg [&_font[size='5']]:text-2xl [&_font[size='6']]:text-3xl [&_h2]:font-heading [&_h2]:text-3xl [&_h2]:font-black [&_h3]:font-heading [&_h3]:text-2xl [&_h3]:font-black [&_li]:my-1 [&_ol]:list-decimal [&_ol]:pr-5 [&_table]:my-3 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-[#cfd8d1] [&_td]:p-2 [&_th]:border [&_th]:border-[#cfd8d1] [&_th]:p-2 [&_th]:font-black [&_ul]:list-disc [&_ul]:pr-5"
+    />
+  );
+}
 
 function AdminSection({
   title,
@@ -697,6 +1305,14 @@ function BlockMediaPicker({
 }
 
 function AdminRail({ onOpenDashboard }: { onOpenDashboard: () => void }) {
+  return <AdminSidebar onNavigate={route => {
+    if (route === '#/admin') {
+      onOpenDashboard();
+      return;
+    }
+    window.location.hash = route;
+  }} />;
+
   return (
     <aside className="hidden border-l border-[#1f3528] bg-[#102118] text-white lg:col-start-1 lg:row-start-1 lg:block">
       <div className="sticky top-0 flex h-screen flex-col items-center gap-4 py-4">

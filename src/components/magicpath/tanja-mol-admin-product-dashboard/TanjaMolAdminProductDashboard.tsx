@@ -1,4 +1,5 @@
 import type { CartItem, OrderDraft, Product } from '../../../storefrontRuntime';
+import { AdminSidebar } from '../../admin/AdminLayout';
 
 type StoredOrder = OrderDraft & {
   id: string;
@@ -9,6 +10,7 @@ type DashboardProps = {
   products: Product[];
   orders: StoredOrder[];
   onAddProduct: () => void;
+  onOpenProducts?: () => void;
   onOpenStorefront: () => void;
   onOpenProduct: (slug: string) => void;
   onOpenOrders?: () => void;
@@ -32,6 +34,7 @@ export const TanjaMolAdminProductDashboard = ({
   products,
   orders,
   onAddProduct,
+  onOpenProducts,
   onOpenStorefront,
   onOpenProduct,
   onOpenOrders,
@@ -67,8 +70,9 @@ export const TanjaMolAdminProductDashboard = ({
 
   return (
     <div dir="rtl" className="min-h-screen w-full bg-[#f4f2eb] text-[#17201b]">
-      <div className="grid min-h-screen lg:grid-cols-[248px_minmax(0,1fr)]">
-        <aside className="hidden border-l border-[#d9dfd8] bg-[#102118] text-white lg:block">
+      <AdminSidebar />
+      <div className="grid min-h-screen lg:grid-cols-[76px_minmax(0,1fr)]">
+        <aside className="hidden">
           <div className="sticky top-0 flex h-screen flex-col px-4 py-5">
             <div className="flex items-center gap-3 px-2">
               <button type="button" onClick={onOpenStorefront} className="grid h-11 w-11 place-items-center rounded-md bg-[#00a66c] font-heading text-lg font-black">TM</button>
@@ -96,7 +100,7 @@ export const TanjaMolAdminProductDashboard = ({
           </div>
         </aside>
 
-        <main className="min-w-0">
+        <main className="min-w-0 lg:col-start-2">
           <header className="sticky top-0 z-30 border-b border-[#d9dfd8] bg-[#f8f7f1]/94">
             <div className="mx-auto flex min-h-[72px] max-w-[1440px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
               <div className="min-w-0">

@@ -20,6 +20,7 @@ export type Product = {
   showPolicies?: boolean;
   details?: ProductDetailBlock[];
   specs?: Array<[string, string]>;
+  variantOptions?: ProductVariantOption[];
   variants?: ProductVariant[];
 };
 
@@ -27,9 +28,17 @@ export type ProductDetailBlock = {
   id: string;
   title: string;
   text: string;
+  richTextHtml?: string;
   mediaUrl: string;
   mediaType: 'image' | 'video';
   reverse: boolean;
+  textAlign?: 'right' | 'center' | 'left';
+  textSize?: 'sm' | 'base' | 'lg';
+  headingSize?: 'h2' | 'h3';
+  textBold?: boolean;
+  textItalic?: boolean;
+  textUnderline?: boolean;
+  textColor?: string;
 };
 
 export type ProductVariant = {
@@ -40,6 +49,18 @@ export type ProductVariant = {
   stock: number;
   enabled: boolean;
   image?: string;
+  optionValues?: Record<string, string>;
+};
+
+export type ProductVariantOption = {
+  id: string;
+  type: string;
+  label: string;
+  values: Array<{
+    id: string;
+    label: string;
+    color?: string;
+  }>;
 };
 
 export type Category = {
@@ -134,6 +155,59 @@ export const categories: Category[] = [
 ];
 
 export const products: Product[] = [
+  {
+    id: 'portable-juice-blender-test',
+    slug: 'portable-juice-blender-test',
+    title: 'خلاط عصائر محمول USB بكأس شفاف',
+    category: 'المنزل والمطبخ',
+    price: 159,
+    priceLabel: '159 درهم',
+    oldPrice: '230 درهم',
+    badge: 'اختبار صفحة الإضافة',
+    image: 'https://images.unsplash.com/photo-1622484212850-eb596d769edc?auto=format&fit=crop&w=900&q=82',
+    gallery: [
+      'https://images.unsplash.com/photo-1622484212850-eb596d769edc?auto=format&fit=crop&w=1200&q=85',
+      'https://images.unsplash.com/photo-1570197788417-0e82375c9371?auto=format&fit=crop&w=1000&q=82',
+      'https://images.unsplash.com/photo-1622597467836-f3285f2131b8?auto=format&fit=crop&w=1000&q=82',
+      'https://images.unsplash.com/photo-1497534446932-c925b458314e?auto=format&fit=crop&w=1000&q=82',
+    ],
+    description: 'خلاط خفيف لتحضير العصائر في البيت أو المكتب، يشحن عبر USB ويأتي بكأس شفاف سهل الحمل والتنظيف.',
+    stock: 26,
+    delivery: '24 إلى 48 ساعة',
+    reviewsEnabled: true,
+    manualReviewsEnabled: true,
+    showRelated: true,
+    showPolicies: true,
+    details: [
+      {
+        id: 'portable-blender-detail-1',
+        title: 'تحضير سريع بدون أجهزة كبيرة',
+        text: 'صمم هذا الخلاط للاستعمال اليومي السريع: أضف الفواكه الطرية، الماء أو الحليب، وشغل الخلط مباشرة داخل الكأس. مناسب للعصائر الخفيفة بعد الرياضة أو في المكتب.',
+        mediaUrl: 'https://images.unsplash.com/photo-1622597467836-f3285f2131b8?auto=format&fit=crop&w=1000&q=82',
+        mediaType: 'image',
+        reverse: false,
+      },
+      {
+        id: 'portable-blender-detail-2',
+        title: 'كأس محمول وسهل التنظيف',
+        text: 'الكأس الشفاف يسمح برؤية المكونات أثناء الخلط، ويمكن شطفه بسرعة بعد الاستعمال. حجمه مناسب للحقيبة أو رف المطبخ بدون أخذ مساحة كبيرة.',
+        mediaUrl: 'https://images.unsplash.com/photo-1497534446932-c925b458314e?auto=format&fit=crop&w=1000&q=82',
+        mediaType: 'image',
+        reverse: true,
+      },
+    ],
+    specs: [
+      ['الشحن', 'USB قابل لإعادة الشحن'],
+      ['السعة', 'كأس عملي للاستعمال اليومي'],
+      ['الاستعمال', 'عصائر خفيفة وفواكه طرية'],
+      ['التوصيل', 'داخل طنجة خلال 24 إلى 48 ساعة'],
+    ],
+    variants: [
+      { id: 'portable-blender-white', name: 'أبيض', sku: 'TM-BLENDER-WHT', priceLabel: '159 درهم', stock: 11, enabled: true },
+      { id: 'portable-blender-green', name: 'أخضر', sku: 'TM-BLENDER-GRN', priceLabel: '159 درهم', stock: 9, enabled: true },
+      { id: 'portable-blender-pink', name: 'وردي', sku: 'TM-BLENDER-PNK', priceLabel: '169 درهم', stock: 6, enabled: true },
+    ],
+  },
   {
     id: 'smart-watch',
     slug: 'smart-watch',
