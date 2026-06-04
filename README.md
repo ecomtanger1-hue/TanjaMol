@@ -21,10 +21,13 @@ npm run build
 npm run preview
 ```
 
-## GitHub Pages
+## Cloudflare Pages
 
-```bash
-npm run deploy:gh-pages
-```
+Use these settings when creating the Cloudflare Pages project:
 
-This builds the site and publishes the `dist` folder to the `gh-pages` branch.
+- Framework preset: `Vite`
+- Build command: `npm run build`
+- Build output directory: `dist`
+- Node.js version: `24`
+
+The `public/_headers` file adds basic browser security headers and long-lived caching for built assets. The `public/_redirects` file keeps client-side routes loading through `index.html`.
