@@ -197,6 +197,9 @@ export function App() {
     const nextOrders = [order, ...readStored<StoredOrder[]>(ORDERS_KEY, [])];
     localStorage.setItem(ORDERS_KEY, JSON.stringify(nextOrders));
     setOrders(nextOrders);
+    void import('./lib/supabaseOrders').then(({ saveOrderToSupabase }) => saveOrderToSupabase(order)).catch(error => {
+      console.error('Failed to save order to Supabase', error);
+    });
 
     if (draft.source === 'cart') setCart([]);
     setDirectItem(null);
