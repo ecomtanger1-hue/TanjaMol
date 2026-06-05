@@ -41,7 +41,6 @@ const ADMIN_PRODUCTS_KEY = 'tanjamol.admin.products.v1';
 const ADMIN_DELETED_PRODUCTS_KEY = 'tanjamol.admin.deletedProducts.v1';
 const ADMIN_HIDDEN_PRODUCTS_KEY = 'tanjamol.admin.hiddenProducts.v1';
 const SETTINGS_KEY = 'tanjamol.settings.v1';
-const ADMIN_AUTH_KEY = 'tanjamol.admin.auth.v1';
 
 function scrollToPageTop() {
   const activeElement = document.activeElement;
@@ -77,7 +76,9 @@ export function App() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [directItem, setDirectItem] = useState<CartItem | null>(null);
   const [notice, setNotice] = useState('');
-  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(() => readStored<boolean>(ADMIN_AUTH_KEY, false));
+  const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+  const [isAdminLoading, setIsAdminLoading] = useState(() => getRoute().startsWith('#/admin'));
+  const [adminLoginError, setAdminLoginError] = useState('');
 
   useEffect(() => {
     if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
@@ -107,8 +108,46 @@ export function App() {
   }, [settings]);
 
   useEffect(() => {
-    localStorage.setItem(ADMIN_AUTH_KEY, JSON.stringify(isAdminLoggedIn));
-  }, [isAdminLoggedIn]);
+    if (!route.startsWith('#/admin')) {
+      setIsAdminLoading(false);
+      return;
+    }
+
+    if (isAdminLoggedIn) {
+      setIsAdminLoading(false);
+      return;
+    }
+
+    let active = true;
+    setIsAdminLoading(true);
+
+    void import('./lib/supabaseAdmin')
+      .then(async ({ fetchAdminOrders, restoreAdminSession }) => {
+        const restored = await restoreAdminSession();
+        if (!active) return;
+        setIsAdminLoggedIn(restored);
+        if (restored) setOrders(await fetchAdminOrders());
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (active) setIsAdminLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [isAdminLoggedIn, route]);
+
+  useEffect(() => {
+    if (!isAdminLoggedIn || !route.startsWith('#/admin')) return;
+
+    void import('./lib/supabaseAdmin')
+      .then(({ fetchAdminOrders }) => fetchAdminOrders())
+      .then(setOrders)
+      .catch(error => {
+        console.error('Failed to load admin orders', error);
+      });
+  }, [isAdminLoggedIn, route]);
 
   useEffect(() => {
     if (!notice) return;
@@ -225,6 +264,19 @@ export function App() {
     if (draft) submitOrderDraft(draft);
   };
 
+  const loginAdmin = async (email: string, password: string) => {
+    setAdminLoginError('');
+    try {
+      const { fetchAdminOrders, signInAdmin } = await import('./lib/supabaseAdmin');
+      await signInAdmin(email, password);
+      setOrders(await fetchAdminOrders());
+      setIsAdminLoggedIn(true);
+      navigate('#/admin');
+    } catch {
+      setAdminLoginError('بيانات الدخول غير صحيحة أو الحساب ليس مديراً');
+    }
+  };
+
   const commonProps = {
     cartCount,
     products: storefrontProducts,
@@ -297,11 +349,15 @@ export function App() {
 
   const renderedPage = useMemo(() => {
     if (route === '#/admin/login') {
-      return <AdminLogin onLogin={() => { setIsAdminLoggedIn(true); navigate('#/admin'); }} />;
+      return <AdminLogin error={adminLoginError} loading={isAdminLoading} onLogin={loginAdmin} />;
+    }
+
+    if (route.startsWith('#/admin') && isAdminLoading) {
+      return <AdminLogin error="" loading onLogin={loginAdmin} />;
     }
 
     if (route.startsWith('#/admin') && !isAdminLoggedIn) {
-      return <AdminLogin onLogin={() => { setIsAdminLoggedIn(true); navigate(route); }} />;
+      return <AdminLogin error={adminLoginError} loading={false} onLogin={loginAdmin} />;
     }
 
     if (route === '#/admin') {

@@ -478,15 +478,35 @@ export function CartPopup({
   );
 }
 
-export function AdminLogin({ onLogin }: { onLogin: () => void }) {
+export function AdminLogin({
+  error,
+  loading,
+  onLogin,
+}: {
+  error: string;
+  loading: boolean;
+  onLogin: (email: string, password: string) => Promise<void>;
+}) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setSubmitting(true);
+    await onLogin(email, password);
+    setSubmitting(false);
+  };
+
   return (
     <main dir="rtl" className="grid min-h-screen place-items-center bg-[#102118] px-4 text-[#17201b]">
-      <form onSubmit={event => { event.preventDefault(); onLogin(); }} className="w-full max-w-[420px] rounded-lg bg-[#fffdf8] p-5 shadow-[0_34px_90px_rgba(0,0,0,0.34)]">
+      <form onSubmit={submit} className="w-full max-w-[420px] rounded-lg bg-[#fffdf8] p-5 shadow-[0_34px_90px_rgba(0,0,0,0.34)]">
         <p className="font-heading text-3xl font-black">دخول الإدارة</p>
         <div className="mt-5 grid gap-3">
-          <input className="min-h-[48px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-4 font-bold outline-none focus:border-[#0f7d55]" placeholder="اسم المستخدم" defaultValue="admin" />
-          <input className="min-h-[48px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-4 font-bold outline-none focus:border-[#0f7d55]" placeholder="كلمة المرور" type="password" defaultValue="admin" />
-          <button className="min-h-[50px] rounded-md bg-[#00a66c] px-5 font-black text-white" type="submit">دخول</button>
+          <input className="min-h-[48px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-4 font-bold outline-none focus:border-[#0f7d55]" placeholder="البريد الإلكتروني" type="email" value={email} onChange={event => setEmail(event.target.value)} required disabled={loading || submitting} />
+          <input className="min-h-[48px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-4 font-bold outline-none focus:border-[#0f7d55]" placeholder="كلمة المرور" type="password" value={password} onChange={event => setPassword(event.target.value)} required disabled={loading || submitting} />
+          <button className="min-h-[50px] rounded-md bg-[#00a66c] px-5 font-black text-white disabled:opacity-60" type="submit" disabled={loading || submitting}>{loading || submitting ? 'جار التحقق' : 'دخول'}</button>
+          {error ? <p className="rounded-md bg-[#fff1d5] px-3 py-2 text-sm font-black text-[#9a5a00]">{error}</p> : null}
         </div>
       </form>
     </main>
