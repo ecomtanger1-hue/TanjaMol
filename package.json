@@ -12,6 +12,7 @@
     "node": ">=20.19.0"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.107.0",
     "@tailwindcss/vite": "^4.0.0",
     "@vitejs/plugin-react": "^5.0.0",
     "class-variance-authority": "^0.7.1",
