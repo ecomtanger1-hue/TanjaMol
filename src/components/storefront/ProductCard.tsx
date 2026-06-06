@@ -79,6 +79,7 @@ export function ProductCard({
               {added ? 'تمت الإضافة' : 'أضف للسلة'}
             </span>
             {added ? <span className="tm-add-spark" aria-hidden="true" /> : null}
+            {added ? <span className="tm-add-fly" aria-hidden="true" /> : null}
           </button>
         </div>
       </div>

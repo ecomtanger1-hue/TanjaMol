@@ -56,7 +56,10 @@ export function SiteHeader({
     <header className="tm-site-header fixed inset-x-0 top-0 z-50 text-white shadow-[0_14px_36px_rgba(19,25,33,0.2)]" style={{ background: 'var(--tm-header-alpha)' }}>
       <nav className="mx-auto grid min-h-[64px] w-full max-w-[1180px] grid-cols-[44px_1fr_auto] items-center gap-3 px-4 sm:px-6 lg:flex lg:justify-between lg:px-8">
         <button type="button" aria-label={mobileMenuOpen ? 'إغلاق القائمة' : 'فتح القائمة'} aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen(value => !value)} className="tm-press tm-touch grid h-11 w-11 place-items-center rounded-md bg-white/10 lg:hidden">
-          {mobileMenuOpen ? <X className="h-6 w-6" aria-hidden="true" strokeWidth={2.4} /> : <Menu className="h-6 w-6" aria-hidden="true" strokeWidth={2.4} />}
+          <span className={`tm-menu-icon-toggle ${mobileMenuOpen ? 'is-open' : ''}`} aria-hidden="true">
+            <Menu className="tm-menu-icon tm-menu-icon-menu h-6 w-6" strokeWidth={2.4} />
+            <X className="tm-menu-icon tm-menu-icon-close h-6 w-6" strokeWidth={2.4} />
+          </span>
         </button>
 
         <button type="button" onClick={() => onNavigate('#/')} className="tm-press mx-auto min-w-0 text-center lg:mx-0 lg:text-right">

@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Grid3X3, Home, Menu, PackageSearch, Search, ShoppingCart, X } from 'lucide-react';
+import { Grid3X3, Home, PackageSearch, Search, ShoppingCart } from 'lucide-react';
 import { categories, categoryRoute, type CartItem, type OrderDraft, type Product } from '../../storefrontRuntime';
-import { TanjaMallLogo } from '../brand/TanjaMallLogo';
 import { ProductCard as StoreProductCard } from './ProductCard';
-import { MobileMenuDrawer, SiteFooter } from './StorefrontPages';
+import { SiteFooter, SiteHeader } from './StorefrontPages';
 
 type StorefrontProps = {
   cartCount: number;
@@ -94,7 +93,7 @@ export const CODTangerArabicStoreLanding = ({
   const featuredProduct = products[0];
   const shortcutCategories = categories.slice(0, 6);
   const navigate = onNavigate || ((route: string) => { window.location.hash = route; });
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [heroSlide, setHeroSlide] = useState(0);
   const openCategories = () => scrollToSection('categories');
   const bottomItemClass = 'tm-press tm-touch rounded-md bg-[var(--tm-surface-tint)] px-2 py-2 text-center text-xs font-black text-[var(--tm-ink-muted)]';
 
@@ -107,40 +106,13 @@ export const CODTangerArabicStoreLanding = ({
     window.setTimeout(() => scrollToSection(section || 'categories'), 80);
   }, []);
 
+  useEffect(() => {
+    const timer = window.setInterval(() => setHeroSlide(current => (current === 0 ? 1 : 0)), 6500);
+    return () => window.clearInterval(timer);
+  }, []);
+
   return <div dir="rtl" className="min-h-screen w-full overflow-x-hidden bg-[var(--tm-bg)] pb-24 pt-16 text-[var(--tm-ink)] md:pb-0">
-    <header className="tm-site-header fixed inset-x-0 top-0 z-50 text-white shadow-[0_1px_0_rgba(255,255,255,0.08)]" style={{ background: 'var(--tm-header-alpha)' }}>
-      <nav className="mx-auto grid min-h-[64px] w-full max-w-[1180px] grid-cols-[44px_1fr_auto] items-center gap-3 px-4 sm:px-6 lg:flex lg:justify-between lg:px-8">
-        <button type="button" aria-label={mobileMenuOpen ? 'إغلاق القائمة' : 'فتح القائمة'} aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen(value => !value)} className="tm-press tm-touch grid h-11 w-11 place-items-center rounded-md bg-white/10 lg:hidden">
-          {mobileMenuOpen ? <X className="h-6 w-6" aria-hidden="true" strokeWidth={2.4} /> : <Menu className="h-6 w-6" aria-hidden="true" strokeWidth={2.4} />}
-        </button>
-
-                <button type="button" onClick={() => scrollToSection('top')} className="tm-press mx-auto min-w-0 text-center lg:mx-0 lg:text-right">
-          <TanjaMallLogo compact subtitle={"\u0645\u062a\u062c\u0631 \u0637\u0646\u062c\u0629 \u0644\u0644\u062f\u0641\u0639 \u0639\u0646\u062f \u0627\u0644\u0627\u0633\u062a\u0644\u0627\u0645"} textClassName="text-white" />
-        </button>
-
-        <div className="hidden items-center gap-7 text-sm font-semibold text-white/82 lg:flex">
-          <button type="button" onClick={openCategories} className="tm-press tm-touch rounded-md px-2">{'\u0627\u0644\u0623\u0642\u0633\u0627\u0645'}</button>
-          <button type="button" onClick={() => scrollToSection('products')} className="tm-press tm-touch rounded-md px-2">{'\u0627\u0644\u0623\u0643\u062b\u0631 \u0637\u0644\u0628\u0627'}</button>
-          <button type="button" onClick={() => scrollToSection('new-arrivals')} className="tm-press tm-touch rounded-md px-2">{'\u0648\u0635\u0644 \u062d\u062f\u064a\u062b\u0627'}</button>
-          <button type="button" onClick={() => scrollToSection('policies')} className="tm-press tm-touch rounded-md px-2">{'\u0627\u0644\u062a\u0648\u0635\u064a\u0644'}</button>
-          <button type="button" onClick={() => scrollToSection('policies')} className="tm-press tm-touch rounded-md px-2">{'\u0627\u0644\u0623\u0633\u0626\u0644\u0629'}</button>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button type="button" onClick={onOpenSearch} className="tm-press tm-touch hidden items-center gap-2 rounded-md bg-white/10 px-4 text-sm font-extrabold text-white shadow-[0_0_0_1px_rgba(255,255,255,0.16)] sm:inline-flex">
-            <Search className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
-            بحث
-          </button>
-          <button type="button" onClick={onOpenCart} className="tm-press tm-icon-button relative h-11 w-11" aria-label={`السلة، ${cartCount} منتج`}>
-            <ShoppingCart className="h-5 w-5" aria-hidden="true" strokeWidth={2.4} />
-            <span key={cartCount} aria-live="polite" className="tm-num tm-cart-count-pop absolute -left-2 -top-2 inline-flex min-w-5 justify-center rounded-full px-1.5 py-0.5 text-xs text-white" style={{ background: 'var(--tm-brand)' }}>
-              {cartCount}
-            </span>
-          </button>
-        </div>
-      </nav>
-      <MobileMenuDrawer open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} onNavigate={navigate} />
-    </header>
+    <SiteHeader cartCount={cartCount} onNavigate={navigate} onOpenCart={onOpenCart} onOpenSearch={onOpenSearch} />
 
     <main id="top">
       <section className="bg-[var(--tm-surface-white)] px-4 pb-4 pt-4 sm:px-6 lg:hidden">
@@ -195,7 +167,7 @@ export const CODTangerArabicStoreLanding = ({
             </div>
           </div>
           <div className="tm-mobile-hero-stage lg:hidden" aria-label="عروض متجر TanjaMall">
-            <div className="tm-mobile-hero-slide tm-mobile-hero-intro rounded-lg bg-[#131921] p-5 text-center shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)]">
+            <div className={`tm-mobile-hero-slide tm-mobile-hero-intro rounded-lg bg-[#131921] p-5 text-center shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)] ${heroSlide === 0 ? 'tm-mobile-hero-slide-active' : ''}`}>
               <p className="inline-flex rounded-full bg-white px-3 py-1 text-xs font-black text-[#b45309]">TanjaMall</p>
               <h1 className="mt-4 font-heading text-[2rem] font-black leading-tight text-white">متجر طنجة</h1>
               <div className="mt-5 grid gap-2.5 text-sm font-black">
@@ -203,22 +175,25 @@ export const CODTangerArabicStoreLanding = ({
                 <span className="tm-mobile-hero-slogan rounded-md bg-white/10 px-4 py-3 text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08)]">توصيل سريع داخل طنجة</span>
                 <span className="tm-mobile-hero-slogan rounded-md bg-white/10 px-4 py-3 text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08)]">تأكيد الطلب قبل الإرسال</span>
               </div>
-              <div className="mt-5 flex justify-center gap-2" aria-hidden="true">
-                <span className="h-2 w-6 rounded-full bg-[#ffb84d]" />
-                <span className="h-2 w-2 rounded-full bg-white/32" />
-              </div>
             </div>
           {featuredProduct ? (
-            <button type="button" onClick={() => onOpenProduct(featuredProduct.slug)} className="tm-mobile-hero-slide tm-mobile-hero-product tm-press relative block overflow-hidden rounded-lg bg-white/8 text-right shadow-[0_0_0_1px_rgba(255,255,255,0.1),0_18px_44px_rgba(0,0,0,0.22)]">
+            <button type="button" onClick={() => onOpenProduct(featuredProduct.slug)} className={`tm-mobile-hero-slide tm-mobile-hero-product tm-press relative block overflow-hidden rounded-lg bg-white/8 text-right shadow-[0_0_0_1px_rgba(255,255,255,0.1),0_18px_44px_rgba(0,0,0,0.22)] ${heroSlide === 1 ? 'tm-mobile-hero-slide-active' : ''}`}>
               <img src={featuredProduct.image} alt={featuredProduct.title} className="absolute inset-0 h-full w-full object-cover outline outline-1 outline-offset-[-1px] outline-[rgba(255,255,255,0.1)]" fetchPriority="high" decoding="sync" width="760" height="760" sizes="100vw" />
               <span className="absolute inset-0 bg-[linear-gradient(180deg,rgba(19,25,33,0.04),rgba(19,25,33,0.68))]" />
-              <span className="absolute bottom-4 right-4 left-4">
+              <span className="absolute bottom-10 right-4 left-4">
                 <span className="mb-2 inline-flex rounded-md bg-white px-3 py-1 text-xs font-black text-[#17201b]">{featuredProduct.badge}</span>
                 <span className="block line-clamp-2 font-heading text-2xl font-black text-white">{featuredProduct.title}</span>
                 <span className="tm-num mt-2 block font-heading text-2xl font-black text-[#ffb84d]">{featuredProduct.priceLabel}</span>
               </span>
             </button>
           ) : null}
+            <div className="tm-mobile-hero-controls" aria-label="تبديل العرض">
+              {[0, 1].map(index => (
+                <button key={index} type="button" onClick={() => setHeroSlide(index)} aria-label={index === 0 ? 'عرض شعارات المتجر' : 'عرض المنتج المميز'} aria-current={heroSlide === index ? 'true' : undefined} className="tm-press tm-touch grid place-items-center rounded-full">
+                  <span className={`tm-mobile-hero-dot ${heroSlide === index ? 'is-active' : ''}`} />
+                </button>
+              ))}
+            </div>
           </div>
           {featuredProduct ? (
             <button type="button" onClick={() => onOpenProduct(featuredProduct.slug)} className="tm-press relative hidden min-h-[260px] overflow-hidden rounded-lg bg-white/8 text-right shadow-[0_0_0_1px_rgba(255,255,255,0.1),0_18px_44px_rgba(0,0,0,0.22)] lg:block lg:min-h-[360px] lg:rounded-xl">
