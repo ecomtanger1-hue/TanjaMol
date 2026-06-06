@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" role="img" aria-labelledby="title desc">
+  <title id="title">TanjaMall icon - uppercase T balanced gap</title>
+  <desc id="desc">Orange rounded TanjaMall icon with a normal uppercase black T and a separate white smile with balanced spacing.</desc>
+  <rect x="8" y="8" width="92" height="92" rx="21" fill="#ff9900"/>
+  <path d="M29 24h50v14H60.5v30h-13V38H29Z" fill="#131921"/>
+  <path d="M31 72c13 9.2 33 9.2 46 0" fill="none" stroke="#fffdf8" stroke-linecap="round" stroke-width="8.5"/>
+</svg>

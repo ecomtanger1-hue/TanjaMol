@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" role="img" aria-labelledby="title desc">
+  <title id="title">TanjaMall icon - taller T separated smile</title>
+  <desc id="desc">Orange rounded TanjaMall icon with a taller black T and a separate white smile below it.</desc>
+  <rect x="8" y="8" width="92" height="92" rx="21" fill="#ff9900"/>
+  <path d="M30 27h48v13H60.5v23h-13V40H30Z" fill="#131921"/>
+  <path d="M31 69c13 9.5 33 9.5 46 0" fill="none" stroke="#fffdf8" stroke-linecap="round" stroke-width="8.5"/>
+</svg>

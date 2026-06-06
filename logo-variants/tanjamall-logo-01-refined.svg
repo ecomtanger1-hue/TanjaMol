@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 430 108" role="img" aria-labelledby="title desc">
+  <title id="title">TanjaMall logo - refined current direction</title>
+  <desc id="desc">A refined TanjaMall logo with an orange rounded square, a bold T, a clean marketplace smile, and a balanced wordmark.</desc>
+  <style>
+    .word { font-family: "Tajawal", "Cairo", "Aptos Display", Arial, sans-serif; font-size: 50px; font-weight: 800; letter-spacing: -0.5px; }
+    .subtle { font-family: "Tajawal", "Cairo", Arial, sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0; }
+  </style>
+
+  <rect x="8" y="12" width="84" height="84" rx="18" fill="#ff9900"/>
+  <path d="M28 34h41v11H55.5v35h-13V45H28Z" fill="#131921"/>
+  <path d="M30 66c11 8.7 29 8.7 40 0" fill="none" stroke="#fffdf8" stroke-linecap="round" stroke-width="7"/>
+
+  <text class="word" x="116" y="66" fill="#131921">Tanja</text>
+  <text class="word" x="247" y="66" fill="#ff9900">Mall</text>
+  <path d="M248 77h86" fill="none" stroke="#ff9900" stroke-linecap="round" stroke-width="4" opacity="0.9"/>
+  <text class="subtle" x="118" y="86" fill="#68736c">Tangier commerce, made simple</text>
+</svg>
