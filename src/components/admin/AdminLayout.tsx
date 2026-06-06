@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { BarChart3, LayoutDashboard, Package, Settings, ShoppingBag, Store, Users } from 'lucide-react';
+import { TanjaMallLogo } from '../brand/TanjaMallLogo';
 
 type AdminShellProps = {
   title: string;
@@ -31,14 +32,10 @@ export function AdminSidebar({ onNavigate = defaultNavigate }: { onNavigate?: (r
   const currentRoute = window.location.hash || '#/admin';
 
   return (
-    <aside className="group/admin-sidebar fixed bottom-0 right-0 top-0 z-50 hidden w-[76px] overflow-hidden border-l border-[#173226] bg-[#102118] text-white transition-[width,box-shadow] duration-200 ease-out lg:block lg:hover:w-[188px] lg:hover:shadow-[-22px_0_44px_-32px_rgba(16,33,24,0.8)]">
-      <div className="flex h-full w-[188px] flex-col bg-[#102118] px-3 py-5">
+    <aside className="group/admin-sidebar fixed bottom-0 right-0 top-0 z-50 hidden w-[76px] overflow-hidden border-l border-[#273341] bg-[#131921] text-white transition-[width,box-shadow] duration-200 ease-out lg:block lg:hover:w-[188px] lg:hover:shadow-[-22px_0_44px_-32px_rgba(19,25,33,0.8)]">
+      <div className="flex h-full w-[188px] flex-col bg-[#131921] px-3 py-5">
         <button type="button" onClick={() => onNavigate('#/')} className="tm-admin-press flex min-h-[48px] items-center gap-3 rounded-md px-1 text-right">
-          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-md bg-[#00a66c] font-heading text-lg font-black">TM</span>
-          <span className="min-w-0 opacity-0 transition-opacity duration-150 group-hover/admin-sidebar:opacity-100">
-            <span className="block whitespace-nowrap font-heading text-lg font-black leading-none">TanjaMol</span>
-            <span className="mt-1 block whitespace-nowrap text-xs font-bold text-white/58">إدارة المتجر</span>
-          </span>
+          <TanjaMallLogo compact subtitle={"\u0625\u062f\u0627\u0631\u0629 \u0627\u0644\u0645\u062a\u062c\u0631"} textClassName="text-lg opacity-0 transition-opacity duration-150 group-hover/admin-sidebar:opacity-100" />
         </button>
 
         <nav className="mt-8 grid gap-1 text-sm font-extrabold">
@@ -52,7 +49,7 @@ export function AdminSidebar({ onNavigate = defaultNavigate }: { onNavigate?: (r
                 type="button"
                 onClick={() => onNavigate(item.route)}
                 aria-current={active ? 'page' : undefined}
-                className={`tm-admin-press grid min-h-[46px] w-11 grid-cols-[44px_1fr] items-center overflow-hidden rounded-md text-right transition-[width,background-color,color] duration-200 ease-out group-hover/admin-sidebar:w-full ${active ? 'bg-white text-[#102118]' : 'text-white/72 hover:bg-white/10 hover:text-white'}`}
+                className={`tm-admin-press grid min-h-[46px] w-11 grid-cols-[44px_1fr] items-center overflow-hidden rounded-md text-right transition-[width,background-color,color] duration-200 ease-out group-hover/admin-sidebar:w-full ${active ? 'bg-white text-[#131921]' : 'text-white/72 hover:bg-white/10 hover:text-white'}`}
               >
                 <span className="grid h-11 w-11 place-items-center">
                   <Icon className="h-5 w-5" aria-hidden="true" strokeWidth={2.4} />
@@ -82,7 +79,7 @@ export function AdminShell({ title, eyebrow, actions, children, onNavigate = def
         <header className="sticky top-0 z-30 border-b border-[#d9dfd8] bg-[#f8f7f1]/94">
           <div className="mx-auto flex min-h-[72px] max-w-[1440px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
             <div className="min-w-0">
-              {eyebrow ? <p className="text-xs font-black text-[#0f7d55]">{eyebrow}</p> : null}
+              {eyebrow ? <p className="text-xs font-black text-[#b45309]">{eyebrow}</p> : null}
               <h1 className="truncate font-heading text-2xl font-black sm:text-3xl">{title}</h1>
             </div>
             {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}

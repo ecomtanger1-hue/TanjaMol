@@ -23,7 +23,7 @@ function productStatus(product: Product, hidden: boolean) {
   if (hidden) return { label: 'مخفي', className: 'bg-[#fff1d5] text-[#9a5a00]' };
   if ((product.gallery?.length || 0) < 3) return { label: 'يحتاج صور', className: 'bg-[#fff1d5] text-[#9a5a00]' };
   if ((product.stock ?? 24) < 10) return { label: 'مخزون منخفض', className: 'bg-[#fff1d5] text-[#9a5a00]' };
-  return { label: 'ظاهر', className: 'bg-[#e7f8ee] text-[#0f7d55]' };
+  return { label: 'ظاهر', className: 'bg-[#fff3df] text-[#b45309]' };
 }
 
 export function AdminProductsPage({
@@ -49,7 +49,7 @@ export function AdminProductsPage({
           <button type="button" onClick={() => onNavigate('#/')} className="tm-admin-press hidden min-h-[42px] rounded-md border border-[#cfd8d1] bg-white px-4 text-sm font-extrabold text-[#17201b] sm:block">
             فتح المتجر
           </button>
-          <button type="button" onClick={() => onNavigate('#/admin/products/new')} className="tm-admin-press inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#00a66c] px-4 text-sm font-black text-white shadow-[0_14px_34px_-22px_rgba(0,166,108,0.9)]">
+          <button type="button" onClick={() => onNavigate('#/admin/products/new')} className="tm-admin-press inline-flex min-h-[42px] items-center gap-2 rounded-md bg-[#ff9900] px-4 text-sm font-black text-[#131921] shadow-[0_14px_34px_-22px_rgba(255,153,0,0.9)]">
             <PackagePlus className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
             إضافة منتج
           </button>
@@ -113,7 +113,7 @@ export function AdminProductsPage({
                       </div>
                     </td>
                     <td className="px-4 py-3 font-bold text-[#65716a]">{product.category}</td>
-                    <td className="tm-admin-num px-4 py-3 font-heading text-lg font-black text-[#0f7d55]">{product.priceLabel}</td>
+                    <td className="tm-admin-num px-4 py-3 font-heading text-lg font-black text-[#b45309]">{product.priceLabel}</td>
                     <td className="tm-admin-num px-4 py-3 font-black">{product.stock ?? 24}</td>
                     <td className="tm-admin-num px-4 py-3 font-black">{product.gallery?.length || 0}</td>
                     <td className="tm-admin-num px-4 py-3 font-black">{sales.sales}</td>

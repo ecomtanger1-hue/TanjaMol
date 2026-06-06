@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useState, type CSSProperties, type FormEvent } from 'react';
 import { CODTangerArabicStoreLanding } from './components/storefront/CODTangerArabicStoreLanding';
 import { TanjaMolArabicCODProductPage } from './components/product/TanjaMolArabicCODProductPage';
-import { TanjaMolAdminProductDashboard } from './components/magicpath/tanja-mol-admin-product-dashboard/TanjaMolAdminProductDashboard';
+import { TanjaMallAdminProductDashboard } from './components/magicpath/tanja-mol-admin-product-dashboard/TanjaMolAdminProductDashboard';
 import { TanjaMolAddProductPage } from './components/magicpath/tanja-mol-add-product-page/TanjaMolAddProductPage';
 import { AdminProductsPage } from './components/admin/AdminProductsPage';
 import {
@@ -71,7 +71,14 @@ export function App() {
   const [hiddenProductSlugs, setHiddenProductSlugs] = useState<string[]>(() => readStored<string[]>(ADMIN_HIDDEN_PRODUCTS_KEY, []));
   const [cart, setCart] = useState<CartItem[]>(() => readStored<CartItem[]>(CART_KEY, []));
   const [orders, setOrders] = useState<StoredOrder[]>(() => readStored<StoredOrder[]>(ORDERS_KEY, []));
-  const [settings, setSettings] = useState<StoreSettings>(() => ({ ...defaultSettings, ...readStored<Partial<StoreSettings>>(SETTINGS_KEY, {}) }));
+  const [settings, setSettings] = useState<StoreSettings>(() => {
+    const storedSettings = readStored<Partial<StoreSettings>>(SETTINGS_KEY, {});
+    return {
+      ...defaultSettings,
+      ...storedSettings,
+      storeName: !storedSettings.storeName || storedSettings.storeName === 'TanjaMol' ? defaultSettings.storeName : storedSettings.storeName,
+    };
+  });
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [directItem, setDirectItem] = useState<CartItem | null>(null);
@@ -362,7 +369,7 @@ export function App() {
 
     if (route === '#/admin') {
       return (
-        <TanjaMolAdminProductDashboard
+        <TanjaMallAdminProductDashboard
           products={adminProducts}
           orders={orders}
           onAddProduct={() => navigate('#/admin/products/new')}
@@ -557,7 +564,7 @@ function SearchPanel({
   if (!open) return null;
 
   return (
-    <div dir="rtl" className="tm-modal-backdrop fixed inset-0 z-[90] bg-[#102118]/46 px-4 pt-20" role="dialog" aria-modal="true" aria-label="البحث" onClick={onClose}>
+    <div dir="rtl" className="tm-modal-backdrop fixed inset-0 z-[90] bg-[#131921]/46 px-4 pt-20" role="dialog" aria-modal="true" aria-label="البحث" onClick={onClose}>
       <div className="tm-panel tm-panel-pop mx-auto w-full max-w-[720px] p-3 sm:p-4" onClick={event => event.stopPropagation()}>
         <div className="flex items-center gap-2">
           <label className="sr-only" htmlFor="tm-search-panel-input">بحث</label>
@@ -609,7 +616,7 @@ function Notice({ message }: { message: string }) {
   if (!message) return null;
 
   return (
-    <div className="tm-toast-slide fixed inset-x-0 top-4 z-[100] mx-auto w-fit max-w-[90vw] rounded-md bg-[#102118] px-4 py-3 text-sm font-black text-white shadow-[0_18px_48px_-22px_rgba(23,32,27,0.65)]" role="status">
+    <div className="tm-toast-slide fixed inset-x-0 top-4 z-[100] mx-auto w-fit max-w-[90vw] rounded-md bg-[#131921] px-4 py-3 text-sm font-black text-white shadow-[0_18px_48px_-22px_rgba(23,32,27,0.65)]" role="status">
       {message}
     </div>
   );

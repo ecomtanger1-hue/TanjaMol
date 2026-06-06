@@ -107,7 +107,7 @@ export type StoreSettings = {
 };
 
 export const defaultSettings: StoreSettings = {
-  storeName: 'TanjaMol',
+  storeName: 'TanjaMall',
   whatsappNumber: '212600000000',
   phone: '06 00 00 00 00',
   city: 'طنجة',

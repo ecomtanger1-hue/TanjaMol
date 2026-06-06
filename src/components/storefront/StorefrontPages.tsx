@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { Grid3X3, Home, Menu, Search, ShoppingCart, X } from 'lucide-react';
 import {
   categories,
@@ -15,6 +15,7 @@ import {
   type StoreSettings,
   type StoredOrder,
 } from '../../storefrontRuntime';
+import { TanjaMallLogo } from '../brand/TanjaMallLogo';
 import { ProductCard } from './ProductCard';
 import { AdminSidebar } from '../admin/AdminLayout';
 
@@ -52,15 +53,14 @@ export function SiteHeader({
   };
 
   return (
-    <header className="tm-site-header fixed inset-x-0 top-0 z-50 text-white shadow-[0_14px_36px_rgba(16,33,24,0.2)]" style={{ background: 'var(--tm-header-alpha)' }}>
+    <header className="tm-site-header fixed inset-x-0 top-0 z-50 text-white shadow-[0_14px_36px_rgba(19,25,33,0.2)]" style={{ background: 'var(--tm-header-alpha)' }}>
       <nav className="mx-auto grid min-h-[64px] w-full max-w-[1180px] grid-cols-[44px_1fr_auto] items-center gap-3 px-4 sm:px-6 lg:flex lg:justify-between lg:px-8">
         <button type="button" aria-label={mobileMenuOpen ? 'إغلاق القائمة' : 'فتح القائمة'} aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen(value => !value)} className="tm-press tm-touch grid h-11 w-11 place-items-center rounded-md bg-white/10 lg:hidden">
           {mobileMenuOpen ? <X className="h-6 w-6" aria-hidden="true" strokeWidth={2.4} /> : <Menu className="h-6 w-6" aria-hidden="true" strokeWidth={2.4} />}
         </button>
 
-        <button type="button" onClick={() => onNavigate('#/')} className="tm-press mx-auto flex min-w-0 items-center gap-3 text-center lg:mx-0 lg:text-right">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg font-heading text-lg font-black" style={{ background: 'var(--tm-brand)' }}>T</span>
-          <span className="font-heading text-xl font-black leading-none sm:text-2xl">TanjaMol</span>
+        <button type="button" onClick={() => onNavigate('#/')} className="tm-press mx-auto min-w-0 text-center lg:mx-0 lg:text-right">
+          <TanjaMallLogo compact textClassName="text-white text-xl sm:text-2xl" />
         </button>
 
         <div className="hidden items-center gap-2 text-sm font-bold lg:flex">
@@ -154,10 +154,7 @@ export function SiteFooter({ onNavigate }: { onNavigate: (route: string) => void
     <footer className="bg-[var(--tm-header)] px-4 py-10 text-white sm:px-6 lg:px-8">
       <div className="mx-auto grid w-full max-w-[1180px] gap-8 lg:grid-cols-[1.1fr_0.9fr_1fr]">
         <div>
-          <div className="flex items-center gap-3">
-            <span className="grid h-11 w-11 place-items-center rounded-lg font-heading text-xl font-black" style={{ background: 'var(--tm-brand)' }}>T</span>
-            <p className="font-heading text-2xl font-black">TanjaMol</p>
-          </div>
+          <TanjaMallLogo textClassName="text-white text-2xl" />
           <p className="mt-4 max-w-[360px] text-sm font-semibold leading-7 text-white/68">
             منتجات مختارة، طلب عبر واتساب، ودفع عند الاستلام داخل طنجة.
           </p>
@@ -178,7 +175,7 @@ export function SiteFooter({ onNavigate }: { onNavigate: (route: string) => void
         </div>
       </div>
       <div className="mx-auto mt-8 flex w-full max-w-[1180px] flex-col gap-3 border-t border-white/10 pt-5 text-xs font-bold text-white/54 sm:flex-row sm:items-center sm:justify-between">
-        <p>© 2026 TanjaMol</p>
+        <p>© 2026 TanjaMall</p>
         <p>الدفع عند الاستلام داخل طنجة</p>
       </div>
     </footer>
@@ -237,7 +234,7 @@ export function SearchResultsPage(props: StoreActions & { query: string }) {
             <label className="relative block">
               <span className="sr-only">بحث</span>
               <input className="min-h-[52px] w-full rounded-md border border-white/16 bg-white px-4 pl-24 text-base font-bold text-[#17201b] outline-none sm:min-h-[56px] sm:text-lg" value={query} onChange={event => setQuery(event.target.value)} type="search" />
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 rounded-md bg-[#e9f8ef] px-2.5 py-1 text-[11px] font-black text-[#0f7d55] sm:left-4 sm:text-xs">{results.length} نتيجة</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 rounded-md bg-[#fff3df] px-2.5 py-1 text-[11px] font-black text-[#b45309] sm:left-4 sm:text-xs">{results.length} نتيجة</span>
             </label>
             <button className="tm-press tm-button-primary px-7 text-base sm:min-h-[56px]" type="submit">بحث</button>
           </form>
@@ -307,7 +304,7 @@ export function NotFoundPage({ cartCount, onNavigate, onOpenCart, onOpenSearch }
     <PageShell cartCount={cartCount} onNavigate={onNavigate} onOpenCart={onOpenCart} onOpenSearch={onOpenSearch}>
       <main className="grid min-h-[calc(100vh-64px)] place-items-center bg-[var(--tm-header)] px-4 py-12 text-center text-white">
         <section className="max-w-[680px]">
-          <p className="tm-num font-heading text-8xl font-black text-[#00d084]">404</p>
+          <p className="tm-num font-heading text-8xl font-black text-[#ffb84d]">404</p>
           <h1 className="mt-4 font-heading text-4xl font-black sm:text-6xl">الصفحة غير موجودة</h1>
           <div className="mt-7 grid gap-3 sm:grid-cols-2">
             <button type="button" onClick={() => onNavigate('#/')} className="tm-press tm-button-primary px-6 text-base">الرئيسية</button>
@@ -395,7 +392,7 @@ export function CartPopup({
   if (!open) return null;
 
   return (
-    <div className="tm-modal-backdrop fixed inset-0 z-[90] flex items-center justify-center bg-[#102118]/72 p-3 text-[#17201b] sm:p-5 lg:justify-end" role="dialog" aria-modal="true" aria-labelledby="tm-cart-title" aria-describedby={items.length > 0 ? 'tm-cart-summary' : 'tm-cart-empty'} dir="rtl" data-cart-dialog onClick={onClose}>
+    <div className="tm-modal-backdrop fixed inset-0 z-[90] flex items-center justify-center bg-[#131921]/72 p-3 text-[#17201b] sm:p-5 lg:justify-end" role="dialog" aria-modal="true" aria-labelledby="tm-cart-title" aria-describedby={items.length > 0 ? 'tm-cart-summary' : 'tm-cart-empty'} dir="rtl" data-cart-dialog onClick={onClose}>
       <section className={`tm-cart-drawer tm-panel flex w-full max-w-[440px] flex-col overflow-hidden ${items.length > 0 ? 'h-[calc(100vh-24px)] max-h-[820px]' : 'max-h-[calc(100vh-24px)]'}`} onClick={event => event.stopPropagation()}>
         <header className="flex items-center justify-between gap-3 border-b border-[var(--tm-border)] px-4 py-3">
           <div>
@@ -407,9 +404,9 @@ export function CartPopup({
 
         <div className={`${items.length > 0 ? 'flex-1 overflow-auto' : ''} p-3 sm:p-4`}>
           {items.length > 0 ? (
-            <div className="tm-stagger-list grid gap-2">
-              {items.map((item, index) => (
-                <article key={`${item.id}-${item.variant || ''}`} className="tm-stagger-item tm-panel-white grid grid-cols-[64px_minmax(0,1fr)] gap-3 p-2.5" style={{ '--tm-stagger-delay': `${Math.min(index, 7) * 38}ms` } as CSSProperties}>
+            <div className="grid gap-2">
+              {items.map((item) => (
+                <article key={`${item.id}-${item.variant || ''}`} className="tm-panel-white grid grid-cols-[64px_minmax(0,1fr)] gap-3 p-2.5">
                   <img src={item.image} alt={item.title} className="h-16 w-16 rounded-md object-cover" loading="lazy" decoding="async" width="128" height="128" />
                   <div className="min-w-0">
                     <div className="flex items-start justify-between gap-2">
@@ -432,10 +429,10 @@ export function CartPopup({
               ))}
             </div>
           ) : (
-            <div className="grid min-h-[150px] place-items-center py-4 text-center">
+            <div className="grid min-h-[112px] place-items-center py-3 text-center">
               <div>
-                <p id="tm-cart-empty" className="font-heading text-2xl font-black">السلة فارغة</p>
-                <button onClick={onClose} className="tm-press tm-button-dark mt-4 px-5 text-sm" type="button">متابعة التسوق</button>
+                <p id="tm-cart-empty" className="font-heading text-xl font-black">السلة فارغة</p>
+                <button onClick={onClose} className="tm-press tm-button-dark mt-3 px-5 text-sm" type="button">متابعة التسوق</button>
               </div>
             </div>
           )}
@@ -499,13 +496,13 @@ export function AdminLogin({
   };
 
   return (
-    <main dir="rtl" className="grid min-h-screen place-items-center bg-[#102118] px-4 text-[#17201b]">
+    <main dir="rtl" className="grid min-h-screen place-items-center bg-[#131921] px-4 text-[#17201b]">
       <form onSubmit={submit} className="w-full max-w-[420px] rounded-lg bg-[#fffdf8] p-5 shadow-[0_34px_90px_rgba(0,0,0,0.34)]">
         <p className="font-heading text-3xl font-black">دخول الإدارة</p>
         <div className="mt-5 grid gap-3">
-          <input className="min-h-[48px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-4 font-bold outline-none focus:border-[#0f7d55]" placeholder="البريد الإلكتروني" type="email" value={email} onChange={event => setEmail(event.target.value)} required disabled={loading || submitting} />
-          <input className="min-h-[48px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-4 font-bold outline-none focus:border-[#0f7d55]" placeholder="كلمة المرور" type="password" value={password} onChange={event => setPassword(event.target.value)} required disabled={loading || submitting} />
-          <button className="min-h-[50px] rounded-md bg-[#00a66c] px-5 font-black text-white disabled:opacity-60" type="submit" disabled={loading || submitting}>{loading || submitting ? 'جار التحقق' : 'دخول'}</button>
+          <input className="min-h-[48px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-4 font-bold outline-none focus:border-[#b45309]" placeholder="البريد الإلكتروني" type="email" value={email} onChange={event => setEmail(event.target.value)} required disabled={loading || submitting} />
+          <input className="min-h-[48px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-4 font-bold outline-none focus:border-[#b45309]" placeholder="كلمة المرور" type="password" value={password} onChange={event => setPassword(event.target.value)} required disabled={loading || submitting} />
+          <button className="min-h-[50px] rounded-md bg-[#ff9900] px-5 font-black text-[#131921] disabled:opacity-60" type="submit" disabled={loading || submitting}>{loading || submitting ? 'جار التحقق' : 'دخول'}</button>
           {error ? <p className="rounded-md bg-[#fff1d5] px-3 py-2 text-sm font-black text-[#9a5a00]">{error}</p> : null}
         </div>
       </form>
@@ -524,7 +521,7 @@ export function AdminOrdersPage({ orders, onNavigate }: { orders: StoredOrder[];
               <p className="mt-1 text-sm font-bold text-[#65716a]">{order.name}، {order.phone}</p>
             </div>
             <div className="text-right sm:text-left">
-              <p className="tm-admin-num font-heading text-2xl font-black text-[#0f7d55]">{order.total} درهم</p>
+              <p className="tm-admin-num font-heading text-2xl font-black text-[#b45309]">{order.total} درهم</p>
               <p className="text-xs font-black text-[#65716a]">{order.status}</p>
             </div>
           </button>
@@ -548,7 +545,7 @@ export function AdminOrderDetailPage({ order, onNavigate }: { order?: StoredOrde
                 <img src={item.image} alt={item.title} className="h-16 w-16 rounded-md object-cover" />
                 <div>
                   <p className="font-heading text-base font-black">{item.title}</p>
-                  <p className="tm-admin-num mt-1 text-sm font-black text-[#0f7d55]">{item.quantity} x {item.priceLabel}</p>
+                  <p className="tm-admin-num mt-1 text-sm font-black text-[#b45309]">{item.quantity} x {item.priceLabel}</p>
                 </div>
               </div>
             ))}
@@ -558,11 +555,11 @@ export function AdminOrderDetailPage({ order, onNavigate }: { order?: StoredOrde
           <h2 className="font-heading text-2xl font-black">العميل</h2>
           <div className="mt-4 grid gap-2 text-sm font-bold text-[#65716a]">
             <p>{order.name}</p>
-            <button className="text-right text-[#0f7d55]" type="button" onClick={() => onNavigate(`#/admin/customers/${encodeURIComponent(order.phone)}`)}>{order.phone}</button>
+            <button className="text-right text-[#b45309]" type="button" onClick={() => onNavigate(`#/admin/customers/${encodeURIComponent(order.phone)}`)}>{order.phone}</button>
             <p>{order.address}</p>
             {order.note ? <p>{order.note}</p> : null}
           </div>
-          <p className="tm-admin-num mt-5 border-t border-[#dfe5df] pt-4 font-heading text-3xl font-black text-[#0f7d55]">{order.total} درهم</p>
+          <p className="tm-admin-num mt-5 border-t border-[#dfe5df] pt-4 font-heading text-3xl font-black text-[#b45309]">{order.total} درهم</p>
         </aside>
       </section>
     </AdminShell>
@@ -608,8 +605,8 @@ export function AdminSettingsPage({
         <SettingsInput label="المدينة" value={draft.city} onChange={city => setDraft(current => ({ ...current, city }))} />
         <SettingsInput label="مدة التوصيل" value={draft.deliveryText} onChange={deliveryText => setDraft(current => ({ ...current, deliveryText }))} />
         <SettingsInput label="العنوان" value={draft.address} onChange={address => setDraft(current => ({ ...current, address }))} />
-        <button type="submit" className="min-h-[48px] rounded-md bg-[#00a66c] px-5 font-black text-white">حفظ</button>
-        {saved ? <p className="text-sm font-black text-[#0f7d55]">تم الحفظ</p> : null}
+        <button type="submit" className="min-h-[48px] rounded-md bg-[#ff9900] px-5 font-black text-[#131921]">حفظ</button>
+        {saved ? <p className="text-sm font-black text-[#b45309]">تم الحفظ</p> : null}
       </form>
     </AdminShell>
   );
@@ -635,7 +632,7 @@ function MobileNav({ cartCount, onNavigate, onOpenCart, onOpenSearch }: { cartCo
     onNavigate('#/');
   };
   const itemClass = (active: boolean) => `tm-press tm-touch rounded-md px-2 py-2 text-center text-xs font-black ${active ? 'tm-nav-active' : 'bg-[var(--tm-surface-tint)] text-[var(--tm-ink-muted)]'}`;
-  const iconClass = (active: boolean) => `mx-auto mb-1 h-5 w-5 ${active ? 'text-white' : 'text-[#0f7d55]'}`;
+  const iconClass = (active: boolean) => `mx-auto mb-1 h-5 w-5 ${active ? 'text-white' : 'text-[#b45309]'}`;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 bg-[var(--tm-surface-white)]/96 px-3 pt-2 shadow-[0_-12px_30px_rgba(23,32,27,0.14),0_0_0_1px_rgba(0,0,0,0.06)] md:hidden" style={{ paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))' }}>
@@ -650,7 +647,7 @@ function MobileNav({ cartCount, onNavigate, onOpenCart, onOpenSearch }: { cartCo
         </button>
         <button type="button" onClick={onOpenCart} className={itemClass(false)} aria-label={`السلة، ${cartCount} منتج`}>
           <span className="relative mx-auto mb-1 block h-5 w-5">
-            <ShoppingCart className="h-5 w-5 text-[#0f7d55]" aria-hidden="true" strokeWidth={2.4} />
+            <ShoppingCart className="h-5 w-5 text-[#b45309]" aria-hidden="true" strokeWidth={2.4} />
             {cartCount ? <span key={cartCount} aria-live="polite" className="tm-num tm-cart-count-pop absolute -left-2 -top-2 min-w-4 rounded-full px-1 text-[10px] leading-4 text-white" style={{ background: 'var(--tm-brand)' }}>{cartCount}</span> : null}
           </span>
         </button>
@@ -702,8 +699,7 @@ function AdminShell({ title, onNavigate, children }: { title: string; onNavigate
         <aside className="hidden">
           <div className="sticky top-0 flex h-screen flex-col px-4 py-5">
             <button type="button" onClick={() => onNavigate('#/')} className="flex items-center gap-3 px-2 text-right">
-              <span className="grid h-11 w-11 place-items-center rounded-md bg-[#00a66c] font-heading text-lg font-black">TM</span>
-              <span className="font-heading text-xl font-black">TanjaMol</span>
+              <TanjaMallLogo textClassName="text-xl" />
             </button>
             <nav className="mt-8 grid gap-1 text-sm font-extrabold">
               {nav.map(([label, route]) => (
@@ -749,16 +745,16 @@ function SettingsInput({ label, value, onChange }: { label: string; value: strin
   return (
     <label className="grid gap-1">
       <span className="text-xs font-black text-[#65716a]">{label}</span>
-      <input value={value} onChange={event => onChange(event.target.value)} className="min-h-[44px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-3 text-sm font-bold outline-none focus:border-[#0f7d55]" />
+      <input value={value} onChange={event => onChange(event.target.value)} className="min-h-[44px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-3 text-sm font-bold outline-none focus:border-[#b45309]" />
     </label>
   );
 }
 
 const infoPages: Record<string, { eyebrow: string; title: string; copy?: string; blocks: Array<{ title: string; text: string }> }> = {
   about: {
-    eyebrow: 'TanjaMol',
+    eyebrow: 'TanjaMall',
     title: 'شراء سريع، تأكيد إنساني، ودفع عند الباب.',
-    copy: 'TanjaMol يجمع منتجات عملية للبيت، الهاتف، السفر، والجمال في تجربة طلب واضحة.',
+    copy: 'TanjaMall يجمع منتجات عملية للبيت، الهاتف، السفر، والجمال في تجربة طلب واضحة.',
     blocks: [
       { title: 'الفكرة', text: 'اختيار المنتج، إرسال الطلب عبر واتساب، ثم الدفع عند الاستلام.' },
       { title: 'المدينة', text: 'نخدم {city} بمنتجات مختارة ومسار طلب بسيط.' },

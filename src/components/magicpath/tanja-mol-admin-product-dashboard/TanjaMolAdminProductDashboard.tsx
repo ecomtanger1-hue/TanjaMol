@@ -1,5 +1,6 @@
 import type { CartItem, OrderDraft, Product } from '../../../storefrontRuntime';
 import { AdminSidebar } from '../../admin/AdminLayout';
+import { TanjaMallLogo } from '../../brand/TanjaMallLogo';
 
 type StoredOrder = OrderDraft & {
   id: string;
@@ -30,7 +31,7 @@ function orderTotal(items: CartItem[]) {
   return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 }
 
-export const TanjaMolAdminProductDashboard = ({
+export const TanjaMallAdminProductDashboard = ({
   products,
   orders,
   onAddProduct,
@@ -55,10 +56,10 @@ export const TanjaMolAdminProductDashboard = ({
   ];
 
   const orderFlow = [
-    ['جديدة', orders.length, 'bg-[#00a66c]'],
+    ['جديدة', orders.length, 'bg-[#ff9900]'],
     ['بانتظار التأكيد', Math.ceil(orders.length * 0.25), 'bg-[#f59e0b]'],
     ['جاهزة للإرسال', Math.ceil(orders.length * 0.45), 'bg-[#256dff]'],
-    ['تم التسليم', Math.ceil(orders.length * 0.3), 'bg-[#102118]'],
+    ['تم التسليم', Math.ceil(orders.length * 0.3), 'bg-[#131921]'],
   ];
 
   const productHealth = [
@@ -75,16 +76,18 @@ export const TanjaMolAdminProductDashboard = ({
         <aside className="hidden">
           <div className="sticky top-0 flex h-screen flex-col px-4 py-5">
             <div className="flex items-center gap-3 px-2">
-              <button type="button" onClick={onOpenStorefront} className="grid h-11 w-11 place-items-center rounded-md bg-[#00a66c] font-heading text-lg font-black">TM</button>
+              <button type="button" onClick={onOpenStorefront} className="tm-admin-press">
+                <TanjaMallLogo iconOnly />
+              </button>
               <div>
-                <p className="font-heading text-xl font-black">TanjaMol</p>
+                <p className="font-heading text-xl font-black">TanjaMall</p>
                 <p className="text-xs font-bold text-white/58">إدارة المتجر</p>
               </div>
             </div>
 
             <nav className="mt-8 grid gap-1 text-sm font-extrabold">
               {['لوحة التحكم', 'المنتجات', 'الطلبات', 'الزوار', 'التقارير', 'الإعدادات'].map((item, index) => (
-                <button key={item} type="button" onClick={index === 1 ? onAddProduct : index === 2 ? onOpenOrders : index === 5 ? onOpenSettings : undefined} className={`min-h-[42px] rounded-md px-3 text-right transition-colors ${index === 0 ? 'bg-white text-[#102118]' : 'text-white/72 hover:bg-white/10 hover:text-white'}`}>
+                <button key={item} type="button" onClick={index === 1 ? onAddProduct : index === 2 ? onOpenOrders : index === 5 ? onOpenSettings : undefined} className={`min-h-[42px] rounded-md px-3 text-right transition-colors ${index === 0 ? 'bg-white text-[#131921]' : 'text-white/72 hover:bg-white/10 hover:text-white'}`}>
                   {item}
                 </button>
               ))}
@@ -93,7 +96,7 @@ export const TanjaMolAdminProductDashboard = ({
             <div className="mt-auto rounded-md bg-white/10 p-4">
               <p className="text-xs font-bold text-white/58">صحة المتجر اليوم</p>
               <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/12">
-                <div className="h-full rounded-full bg-[#00d084]" style={{ width: `${Math.min(92, 64 + publishedProducts)}%` }} />
+                <div className="h-full rounded-full bg-[#ffb84d]" style={{ width: `${Math.min(92, 64 + publishedProducts)}%` }} />
               </div>
               <p className="mt-3 text-sm font-extrabold leading-6">الأداء جيد. راقب المنتجات التي تحتاج صورا أو مخزونا قبل إطلاق الحملات.</p>
             </div>
@@ -104,14 +107,14 @@ export const TanjaMolAdminProductDashboard = ({
           <header className="sticky top-0 z-30 border-b border-[#d9dfd8] bg-[#f8f7f1]/94">
             <div className="mx-auto flex min-h-[72px] max-w-[1440px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
               <div className="min-w-0">
-                <p className="text-xs font-black text-[#0f7d55]">نظرة عامة</p>
-                <h1 className="truncate font-heading text-2xl font-black sm:text-3xl">لوحة تحكم TanjaMol</h1>
+                <p className="text-xs font-black text-[#b45309]">نظرة عامة</p>
+                <h1 className="truncate font-heading text-2xl font-black sm:text-3xl">لوحة تحكم TanjaMall</h1>
               </div>
               <div className="flex items-center gap-2">
                 <button type="button" onClick={onOpenStorefront} className="tm-admin-press hidden min-h-[42px] rounded-md border border-[#cfd8d1] bg-white px-4 text-sm font-extrabold text-[#17201b] sm:block">
                   فتح المتجر
                 </button>
-                <button type="button" onClick={onAddProduct} className="tm-admin-press min-h-[42px] rounded-md bg-[#00a66c] px-4 text-sm font-black text-white shadow-[0_14px_34px_-22px_rgba(0,166,108,0.9)]">
+                <button type="button" onClick={onAddProduct} className="tm-admin-press min-h-[42px] rounded-md bg-[#ff9900] px-4 text-sm font-black text-[#131921] shadow-[0_14px_34px_-22px_rgba(255,153,0,0.9)]">
                   إضافة منتج
                 </button>
               </div>
@@ -124,7 +127,7 @@ export const TanjaMolAdminProductDashboard = ({
                 <article key={label} className="tm-admin-surface rounded-md bg-white p-4">
                   <div className="flex items-start justify-between gap-3">
                     <p className="text-xs font-extrabold text-[#65716a]">{label}</p>
-                    <span className={`rounded-md px-2 py-1 text-xs font-black ${delta.startsWith('+') ? 'bg-[#e7f8ee] text-[#0f7d55]' : 'bg-[#fff1d5] text-[#9a5a00]'}`}>{delta}</span>
+                    <span className={`rounded-md px-2 py-1 text-xs font-black ${delta.startsWith('+') ? 'bg-[#fff3df] text-[#b45309]' : 'bg-[#fff1d5] text-[#9a5a00]'}`}>{delta}</span>
                   </div>
                   <p className="tm-admin-num mt-3 font-heading text-3xl font-black text-[#17201b]">{value}</p>
                   <p className="mt-1 text-xs font-bold text-[#65716a]">{hint}</p>
@@ -149,7 +152,7 @@ export const TanjaMolAdminProductDashboard = ({
                 <div className="mt-6 flex h-[260px] items-end gap-3 border-b border-[#dfe5df] px-1">
                   {chartHeights.map((height, index) => (
                     <div key={height + index} className="flex flex-1 flex-col items-center gap-2">
-                      <div className="w-full rounded-t-md bg-[#00a66c]" style={{ height: `${Math.max(18, height + orders.length * 2)}px` }} />
+                      <div className="w-full rounded-t-md bg-[#ff9900]" style={{ height: `${Math.max(18, height + orders.length * 2)}px` }} />
                       <span className="tm-admin-num text-[11px] font-bold text-[#65716a]">{index + 1}</span>
                     </div>
                   ))}
@@ -166,7 +169,7 @@ export const TanjaMolAdminProductDashboard = ({
                 </div>
               </article>
 
-              <article className="tm-admin-surface rounded-md bg-[#102118] p-4 text-white sm:p-5">
+              <article className="tm-admin-surface rounded-md bg-[#131921] p-4 text-white sm:p-5">
                 <h2 className="font-heading text-2xl font-black">تنبيهات تحتاج قرار</h2>
                 <div className="mt-4 grid gap-3">
                   {[
@@ -176,11 +179,11 @@ export const TanjaMolAdminProductDashboard = ({
                   ].map(([title, action]) => (
                     <div key={title} className="rounded-md bg-white/10 p-3">
                       <p className="text-sm font-extrabold">{title}</p>
-                      <p className="mt-1 text-xs font-bold text-[#72e2af]">{action}</p>
+                      <p className="mt-1 text-xs font-bold text-[#ffb84d]">{action}</p>
                     </div>
                   ))}
                 </div>
-                <button type="button" onClick={onAddProduct} className="tm-admin-press mt-4 min-h-[42px] w-full rounded-md bg-white text-sm font-black text-[#102118]">
+                <button type="button" onClick={onAddProduct} className="tm-admin-press mt-4 min-h-[42px] w-full rounded-md bg-white text-sm font-black text-[#131921]">
                   فتح صفحة إضافة منتج
                 </button>
               </article>
@@ -201,7 +204,7 @@ export const TanjaMolAdminProductDashboard = ({
                         <p className="mt-1 text-xs font-bold text-[#65716a]">{index + 3} طلبات</p>
                       </div>
                       <div className="text-left">
-                        <p className="tm-admin-num font-heading text-xl font-black text-[#0f7d55]">{product.priceLabel}</p>
+                        <p className="tm-admin-num font-heading text-xl font-black text-[#b45309]">{product.priceLabel}</p>
                         <p className="text-xs font-bold text-[#65716a]">السعر</p>
                       </div>
                     </button>
@@ -216,10 +219,10 @@ export const TanjaMolAdminProductDashboard = ({
                     <div key={source}>
                       <div className="flex items-center justify-between text-sm font-extrabold">
                         <span>{source}</span>
-                        <span className="tm-admin-num text-[#0f7d55]">{value}</span>
+                        <span className="tm-admin-num text-[#b45309]">{value}</span>
                       </div>
                       <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#e1e7e1]">
-                        <div className={`h-full rounded-full bg-[#00a66c] ${width}`} />
+                        <div className={`h-full rounded-full bg-[#ff9900] ${width}`} />
                       </div>
                     </div>
                   ))}
@@ -275,7 +278,7 @@ export const TanjaMolAdminProductDashboard = ({
                         <p className="font-heading text-base font-black">{label}</p>
                         <p className="mt-1 text-xs font-bold text-[#65716a]">{hint}</p>
                       </div>
-                      <p className="tm-admin-num font-heading text-2xl font-black text-[#0f7d55]">{value}</p>
+                      <p className="tm-admin-num font-heading text-2xl font-black text-[#b45309]">{value}</p>
                     </div>
                   ))}
                 </div>
