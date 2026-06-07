@@ -248,8 +248,8 @@ export const TanjaMolArabicCODProductPage = ({
                   ))}
                 </div>
                 <div className="flex items-center justify-center gap-2 pb-1" aria-label="صور المنتج">
-                  {productGallery.map((image, index) => <button key={image.src} type="button" aria-label={`الصورة ${index + 1}`} aria-controls="tm-product-mobile-gallery" aria-current={selectedImage === index ? 'true' : undefined} onClick={() => selectMobileImage(index)} className="tm-press tm-touch grid place-items-center rounded-full">
-                    <span className={`block h-2.5 rounded-full ${selectedImage === index ? 'w-6 bg-[#ffb84d]' : 'w-2.5 bg-white/38'}`} />
+                  {productGallery.map((image, index) => <button key={image.src} type="button" aria-label={`الصورة ${index + 1}`} aria-controls="tm-product-mobile-gallery" aria-current={selectedImage === index ? 'true' : undefined} onClick={() => selectMobileImage(index)} className="tm-press tm-dot-hit tm-touch grid place-items-center rounded-full">
+                    <span className={`tm-gallery-dot ${selectedImage === index ? 'is-active' : ''}`} />
                   </button>)}
                 </div>
               </div>
@@ -287,7 +287,7 @@ export const TanjaMolArabicCODProductPage = ({
               <h1 className="tm-page-title tm-product-title mt-3 break-words">
                 {productTitle}
               </h1>
-              <p className="tm-body-copy mt-2 text-sm leading-7 text-[#5f6861] sm:text-base">
+              <p className="tm-body-copy mt-2 text-sm text-[#5f6861] sm:text-base">
                 {productDescription}
               </p>
 
@@ -298,27 +298,28 @@ export const TanjaMolArabicCODProductPage = ({
                 </div>
               </div>
 
-              <div className="mt-4 grid gap-4">
+              <div className="mt-4 grid gap-3">
                 {visibleVariantOptions.map(group => {
                   const groupVariants = getGroupVariants(group);
                   if (!groupVariants.length) return null;
                   const selectedId = selectedVariantIds[group.id] ?? groupVariants[0]?.id;
-                  const selected = groupVariants.find(variant => variant.id === selectedId) ?? groupVariants[0];
+                  const isColorGroup = group.type === 'color' || groupVariants.some(variant => Boolean(getVariantColor(group, variant)));
+                  const selectedVariant = groupVariants.find(variant => variant.id === selectedId) ?? groupVariants[0];
+                  const selectedLabel = selectedVariant ? getVariantLabel(group, selectedVariant) : '';
                   return (
-                    <div key={group.id}>
-                      <div className="mb-2 flex items-center justify-between gap-3">
-                        <p className="tm-ui-label text-sm">{group.label}</p>
-                        <p className="tm-small-copy min-w-0 truncate text-[#6b746d]">{selected ? getVariantLabel(group, selected) : ''}</p>
+                    <div key={group.id} className={`tm-variant-group ${isColorGroup ? 'tm-variant-group-color' : ''}`}>
+                      <div className="tm-variant-heading">
+                        <p className="tm-variant-label">{group.label}</p>
+                        {isColorGroup && selectedLabel ? <p className="tm-variant-selected-name">{selectedLabel}</p> : null}
                       </div>
-                      <div className="tm-variant-row tm-no-scrollbar">
+                      <div className={`tm-variant-row ${isColorGroup ? 'tm-variant-row-colors' : ''}`}>
                         {groupVariants.map(variant => {
                           const variantColor = getVariantColor(group, variant);
                           const isSelected = selectedId === variant.id;
                           const isSoldOut = variant.stock <= 0;
-                          const compactChoices = groupVariants.length > 3;
-                          return <button key={variant.id} type="button" disabled={isSoldOut} aria-pressed={isSelected} onClick={() => setSelectedVariantIds(current => ({ ...current, [group.id]: variant.id }))} className={`tm-press tm-touch tm-ui-label tm-variant-choice flex min-w-0 items-center justify-center gap-1.5 rounded-md border ${compactChoices ? 'px-1.5 text-xs sm:px-2 sm:text-sm' : 'px-3 text-sm'} ${isSelected ? 'border-[#b45309] bg-[#fff3df] text-[#b45309]' : 'border-[#d9e1dc] bg-white text-[#17201b]'} ${isSoldOut ? 'cursor-not-allowed opacity-45' : ''}`}>
-                            {variantColor ? <span className="h-3.5 w-3.5 shrink-0 rounded-full border border-black/10" style={{ backgroundColor: variantColor }} /> : null}
-                            <span className="min-w-0 truncate">{getVariantLabel(group, variant)}</span>
+                          const label = getVariantLabel(group, variant);
+                          return <button key={variant.id} type="button" disabled={isSoldOut} aria-label={`${group.label}: ${label}`} title={label} aria-pressed={isSelected} onClick={() => setSelectedVariantIds(current => ({ ...current, [group.id]: variant.id }))} className={`tm-press tm-touch tm-ui-label tm-variant-choice ${isColorGroup ? 'tm-variant-swatch' : 'tm-variant-pill'} ${isSelected ? 'is-selected border-[#b45309] bg-[#fff3df] text-[#b45309]' : 'border-[#d9e1dc] bg-white text-[#17201b]'} ${isSoldOut ? 'cursor-not-allowed opacity-45' : ''}`}>
+                            {isColorGroup ? <span className="tm-variant-color-dot" style={{ backgroundColor: variantColor || '#d9e1dc' }} /> : <span>{label}</span>}
                           </button>;
                         })}
                       </div>
@@ -351,7 +352,7 @@ export const TanjaMolArabicCODProductPage = ({
               </div>
 
               {showOrderForm ? (
-                <form id="product-order-details" className="tm-panel-white mt-4 grid gap-3 border border-[var(--tm-border)] p-3" onSubmit={submitOrder}>
+                <form id="product-order-details" className="tm-panel-white mt-4 grid gap-3 p-3" onSubmit={submitOrder}>
                   <div>
                     <p className="tm-modal-title">معلومات الطلب</p>
                     <p className="tm-small-copy tm-text-muted mt-1">نؤكد التفاصيل على واتساب قبل الإرسال. لا يوجد دفع مسبق.</p>
@@ -374,7 +375,7 @@ export const TanjaMolArabicCODProductPage = ({
                   <button className="tm-press tm-button-primary px-5 text-base" type="submit">إرسال الطلب عبر واتساب</button>
                 </form>
               ) : (
-                <div className="tm-body-copy tm-panel-white mt-3 border border-[var(--tm-border)] px-3 py-2.5 text-sm leading-7 text-[var(--tm-ink-soft)]">
+                <div className="tm-body-copy tm-panel-white mt-3 px-3 py-2.5 text-sm leading-7 text-[var(--tm-ink-soft)]">
                   اختر {variantPickerLabel} والكمية، ثم اضغط اطلب الآن لملء بياناتك. سنراجع الطلب معك على واتساب قبل التوصيل.
                 </div>
               )}
@@ -398,7 +399,7 @@ export const TanjaMolArabicCODProductPage = ({
             <details className="tm-surface rounded-lg bg-white p-4 open:bg-[#fffdf8] sm:p-5 lg:p-7" open>
               <summary className="cursor-pointer font-heading text-xl font-black sm:text-2xl">تفاصيل المنتج</summary>
               {productDetails.length ? <div className="mt-6 grid gap-4 lg:gap-6">
-                {productDetails.map((detail, index) => <article key={detail.id} dir="ltr" className="grid gap-4 overflow-hidden rounded-lg bg-[#f8fafc] lg:min-h-[320px] lg:grid-cols-2 lg:items-stretch lg:gap-6">
+                {productDetails.map((detail, index) => <article key={detail.id} dir="ltr" className="tm-panel-white grid gap-4 overflow-hidden rounded-lg bg-[#f8fafc] lg:min-h-[320px] lg:grid-cols-2 lg:items-stretch lg:gap-6">
                   <div dir="rtl" className={`order-1 flex flex-col justify-center p-5 lg:p-7 ${index % 2 === 0 ? 'lg:order-2' : 'lg:order-1'}`}>
                     <ProductDetailTitle detail={detail} />
                     <ProductDetailRichText detail={detail} />
@@ -409,17 +410,17 @@ export const TanjaMolArabicCODProductPage = ({
                 </article>)}
               </div> : null}
               <div className={productDetails.length ? 'hidden' : 'lg:hidden'}>
-                <p className="tm-copy tm-text-muted mt-3 max-w-[860px] text-sm font-semibold leading-7 sm:text-base">
+                <p className="tm-body-copy tm-text-muted mt-3 max-w-[860px] text-sm sm:text-base">
                   {productDescription}
                 </p>
                 <div className="mt-6 grid gap-3 md:grid-cols-3">
-                  <figure className="overflow-hidden rounded-lg bg-[#f8fafc]">
+                  <figure className="tm-panel-white overflow-hidden rounded-lg bg-[#f8fafc]">
                     <img src={(productGallery[1] ?? productGallery[0]).src} alt={(productGallery[1] ?? productGallery[0]).alt} className="tm-image h-[220px] w-full object-cover md:h-[260px]" loading="lazy" decoding="async" width="640" height="520" sizes="(max-width: 768px) 100vw, 33vw" />
-                    <figcaption className="px-4 py-3 text-sm font-extrabold text-[#17201b]">صور تفصيلية للمنتج</figcaption>
+                    <figcaption className="tm-compact-label px-4 py-3 text-sm text-[#17201b]">صور تفصيلية للمنتج</figcaption>
                   </figure>
-                  <figure className="overflow-hidden rounded-lg bg-[#f8fafc]">
+                  <figure className="tm-panel-white overflow-hidden rounded-lg bg-[#f8fafc]">
                     <img src={(productGallery[2] ?? productGallery[0]).src} alt={(productGallery[2] ?? productGallery[0]).alt} className="tm-image h-[220px] w-full object-cover md:h-[260px]" loading="lazy" decoding="async" width="640" height="520" sizes="(max-width: 768px) 100vw, 33vw" />
-                    <figcaption className="px-4 py-3 text-sm font-extrabold text-[#17201b]">الخامة والحزام من قرب</figcaption>
+                    <figcaption className="tm-compact-label px-4 py-3 text-sm text-[#17201b]">الخامة والحزام من قرب</figcaption>
                   </figure>
                   <button type="button" className="tm-press relative min-h-[260px] overflow-hidden rounded-lg bg-[#131921] text-right text-white" aria-label="عرض فيديو طريقة استعمال المنتج">
                     <img src={(productGallery[3] ?? productGallery[0]).src} alt="معاينة فيديو شرح المنتج" className="tm-image absolute inset-0 h-full w-full object-cover opacity-45" loading="lazy" decoding="async" width="640" height="520" sizes="(max-width: 768px) 100vw, 33vw" />
@@ -428,8 +429,8 @@ export const TanjaMolArabicCODProductPage = ({
                       <span className="mb-4 grid h-14 w-14 place-items-center rounded-full bg-white text-[#131921]">
                         <span className="mr-1 h-0 w-0 border-y-[9px] border-r-[15px] border-y-transparent border-r-[#131921]" />
                       </span>
-                      <span className="font-heading text-2xl font-black">فيديو طريقة الاستعمال</span>
-                      <span className="mt-2 text-sm font-semibold leading-7 text-white/78">شاهد التشغيل، الحجم على اليد، والتنبيهات اليومية قبل تأكيد الطلب.</span>
+                      <span className="tm-heading font-heading text-2xl font-black">فيديو طريقة الاستعمال</span>
+                      <span className="tm-copy mt-2 text-sm font-semibold leading-7 text-white/78">شاهد التشغيل، الحجم على اليد، والتنبيهات اليومية قبل تأكيد الطلب.</span>
                     </span>
                   </button>
                 </div>
@@ -437,13 +438,13 @@ export const TanjaMolArabicCODProductPage = ({
 
               <div className={productDetails.length ? 'hidden' : 'mt-7 hidden gap-5 lg:grid'}>
                 <article dir="ltr" className="grid min-h-[320px] grid-cols-2 items-stretch gap-6">
-                  <figure className="overflow-hidden rounded-lg bg-[#f8fafc]">
+                  <figure className="tm-panel-white overflow-hidden rounded-lg bg-[#f8fafc]">
                     <img src={(productGallery[1] ?? productGallery[0]).src} alt={(productGallery[1] ?? productGallery[0]).alt} className="tm-image h-full min-h-[320px] w-full object-cover" loading="lazy" decoding="async" width="900" height="640" sizes="50vw" />
                   </figure>
                   <div dir="rtl" className="flex flex-col justify-center rounded-lg bg-[#f8fafc] p-7">
-                    <p className="tm-price-text text-sm font-extrabold">استعمال يومي واضح</p>
+                    <p className="tm-kicker tm-price-text">استعمال يومي واضح</p>
                     <h3 className="tm-heading mt-2 font-heading text-3xl font-black">شاشة وتنبيهات تساعدك طوال اليوم</h3>
-                    <p className="tm-copy tm-text-muted mt-3 text-base font-semibold leading-8">
+                    <p className="tm-body-copy tm-text-muted mt-3 text-base">
                       شاشة واضحة، تنبيهات المكالمات والرسائل، وقياس سريع للخطوات والنشاط. مناسبة للاستعمال في الخدمة، الرياضة، والتنقل داخل المدينة بدون تعقيد.
                     </p>
                   </div>
@@ -451,13 +452,13 @@ export const TanjaMolArabicCODProductPage = ({
 
                 <article dir="ltr" className="grid min-h-[320px] grid-cols-2 items-stretch gap-6">
                   <div dir="rtl" className="flex flex-col justify-center rounded-lg bg-[#fff7e6] p-7">
-                    <p className="text-sm font-extrabold text-[#9a5a00]">راحة في اللبس</p>
+                    <p className="tm-kicker text-[#9a5a00]">راحة في اللبس</p>
                     <h3 className="tm-heading mt-2 font-heading text-3xl font-black">حزام خفيف وخامة مناسبة للحركة</h3>
-                    <p className="tm-copy tm-text-muted mt-3 text-base font-semibold leading-8">
+                    <p className="tm-body-copy tm-text-muted mt-3 text-base">
                       الحزام مريح للاستعمال الطويل، والخامة مناسبة للاستعمال اليومي. التفاصيل القريبة تساعد الزبون يرى الحجم، الملمس، وطريقة الثبات قبل تأكيد الطلب.
                     </p>
                   </div>
-                  <figure className="overflow-hidden rounded-lg bg-[#f8fafc]">
+                  <figure className="tm-panel-white overflow-hidden rounded-lg bg-[#f8fafc]">
                     <img src={(productGallery[2] ?? productGallery[0]).src} alt={(productGallery[2] ?? productGallery[0]).alt} className="tm-image h-full min-h-[320px] w-full object-cover" loading="lazy" decoding="async" width="900" height="640" sizes="50vw" />
                   </figure>
                 </article>
@@ -470,13 +471,13 @@ export const TanjaMolArabicCODProductPage = ({
                       <span className="mb-4 grid h-14 w-14 place-items-center rounded-full bg-white text-[#131921]">
                         <span className="mr-1 h-0 w-0 border-y-[9px] border-r-[15px] border-y-transparent border-r-[#131921]" />
                       </span>
-                      <span className="font-heading text-3xl font-black">فيديو طريقة الاستعمال</span>
+                      <span className="tm-heading font-heading text-3xl font-black">فيديو طريقة الاستعمال</span>
                     </span>
                   </button>
                   <div dir="rtl" className="flex flex-col justify-center rounded-lg bg-[#fff7ed] p-7">
-                    <p className="tm-price-text text-sm font-extrabold">قبل تأكيد الطلب</p>
+                    <p className="tm-kicker tm-price-text">قبل تأكيد الطلب</p>
                     <h3 className="tm-heading mt-2 font-heading text-3xl font-black">مساحة جاهزة لفيديو أو شرح مصور</h3>
-                    <p className="tm-copy tm-text-muted mt-3 text-base font-semibold leading-8">
+                    <p className="tm-body-copy tm-text-muted mt-3 text-base">
                       يمكن استعمال هذه المساحة لعرض فيديو قصير، خطوات التشغيل، أو صور تفصيلية إضافية. الهدف أن يحصل الزبون على كل المعلومات المهمة دون الابتعاد عن مسار الطلب.
                     </p>
                   </div>
@@ -497,7 +498,7 @@ export const TanjaMolArabicCODProductPage = ({
             {showReviews ? <section className="tm-surface rounded-lg bg-white p-4 sm:p-5 lg:p-6">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <p className="text-sm font-extrabold text-[#f59e0b]">قبل الطلب</p>
+                  <p className="tm-kicker text-[#f59e0b]">قبل الطلب</p>
                 </div>
                 <div className="w-fit rounded-md bg-[#17201b] px-4 py-3 text-center text-white">
                   <p className="font-heading text-xl font-black">لا دفع مسبق</p>
@@ -506,7 +507,7 @@ export const TanjaMolArabicCODProductPage = ({
               </div>
 
               <div className="mt-5 grid gap-3 md:grid-cols-2">
-                {['اسألنا على اللون أو الكمية قبل الإرسال، ونؤكد معك التفاصيل على واتساب.', 'إذا كان المنتج مختلفا أو فيه عيب واضح، يمكن مراجعة الاستبدال حسب الحالة.'].map((note, index) => <article key={note} className="rounded-md border border-[#dde6df] bg-[#fffdf8] p-4">
+                {['اسألنا على اللون أو الكمية قبل الإرسال، ونؤكد معك التفاصيل على واتساب.', 'إذا كان المنتج مختلفا أو فيه عيب واضح، يمكن مراجعة الاستبدال حسب الحالة.'].map((note, index) => <article key={note} className="tm-panel-white rounded-md bg-[#fffdf8] p-4">
                     <div className="mb-3 flex items-center justify-between">
                       <p className="font-heading text-lg font-black">{index === 0 ? 'تأكيد التفاصيل' : 'الاستبدال'}</p>
                       <p className="text-sm font-extrabold text-[#b45309]">مهم</p>
@@ -532,7 +533,7 @@ export const TanjaMolArabicCODProductPage = ({
           <div className="mx-auto w-full max-w-[1180px] px-4 sm:px-6 lg:px-8">
             <div className="flex items-end justify-between gap-4">
               <div>
-                <p className="text-sm font-extrabold text-[#b45309]">منتجات مناسبة معها</p>
+                <p className="tm-kicker text-[#b45309]">منتجات مناسبة معها</p>
               </div>
               <button className="tm-press hidden min-h-[44px] rounded-md bg-[#17201b] px-5 font-extrabold text-white sm:block" type="button">
                 عرض الكل
@@ -552,7 +553,7 @@ export const TanjaMolArabicCODProductPage = ({
               {false && relatedProducts.map((product, index) => <article key={product.title} className="tm-lift tm-surface w-[72vw] flex-none snap-start overflow-hidden rounded-lg bg-[#fffdf8] md:w-auto">
                   <img src={product.image} alt={product.title} className="tm-image h-[170px] w-full object-cover md:h-[230px]" loading="lazy" decoding="async" width="640" height="640" sizes="(max-width: 768px) 72vw, 33vw" />
                   <div className="p-4">
-                    <h3 className="tm-heading line-clamp-2 min-h-[48px] font-heading text-xl font-black">{product.title}</h3>
+                    <h3 className="tm-product-card-title line-clamp-2 min-h-[48px] text-xl">{product.title}</h3>
                     <div className="mt-4 flex items-center justify-between gap-3">
                       <p className="tm-num font-heading text-2xl font-black text-[#b45309]">{product.price}</p>
                       <button className="tm-press min-h-[44px] rounded-md bg-[#ff9900] px-4 text-sm font-extrabold text-[#131921]" type="button" onClick={() => { const item = relatedItems[index]; if (item) onAddToCart({ id: item.id, slug: item.slug, title: item.title, price: item.price, priceLabel: item.priceLabel, quantity: 1, image: item.image }); }}>أضف</button>

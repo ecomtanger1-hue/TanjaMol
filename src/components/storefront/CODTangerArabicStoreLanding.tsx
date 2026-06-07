@@ -56,7 +56,7 @@ function ProductCard({
   };
 
   return <article className="tm-lift tm-surface overflow-hidden rounded-lg bg-[#fffdf8]">
-    <button type="button" onClick={openProduct} className="block w-full text-right">
+    <button type="button" onClick={openProduct} className="tm-press block w-full text-right">
       <div className="relative">
         <img src={product.image} alt={product.title} className={`tm-image w-full object-cover ${compact ? 'h-[148px]' : 'h-[160px] sm:h-[220px] lg:h-[250px]'}`} loading="lazy" decoding="async" width="640" height="640" sizes="(max-width: 768px) 50vw, 25vw" />
         <span className="absolute right-2 top-2 rounded-md bg-[#fffdf8] px-2 py-1 text-[10px] font-black text-[#17201b] shadow-[0_8px_22px_rgba(23,32,27,0.16)] sm:right-3 sm:top-3 sm:px-3 sm:py-2 sm:text-xs">
@@ -65,7 +65,7 @@ function ProductCard({
       </div>
       <div className={compact ? 'p-2.5' : 'p-3 sm:p-4'}>
         <p className="text-xs font-extrabold text-[#ff9900]">{product.category}</p>
-        <h3 className="tm-heading mt-1 line-clamp-2 min-h-[42px] text-center font-heading text-base font-black leading-tight text-[#17201b] sm:min-h-[54px] sm:text-xl">
+        <h3 className="tm-product-card-title mt-1 line-clamp-2 min-h-[42px] text-center text-[#17201b] sm:min-h-[54px]">
           {product.title}
         </h3>
         <div className="mt-3 flex items-end justify-between gap-2">
@@ -137,7 +137,7 @@ export const CODTangerArabicStoreLanding = ({
                 <span className="relative mx-auto grid h-16 w-16 place-items-center overflow-hidden rounded-full bg-[#fff7ed] shadow-[0_0_0_1px_rgba(0,0,0,0.06),0_10px_24px_rgba(23,32,27,0.08)] sm:h-20 sm:w-20 lg:h-24 lg:w-24">
                   <img src={category.image} alt={category.title} className="h-full w-full object-cover outline outline-1 outline-offset-[-1px] outline-[rgba(0,0,0,0.1)]" loading="lazy" decoding="async" width="160" height="160" sizes="(max-width: 640px) 64px, (max-width: 1024px) 80px, 96px" />
                 </span>
-                <span className="mt-2 block min-h-[34px] whitespace-normal break-words text-xs font-black leading-tight text-[#17201b] sm:text-sm lg:mt-3 lg:min-h-0 lg:truncate lg:text-[15px]">{category.title}</span>
+                <span className="tm-compact-label mt-2 block min-h-[34px] whitespace-normal break-words text-xs text-[#17201b] sm:text-sm lg:mt-3 lg:min-h-0 lg:truncate lg:text-[15px]">{category.title}</span>
               </button>
             ))}
           </div>
@@ -147,15 +147,15 @@ export const CODTangerArabicStoreLanding = ({
       <section className="bg-[var(--tm-bg)] px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
         <div className="tm-shell-dark mx-auto grid w-full max-w-[1180px] gap-4 overflow-hidden rounded-lg p-4 text-white sm:p-6 lg:grid-cols-[1fr_430px] lg:items-center lg:gap-8 lg:rounded-2xl lg:p-8">
           <div className="hidden min-w-0 lg:block">
-            <p className="inline-flex rounded-full bg-white px-3 py-1 text-xs font-black text-[#b45309]">الدفع عند الاستلام</p>
-            <h1 className="tm-heading mt-3 max-w-[680px] font-heading text-[34px] font-black leading-[1.12] [text-wrap:balance] sm:text-5xl lg:text-6xl">
+            <p className="tm-kicker inline-flex rounded-full bg-white px-3 py-1 text-[#b45309]">الدفع عند الاستلام</p>
+            <h1 className="tm-heading mt-3 max-w-[680px] font-heading text-[34px] font-black leading-[1.12] sm:text-5xl lg:text-6xl">
               عروض طنجة اليوم
             </h1>
-            <p className="mt-3 max-w-[580px] text-sm font-bold leading-7 text-white/78 [text-wrap:pretty] sm:text-base lg:text-lg">
+            <p className="tm-copy mt-3 max-w-[580px] text-sm font-semibold leading-7 text-white/78 sm:text-base lg:text-lg">
               خصومات على الإلكترونيات والمنزل والعناية
             </p>
             <div className="mt-5 flex flex-wrap gap-2 lg:gap-3">
-              {trustItems.slice(0, 3).map(item => <span key={item} className="rounded-md bg-white/10 px-3 py-2 text-xs font-black text-white/88 shadow-[0_0_0_1px_rgba(255,255,255,0.08)] lg:px-4">{item}</span>)}
+              {trustItems.slice(0, 3).map(item => <span key={item} className="tm-compact-label rounded-md bg-white/10 px-3 py-2 text-xs text-white/88 shadow-[0_0_0_1px_rgba(255,255,255,0.08)] lg:px-4">{item}</span>)}
             </div>
             <div className="mt-5 flex flex-wrap gap-3">
               <button type="button" onClick={() => scrollToSection('products')} className="tm-press tm-button-primary px-5 text-sm">
@@ -168,12 +168,12 @@ export const CODTangerArabicStoreLanding = ({
           </div>
           <div className="tm-mobile-hero-stage lg:hidden" aria-label="عروض متجر TanjaMall">
             <div className={`tm-mobile-hero-slide tm-mobile-hero-intro rounded-lg bg-[#131921] p-5 text-center shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)] ${heroSlide === 0 ? 'tm-mobile-hero-slide-active' : ''}`}>
-              <p className="inline-flex rounded-full bg-white px-3 py-1 text-xs font-black text-[#b45309]">TanjaMall</p>
-              <h1 className="mt-4 font-heading text-[2rem] font-black leading-tight text-white">متجر طنجة</h1>
-              <div className="mt-5 grid gap-2.5 text-sm font-black">
-                <span className="tm-mobile-hero-slogan rounded-md bg-white/10 px-4 py-3 text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08)]">الدفع عند الاستلام</span>
-                <span className="tm-mobile-hero-slogan rounded-md bg-white/10 px-4 py-3 text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08)]">توصيل سريع داخل طنجة</span>
-                <span className="tm-mobile-hero-slogan rounded-md bg-white/10 px-4 py-3 text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08)]">تأكيد الطلب قبل الإرسال</span>
+              <p className="tm-kicker inline-flex rounded-full bg-white px-3 py-1 text-[#b45309]">TanjaMall</p>
+              <h1 className="tm-heading mt-4 font-heading text-[2rem] font-black leading-tight text-white">متجر طنجة</h1>
+              <div className="mt-5 grid gap-2.5 text-sm">
+                <span className="tm-mobile-hero-slogan tm-compact-label rounded-md bg-white/10 px-4 py-3 text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08)]">الدفع عند الاستلام</span>
+                <span className="tm-mobile-hero-slogan tm-compact-label rounded-md bg-white/10 px-4 py-3 text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08)]">توصيل سريع داخل طنجة</span>
+                <span className="tm-mobile-hero-slogan tm-compact-label rounded-md bg-white/10 px-4 py-3 text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08)]">تأكيد الطلب قبل الإرسال</span>
               </div>
             </div>
           {featuredProduct ? (
@@ -182,14 +182,14 @@ export const CODTangerArabicStoreLanding = ({
               <span className="absolute inset-0 bg-[linear-gradient(180deg,rgba(19,25,33,0.04),rgba(19,25,33,0.68))]" />
               <span className="absolute bottom-10 right-4 left-4">
                 <span className="mb-2 inline-flex rounded-md bg-white px-3 py-1 text-xs font-black text-[#17201b]">{featuredProduct.badge}</span>
-                <span className="block line-clamp-2 font-heading text-2xl font-black text-white">{featuredProduct.title}</span>
+                <span className="tm-heading block line-clamp-2 font-heading text-2xl font-black text-white">{featuredProduct.title}</span>
                 <span className="tm-num mt-2 block font-heading text-2xl font-black text-[#ffb84d]">{featuredProduct.priceLabel}</span>
               </span>
             </button>
           ) : null}
             <div className="tm-mobile-hero-controls" aria-label="تبديل العرض">
               {[0, 1].map(index => (
-                <button key={index} type="button" onClick={() => setHeroSlide(index)} aria-label={index === 0 ? 'عرض شعارات المتجر' : 'عرض المنتج المميز'} aria-current={heroSlide === index ? 'true' : undefined} className="tm-press tm-touch grid place-items-center rounded-full">
+                <button key={index} type="button" onClick={() => setHeroSlide(index)} aria-label={index === 0 ? 'عرض شعارات المتجر' : 'عرض المنتج المميز'} aria-current={heroSlide === index ? 'true' : undefined} className="tm-press tm-dot-hit tm-touch grid place-items-center rounded-full">
                   <span className={`tm-mobile-hero-dot ${heroSlide === index ? 'is-active' : ''}`} />
                 </button>
               ))}
@@ -201,7 +201,7 @@ export const CODTangerArabicStoreLanding = ({
               <span className="absolute inset-0 bg-[linear-gradient(180deg,rgba(19,25,33,0.04),rgba(19,25,33,0.68))]" />
               <span className="absolute bottom-4 right-4 left-4">
                 <span className="mb-2 inline-flex rounded-md bg-white px-3 py-1 text-xs font-black text-[#17201b]">{featuredProduct.badge}</span>
-                <span className="block line-clamp-2 font-heading text-2xl font-black text-white">{featuredProduct.title}</span>
+                <span className="tm-heading block line-clamp-2 font-heading text-2xl font-black text-white">{featuredProduct.title}</span>
                 <span className="tm-num mt-2 block font-heading text-2xl font-black text-[#ffb84d]">{featuredProduct.priceLabel}</span>
               </span>
             </button>
@@ -213,7 +213,7 @@ export const CODTangerArabicStoreLanding = ({
         <div className="mx-auto w-full max-w-[1180px] px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-sm font-extrabold text-[#f59e0b]">الأكثر طلبا</p>
+              <p className="tm-kicker text-[#f59e0b]">الأكثر طلبا</p>
             </div>
           </div>
 
@@ -232,9 +232,9 @@ export const CODTangerArabicStoreLanding = ({
       <section className="bg-[#fff7ed] px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
         <div className="mx-auto grid w-full max-w-[1180px] gap-5 overflow-hidden rounded-lg bg-[#131921] p-5 text-white sm:p-8 lg:grid-cols-[1fr_380px] lg:items-center">
           <div>
-            <p className="text-sm font-extrabold text-[#ffb84d]">الدفع عند الاستلام</p>
+            <p className="tm-kicker text-[#ffb84d]">الدفع عند الاستلام</p>
             <h2 className="tm-heading mt-2 font-heading text-3xl font-black leading-tight sm:text-4xl lg:text-5xl">اطلب الآن وادفع عند وصول المنتج</h2>
-            <p className="tm-copy mt-4 max-w-[680px] text-base font-semibold leading-8 text-white/74 sm:text-lg">لا تحتاج إلى بطاقة بنكية. نؤكد الطلب عبر الواتساب ثم نرسله إلى عنوانك في أسرع وقت.</p>
+            <p className="tm-body-copy mt-4 max-w-[680px] text-base text-white/74 sm:text-lg">لا تحتاج إلى بطاقة بنكية. نؤكد الطلب عبر الواتساب ثم نرسله إلى عنوانك في أسرع وقت.</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
             {[['24-48h', 'مدة التوصيل'], ['0 DH', 'دفع مسبق'], ['7 أيام', 'استبدال'], ['طنجة', 'نطاق الخدمة']].map(([value, label]) => <div key={label} className="rounded-md bg-white/10 p-4 text-center">
@@ -248,7 +248,7 @@ export const CODTangerArabicStoreLanding = ({
       <section id="new-arrivals" className="mx-auto w-full max-w-[1180px] scroll-mt-20 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <p className="text-sm font-extrabold text-[#b45309]">وصل حديثا</p>
+            <p className="tm-kicker text-[#b45309]">وصل حديثا</p>
           </div>
           <button type="button" className="tm-press tm-button-dark hidden px-5 text-sm sm:block">
             عرض الجديد
@@ -264,7 +264,7 @@ export const CODTangerArabicStoreLanding = ({
       <section id="policies" className="bg-[#fffdf7] scroll-mt-20 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
         <div className="mx-auto grid w-full max-w-[1180px] gap-4 lg:grid-cols-[260px_1fr] lg:gap-6">
           <div>
-            <p className="text-sm font-extrabold text-[#b45309]">قبل الطلب</p>
+            <p className="tm-kicker text-[#b45309]">قبل الطلب</p>
           </div>
           <div className="grid gap-3">
             {policies.map(([title, copy]) => <details key={title} className="tm-panel-white px-4 py-3 open:bg-[var(--tm-surface-tint)]">

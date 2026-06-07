@@ -30,7 +30,7 @@ export function ProductCard({
 
   return (
     <article className="tm-reveal-item tm-lift tm-card min-w-0 overflow-hidden">
-      <button type="button" onClick={() => onOpenProduct(product.slug)} className="block w-full text-right" aria-label={`فتح ${product.title}`}>
+      <button type="button" onClick={() => onOpenProduct(product.slug)} className="tm-press block w-full text-right" aria-label={`فتح ${product.title}`}>
         <div className="relative">
           <img
             src={product.image}
@@ -49,8 +49,8 @@ export function ProductCard({
       </button>
 
       <div className="p-2.5 sm:p-4">
-        <button type="button" onClick={() => onOpenProduct(product.slug)} className="block w-full" aria-label={`تفاصيل ${product.title}`}>
-          <h3 className="tm-text-ink line-clamp-2 min-h-[42px] text-center font-heading text-sm font-black leading-tight sm:min-h-[48px] sm:text-lg">
+        <button type="button" onClick={() => onOpenProduct(product.slug)} className="tm-press block w-full" aria-label={`تفاصيل ${product.title}`}>
+          <h3 className="tm-product-card-title tm-text-ink line-clamp-2 min-h-[42px] text-center sm:min-h-[48px]">
             {product.title}
           </h3>
         </button>

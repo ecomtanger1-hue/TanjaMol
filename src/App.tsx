@@ -553,11 +553,13 @@ function SearchPanel({
   onOpenProduct: (slug: string) => void;
 }) {
   const [query, setQuery] = useState('');
+  const [hasTyped, setHasTyped] = useState(false);
   const results = useMemo(() => query.trim() ? searchProducts(products, query).slice(0, 8) : [], [products, query]);
 
   useEffect(() => {
     if (!open) return;
     setQuery('');
+    setHasTyped(false);
     window.setTimeout(() => document.getElementById('tm-search-panel-input')?.focus(), 60);
   }, [open]);
 
@@ -571,7 +573,10 @@ function SearchPanel({
           <input
             id="tm-search-panel-input"
             value={query}
-            onChange={event => setQuery(event.target.value)}
+            onChange={event => {
+              setQuery(event.target.value);
+              setHasTyped(true);
+            }}
             className="tm-field h-12 flex-1 bg-[var(--tm-surface-white)] text-right"
             placeholder="ابحث عن منتج"
             type="search"
@@ -591,7 +596,7 @@ function SearchPanel({
                   onClose();
                   onOpenProduct(product.slug);
                 }}
-                className="tm-press tm-stagger-item tm-panel-white grid grid-cols-[64px_1fr_auto] items-center gap-3 p-2 text-right"
+                className={`tm-press tm-panel-white grid grid-cols-[64px_1fr_auto] items-center gap-3 p-2 text-right ${hasTyped ? 'tm-search-result-row' : ''}`}
                 style={{ '--tm-stagger-delay': `${Math.min(index, 7) * 38}ms` } as CSSProperties}
                 aria-label={`فتح ${product.title}`}
               >

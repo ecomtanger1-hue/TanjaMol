@@ -141,7 +141,7 @@ export function ProductDetailRichText({ detail }: { detail: ProductDetailBlock }
   if (detail.richTextHtml?.trim()) {
     return (
       <div
-        className={`tm-copy tm-text-muted mt-3 grid gap-3 whitespace-normal font-semibold leading-8 ${copySizeClass[detail.textSize || 'base']} ${textAlignClass[detail.textAlign || 'right']} [&_a]:font-black [&_a]:text-[#b45309] [&_a]:underline [&_a]:underline-offset-4 [&_b]:font-black [&_font[size='2']]:text-xs [&_font[size='3']]:text-sm [&_font[size='4']]:text-lg [&_font[size='5']]:text-2xl [&_font[size='6']]:text-3xl [&_h2]:font-heading [&_h2]:text-3xl [&_h2]:font-black [&_h3]:font-heading [&_h3]:text-2xl [&_h3]:font-black [&_li]:leading-8 [&_ol]:grid [&_ol]:list-decimal [&_ol]:gap-2 [&_ol]:pr-5 [&_strong]:font-black [&_table]:mt-3 [&_table]:w-full [&_table]:overflow-hidden [&_table]:rounded-md [&_table]:border [&_table]:border-[#dbe4dd] [&_table]:bg-white [&_td]:border [&_td]:border-[#dbe4dd] [&_td]:px-3 [&_td]:py-2 [&_th]:border [&_th]:border-[#dbe4dd] [&_th]:px-3 [&_th]:py-2 [&_ul]:grid [&_ul]:list-disc [&_ul]:gap-2 [&_ul]:pr-5`}
+        className={`tm-copy tm-text-muted mt-3 grid gap-3 whitespace-normal font-medium leading-8 ${copySizeClass[detail.textSize || 'base']} ${textAlignClass[detail.textAlign || 'right']} [&_a]:font-extrabold [&_a]:text-[#b45309] [&_a]:underline [&_a]:underline-offset-4 [&_b]:font-extrabold [&_font[size='2']]:text-xs [&_font[size='3']]:text-sm [&_font[size='4']]:text-lg [&_font[size='5']]:text-2xl [&_font[size='6']]:text-3xl [&_h2]:tm-heading [&_h2]:font-heading [&_h2]:text-3xl [&_h2]:font-black [&_h3]:tm-heading [&_h3]:font-heading [&_h3]:text-2xl [&_h3]:font-black [&_li]:leading-8 [&_ol]:grid [&_ol]:list-decimal [&_ol]:gap-2 [&_ol]:pr-5 [&_strong]:font-extrabold [&_table]:mt-3 [&_table]:w-full [&_table]:overflow-hidden [&_table]:rounded-md [&_table]:border [&_table]:border-[#dbe4dd] [&_table]:bg-white [&_td]:border [&_td]:border-[#dbe4dd] [&_td]:px-3 [&_td]:py-2 [&_th]:border [&_th]:border-[#dbe4dd] [&_th]:px-3 [&_th]:py-2 [&_ul]:grid [&_ul]:list-disc [&_ul]:gap-2 [&_ul]:pr-5`}
         style={style}
         dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(detail.richTextHtml) }}
       />
@@ -150,7 +150,7 @@ export function ProductDetailRichText({ detail }: { detail: ProductDetailBlock }
 
   return (
     <div
-      className={`tm-copy tm-text-muted mt-3 grid gap-3 whitespace-pre-line font-semibold leading-8 ${copySizeClass[detail.textSize || 'base']} ${textAlignClass[detail.textAlign || 'right']}`}
+      className={`tm-copy tm-text-muted mt-3 grid gap-3 whitespace-pre-line font-medium leading-8 ${copySizeClass[detail.textSize || 'base']} ${textAlignClass[detail.textAlign || 'right']}`}
       style={style}
     >
       {renderRichBlocks(detail.text)}

@@ -158,7 +158,7 @@ export function SiteFooter({ onNavigate }: { onNavigate: (route: string) => void
       <div className="mx-auto grid w-full max-w-[1180px] gap-8 lg:grid-cols-[1.1fr_0.9fr_1fr]">
         <div>
           <TanjaMallLogo textClassName="text-white text-2xl" />
-          <p className="mt-4 max-w-[360px] text-sm font-semibold leading-7 text-white/68">
+          <p className="tm-copy mt-4 max-w-[360px] text-sm font-semibold leading-7 text-white/68">
             منتجات مختارة، طلب عبر واتساب، ودفع عند الاستلام داخل طنجة.
           </p>
         </div>
@@ -232,7 +232,7 @@ export function SearchResultsPage(props: StoreActions & { query: string }) {
             <span className="tm-breadcrumb-dot" />
             <span className="tm-breadcrumb-current">نتائج البحث</span>
           </div>
-          <h1 className="mt-2 font-heading text-[32px] font-black leading-tight sm:text-5xl">{props.query ? `نتائج البحث عن "${props.query}"` : 'البحث'}</h1>
+          <h1 className="tm-heading mt-2 font-heading text-[32px] font-black leading-tight sm:text-5xl">{props.query ? `نتائج البحث عن "${props.query}"` : 'البحث'}</h1>
           <form onSubmit={submit} className="mt-4 grid gap-3 lg:grid-cols-[1fr_auto]">
             <label className="relative block">
               <span className="sr-only">بحث</span>
@@ -247,7 +247,7 @@ export function SearchResultsPage(props: StoreActions & { query: string }) {
           <div className="min-w-0">
             <div className="tm-panel-white hidden items-center justify-between p-4 lg:flex">
               <p className="font-heading text-xl font-black">{results.length} منتج</p>
-              <p className="tm-text-muted text-sm font-bold">نتائج مطابقة للكلمات التي كتبتها</p>
+              <p className="tm-copy tm-text-muted text-sm font-semibold">نتائج مطابقة للكلمات التي كتبتها</p>
             </div>
             <ProductGrid {...props} products={results} columns="lg:grid-cols-4" />
           </div>
@@ -284,16 +284,16 @@ export function InfoPage({
               <span className="tm-breadcrumb-dot" />
               <span className="tm-breadcrumb-current">{data.eyebrow}</span>
             </div>
-            <h1 className="mt-3 max-w-[780px] font-heading text-[38px] font-black leading-tight sm:text-5xl lg:text-6xl">{data.title}</h1>
-            {data.copy ? <p className="mt-4 max-w-[680px] text-base font-semibold leading-8 text-white/74 sm:text-lg sm:leading-9">{data.copy}</p> : null}
+            <h1 className="tm-heading mt-3 max-w-[780px] font-heading text-[38px] font-black leading-tight sm:text-5xl lg:text-6xl">{data.title}</h1>
+            {data.copy ? <p className="tm-body-copy mt-4 max-w-[680px] text-base text-white/74 sm:text-lg">{data.copy}</p> : null}
           </div>
         </section>
 
         <section className="mx-auto grid max-w-[1180px] gap-4 px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
           {data.blocks.map(block => (
             <article key={block.title} className="tm-panel-white p-4 sm:p-5">
-              <h2 className="font-heading text-2xl font-black">{block.title}</h2>
-              <p className="tm-text-muted mt-2 text-sm font-semibold leading-8 sm:text-base">{block.text.replace('{city}', settings.city)}</p>
+              <h2 className="tm-heading font-heading text-2xl font-black">{block.title}</h2>
+              <p className="tm-copy tm-text-muted mt-2 text-sm font-semibold leading-8 sm:text-base">{block.text.replace('{city}', settings.city)}</p>
             </article>
           ))}
         </section>
@@ -308,7 +308,7 @@ export function NotFoundPage({ cartCount, onNavigate, onOpenCart, onOpenSearch }
       <main className="grid min-h-[calc(100vh-64px)] place-items-center bg-[var(--tm-header)] px-4 py-12 text-center text-white">
         <section className="max-w-[680px]">
           <p className="tm-num font-heading text-8xl font-black text-[#ffb84d]">404</p>
-          <h1 className="mt-4 font-heading text-4xl font-black sm:text-6xl">الصفحة غير موجودة</h1>
+          <h1 className="tm-heading mt-4 font-heading text-4xl font-black sm:text-6xl">الصفحة غير موجودة</h1>
           <div className="mt-7 grid gap-3 sm:grid-cols-2">
             <button type="button" onClick={() => onNavigate('#/')} className="tm-press tm-button-primary px-6 text-base">الرئيسية</button>
             <button type="button" onClick={() => onNavigate(categoryRoute(categories[0].id))} className="tm-press tm-button-secondary bg-white/12 px-6 text-base text-white shadow-[0_0_0_1px_rgba(255,255,255,0.2)]">الأقسام</button>
@@ -410,11 +410,11 @@ export function CartPopup({
             <div className="grid gap-2">
               {items.map((item) => (
                 <article key={`${item.id}-${item.variant || ''}`} className="tm-panel-white grid grid-cols-[64px_minmax(0,1fr)] gap-3 p-2.5">
-                  <img src={item.image} alt={item.title} className="h-16 w-16 rounded-md object-cover" loading="lazy" decoding="async" width="128" height="128" />
+                  <img src={item.image} alt={item.title} className="tm-image h-16 w-16 rounded-md object-cover" loading="lazy" decoding="async" width="128" height="128" />
                   <div className="min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <h2 className="line-clamp-2 font-heading text-sm font-black leading-5">{item.title}</h2>
+                        <h2 className="tm-product-card-title line-clamp-2 text-sm">{item.title}</h2>
                         {item.variant ? <p className="tm-text-muted mt-1 text-xs font-bold">{item.variant}</p> : null}
                       </div>
                       {!directItem ? <button aria-label={`حذف ${item.title} من السلة`} onClick={() => onRemove(item.id, item.variant)} className="tm-press tm-icon-button shrink-0 bg-[var(--tm-warning-soft)] text-sm font-black text-[var(--tm-warning)]" type="button">×</button> : null}
@@ -434,7 +434,7 @@ export function CartPopup({
           ) : (
             <div className="grid min-h-[112px] place-items-center py-3 text-center">
               <div>
-                <p id="tm-cart-empty" className="font-heading text-xl font-black">السلة فارغة</p>
+            <p id="tm-cart-empty" className="tm-heading font-heading text-xl font-black">السلة فارغة</p>
                 <button onClick={onClose} className="tm-press tm-button-dark mt-3 px-5 text-sm" type="button">متابعة التسوق</button>
               </div>
             </div>
@@ -442,7 +442,7 @@ export function CartPopup({
 
           {items.length > 0 ? <form id="tm-cart-order-form" className="tm-panel-white mt-4 grid gap-3 p-3" onSubmit={event => onPlaceOrder(items, directItem ? 'direct-product' : 'cart', event)}>
             <div>
-              <h2 className="font-heading text-xl font-black">معلومات العميل</h2>
+              <h2 className="tm-heading font-heading text-xl font-black">معلومات العميل</h2>
               <p id="tm-cart-form-help" className="tm-field-help">اكتب بيانات واضحة حتى نؤكد الطلب عبر واتساب قبل التوصيل.</p>
             </div>
             <label className="grid gap-1" htmlFor="tm-cart-name">
@@ -468,7 +468,7 @@ export function CartPopup({
           <div id="tm-cart-summary" className="mb-3 grid gap-1 text-sm font-bold">
             <div className="flex justify-between"><span>المجموع</span><span className="tm-num tm-price-text font-heading text-lg font-black">{total} درهم</span></div>
             <div className="tm-text-muted flex justify-between"><span>التوصيل</span><span>يؤكد في واتساب</span></div>
-            <p className="tm-text-muted text-xs leading-5">لا يوجد دفع مسبق. نؤكد تفاصيل الطلب معك قبل الإرسال.</p>
+            <p className="tm-copy tm-text-muted text-xs leading-5">لا يوجد دفع مسبق. نؤكد تفاصيل الطلب معك قبل الإرسال.</p>
           </div>
           <button form="tm-cart-order-form" disabled={items.length === 0} className="tm-press tm-button-primary w-full px-5 text-base" type="submit">إرسال الطلب عبر واتساب</button>
           <button onClick={onClose} className="tm-press tm-button-secondary mt-2 w-full px-5 text-sm" type="button">متابعة التسوق</button>
@@ -667,8 +667,8 @@ function ProductGrid({ products, columns = 'lg:grid-cols-3', ...props }: StoreAc
   if (!products.length) {
     return (
       <div className="tm-panel-white mt-5 p-6 text-center">
-        <p className="font-heading text-2xl font-black">لا توجد منتجات هنا حاليا</p>
-        <p className="tm-text-muted mx-auto mt-2 max-w-[420px] text-sm font-bold leading-7">جرّب البحث بكلمة مختلفة أو ارجع للأقسام الرئيسية لاختيار منتج آخر.</p>
+        <p className="tm-heading font-heading text-2xl font-black">لا توجد منتجات هنا حاليا</p>
+        <p className="tm-copy tm-text-muted mx-auto mt-2 max-w-[420px] text-sm font-semibold leading-7">جرّب البحث بكلمة مختلفة أو ارجع للأقسام الرئيسية لاختيار منتج آخر.</p>
         <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-center">
           <button type="button" onClick={() => props.onNavigate('#/')} className="tm-press tm-button-dark px-5 text-sm">الرئيسية</button>
           <button type="button" onClick={() => { window.sessionStorage.setItem('tm-open-categories', '1'); props.onNavigate('#/'); }} className="tm-press tm-button-secondary px-5 text-sm">تصفح الأقسام</button>
