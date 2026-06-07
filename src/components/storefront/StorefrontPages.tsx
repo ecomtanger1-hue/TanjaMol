@@ -54,7 +54,7 @@ export function SiteHeader({
 
   return (
     <header className="tm-site-header fixed inset-x-0 top-0 z-50 text-white shadow-[0_14px_36px_rgba(19,25,33,0.2)]" style={{ background: 'var(--tm-header-alpha)' }}>
-      <nav className="mx-auto grid min-h-[64px] w-full max-w-[1180px] grid-cols-[44px_1fr_auto] items-center gap-3 px-4 sm:px-6 lg:flex lg:justify-between lg:px-8">
+      <nav className="mx-auto grid min-h-[64px] w-full max-w-[1180px] grid-cols-[44px_1fr_44px] items-center gap-3 px-4 sm:px-6 lg:flex lg:justify-between lg:px-8">
         <button type="button" aria-label={mobileMenuOpen ? 'إغلاق القائمة' : 'فتح القائمة'} aria-expanded={mobileMenuOpen} onClick={() => setMobileMenuOpen(value => !value)} className="tm-press tm-touch grid h-11 w-11 place-items-center rounded-md bg-white/10 lg:hidden">
           <span className={`tm-menu-icon-toggle ${mobileMenuOpen ? 'is-open' : ''}`} aria-hidden="true">
             <Menu className="tm-menu-icon tm-menu-icon-menu h-6 w-6" strokeWidth={2.4} />
@@ -74,7 +74,7 @@ export function SiteHeader({
         </div>
 
         <div className="flex items-center gap-2">
-          <button type="button" onClick={onOpenSearch} className="tm-press tm-touch inline-flex items-center gap-2 rounded-md bg-white/10 px-3 text-sm font-black text-white shadow-[0_0_0_1px_rgba(255,255,255,0.16)]" aria-label="فتح البحث">
+          <button type="button" onClick={onOpenSearch} className="tm-press tm-touch hidden items-center gap-2 rounded-md bg-white/10 px-3 text-sm font-black text-white shadow-[0_0_0_1px_rgba(255,255,255,0.16)] lg:inline-flex" aria-label="فتح البحث">
             <Search className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
             بحث
           </button>
@@ -343,10 +343,16 @@ export function CartPopup({
     if (!open) return;
 
     const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
     const previousOverflow = document.body.style.overflow;
+    const previousBodyPosition = document.body.style.position;
+    const previousBodyWidth = document.body.style.width;
     const focusableSelector = 'button, input, textarea, select, a[href], [tabindex]:not([tabindex="-1"])';
 
+    document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
+    document.body.style.position = 'relative';
+    document.body.style.width = '100%';
 
     const focusFirstControl = window.setTimeout(() => {
       const dialog = document.querySelector<HTMLElement>('[data-cart-dialog]');
@@ -387,7 +393,10 @@ export function CartPopup({
     return () => {
       window.clearTimeout(focusFirstControl);
       document.removeEventListener('keydown', onKeyDown);
+      document.documentElement.style.overflow = previousHtmlOverflow;
       document.body.style.overflow = previousOverflow;
+      document.body.style.position = previousBodyPosition;
+      document.body.style.width = previousBodyWidth;
       previousFocus?.focus();
     };
   }, [open, onClose]);
@@ -467,7 +476,6 @@ export function CartPopup({
         {items.length > 0 ? <footer className="border-t border-[var(--tm-border)] bg-[var(--tm-surface-white)] p-3 sm:p-4" style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
           <div id="tm-cart-summary" className="mb-3 grid gap-1 text-sm font-bold">
             <div className="flex justify-between"><span>المجموع</span><span className="tm-num tm-price-text font-heading text-lg font-black">{total} درهم</span></div>
-            <div className="tm-text-muted flex justify-between"><span>التوصيل</span><span>يؤكد في واتساب</span></div>
             <p className="tm-copy tm-text-muted text-xs leading-5">لا يوجد دفع مسبق. نؤكد تفاصيل الطلب معك قبل الإرسال.</p>
           </div>
           <button form="tm-cart-order-form" disabled={items.length === 0} className="tm-press tm-button-primary w-full px-5 text-base" type="submit">إرسال الطلب عبر واتساب</button>

@@ -202,9 +202,6 @@ body {
 .tm-logo-mark {
   overflow: hidden;
   border-radius: 0.625rem;
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.14),
-    0 12px 26px -18px rgba(255, 153, 0, 0.9);
 }
 
 .tm-logo-wordmark {
@@ -504,7 +501,7 @@ body {
 
 .tm-button-primary {
   background: var(--tm-brand);
-  color: var(--tm-surface-white);
+  color: var(--tm-header);
   box-shadow: var(--tm-shadow-brand);
 }
 

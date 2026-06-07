@@ -210,6 +210,16 @@ export const TanjaMolArabicCODProductPage = ({
     }, 80);
   };
 
+  const handleOrderNow = () => {
+    if (!showOrderForm) {
+      scrollToOrder();
+      return;
+    }
+
+    const form = document.getElementById('product-order-details') as HTMLFormElement | null;
+    form?.requestSubmit();
+  };
+
   useEffect(() => {
     if (window.sessionStorage.getItem('tm-open-product-order') !== '1') return;
     window.sessionStorage.removeItem('tm-open-product-order');
@@ -265,8 +275,8 @@ export const TanjaMolArabicCODProductPage = ({
 
               <div className="mt-5 grid grid-cols-3 gap-2 text-center text-xs font-extrabold text-white md:text-sm">
                 <div className="rounded-md bg-white/10 px-3 py-3">تأكيد بالهاتف</div>
-                <div className="rounded-md bg-white/10 px-3 py-3">دفع عند الباب</div>
-                <div className="rounded-md bg-white/10 px-3 py-3">توصيل محلي</div>
+                <div className="rounded-md bg-white/10 px-3 py-3">الدفع عند الاستلام</div>
+                <div className="rounded-md bg-white/10 px-3 py-3">توصيل سريع</div>
               </div>
 
               <div className="mt-4 hidden max-w-[680px] gap-2 md:grid md:grid-cols-1">
@@ -338,7 +348,7 @@ export const TanjaMolArabicCODProductPage = ({
               </div>
 
               <div className="mt-4 grid gap-2">
-                <button className="tm-press tm-order-cta tm-button-primary px-5 text-base" type="button" onClick={scrollToOrder}>
+                <button className="tm-press tm-order-cta tm-button-primary px-5 text-base" type="button" onClick={handleOrderNow}>
                   اطلب الآن
                 </button>
                 <button className={`tm-press tm-secondary-label relative overflow-hidden px-5 text-sm ${added ? 'tm-add-button-added tm-button-dark' : 'tm-button-secondary'}`} type="button" onClick={addProduct} aria-live="polite" aria-label={added ? `تمت إضافة ${productTitle} للسلة` : `أضف ${productTitle} للسلة`}>
@@ -370,21 +380,16 @@ export const TanjaMolArabicCODProductPage = ({
                   <label className="grid gap-1" htmlFor="product-order-address">
                     <span className="tm-field-label">الحي أو العنوان داخل طنجة *</span>
                     <input id="product-order-address" required name="address" className="tm-field" autoComplete="street-address" />
-                    <span className="tm-field-help">مثال: الحي، الشارع، أو نقطة قريبة يعرفها المندوب.</span>
                   </label>
                   <button className="tm-press tm-button-primary px-5 text-base" type="submit">إرسال الطلب عبر واتساب</button>
                 </form>
               ) : (
                 <div className="tm-body-copy tm-panel-white mt-3 px-3 py-2.5 text-sm leading-7 text-[var(--tm-ink-soft)]">
-                  اختر {variantPickerLabel} والكمية، ثم اضغط اطلب الآن لملء بياناتك. سنراجع الطلب معك على واتساب قبل التوصيل.
+                  اختر الخيارات المناسبة، ثم أرسل طلبك عبر واتساب.
                 </div>
               )}
 
               <div className="mt-3 grid gap-2 text-sm font-bold text-[var(--tm-ink-soft)]">
-                <div className="flex items-center justify-between rounded-md bg-[var(--tm-surface-tint)] px-3 py-2.5">
-                  <span>موعد التأكيد</span>
-                  <span className="tm-price-text">خلال 15 دقيقة</span>
-                </div>
                 <div className="flex items-center justify-between rounded-md bg-[var(--tm-surface-tint)] px-3 py-2.5">
                   <span>التوصيل داخل طنجة</span>
                   <span className="tm-price-text">24 إلى 48 ساعة</span>
@@ -500,10 +505,6 @@ export const TanjaMolArabicCODProductPage = ({
                 <div>
                   <p className="tm-kicker text-[#f59e0b]">قبل الطلب</p>
                 </div>
-                <div className="w-fit rounded-md bg-[#17201b] px-4 py-3 text-center text-white">
-                  <p className="font-heading text-xl font-black">لا دفع مسبق</p>
-                  <p className="text-xs font-bold text-white/70">القرار النهائي بعد التأكيد</p>
-                </div>
               </div>
 
               <div className="mt-5 grid gap-3 md:grid-cols-2">
@@ -573,10 +574,8 @@ export const TanjaMolArabicCODProductPage = ({
         <div className="tm-surface pointer-events-auto mx-auto flex max-w-[520px] items-center gap-3 rounded-lg bg-white/95 p-2 shadow-[0_18px_48px_-22px_rgba(23,32,27,0.65)]">
           <div className="min-w-0 flex-1">
             <p className="tm-num font-heading text-xl font-black text-[#b45309]">{selectedVariantPriceLabel}</p>
-            <p className="truncate text-xs font-bold text-[#68736c]">الدفع عند الاستلام داخل طنجة</p>
-            {selectedVariantLabel ? <p className="mt-0.5 truncate text-[11px] font-extrabold text-[#17201b]">{selectedVariantLabel}</p> : null}
           </div>
-          <button className="tm-press tm-order-cta min-h-[50px] overflow-hidden rounded-md bg-[#ff9900] px-5 text-sm font-black text-[#131921] shadow-[0_16px_34px_-18px_rgba(255,153,0,0.95)]" type="button" onClick={scrollToOrder}>
+          <button className="tm-press tm-order-cta min-h-[50px] overflow-hidden rounded-md bg-[#ff9900] px-5 text-sm font-black text-[#131921] shadow-[0_16px_34px_-18px_rgba(255,153,0,0.95)]" type="button" onClick={handleOrderNow}>
             اطلب الآن
           </button>
         </div>
