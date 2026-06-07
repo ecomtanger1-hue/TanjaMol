@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 430 108" role="img" aria-labelledby="title desc">
+  <title id="title">TanjaMall logo - combined smile mask</title>
+  <desc id="desc">A TanjaMall logo combining the orange tile and black T with a white smile that masks the lower stem cleanly.</desc>
+  <style>
+    .word { font-family: "Tajawal", "Cairo", "Aptos Display", Arial, sans-serif; font-size: 50px; font-weight: 800; letter-spacing: -0.5px; }
+    .tag { font-family: "Tajawal", "Cairo", Arial, sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0; }
+  </style>
+
+  <rect x="8" y="12" width="84" height="84" rx="18" fill="#ff9900"/>
+
+  <path d="M28 34h44v11H56.5v24h-13V45H28Z" fill="#131921"/>
+  <path d="M43.5 73h13v8h-13Z" fill="#131921"/>
+  <path d="M30 66c11.5 8 28.5 8 40 0" fill="none" stroke="#fffdf8" stroke-linecap="round" stroke-width="7.5"/>
+
+  <text class="word" x="116" y="66" fill="#131921">Tanja</text>
+  <text class="word" x="247" y="66" fill="#ff9900">Mall</text>
+  <path d="M247 77h87" fill="none" stroke="#ff9900" stroke-linecap="round" stroke-width="4" opacity="0.88"/>
+  <text class="tag" x="118" y="86" fill="#68736c">Tangier commerce, made simple</text>
+</svg>

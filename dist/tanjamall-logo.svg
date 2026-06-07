@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 96" role="img" aria-labelledby="title desc">
+  <title id="title">TanjaMall logo</title>
+  <desc id="desc">TanjaMall wordmark with an orange square marketplace icon.</desc>
+  <rect x="8" y="12" width="72" height="72" rx="14" fill="#ff9900"/>
+  <path d="M27.5 33h33v9h-12v27h-9V42h-12v-9Z" fill="#131921"/>
+  <path d="M27 59.5c8.2 7.1 24.5 7.1 33 0" fill="none" stroke="#fffdf8" stroke-linecap="round" stroke-width="5.4"/>
+  <circle cx="64" cy="36" r="4.5" fill="#fffdf8"/>
+  <text x="98" y="61" fill="#131921" font-family="Tajawal, Cairo, Arial, sans-serif" font-size="43" font-weight="900" letter-spacing="0">Tanja</text>
+  <text x="220" y="61" fill="#b45309" font-family="Tajawal, Cairo, Arial, sans-serif" font-size="43" font-weight="900" letter-spacing="0">Mall</text>
+</svg>

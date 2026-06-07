@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 430 108" role="img" aria-labelledby="title desc">
+  <title id="title">TanjaMall logo - bag mark variant</title>
+  <desc id="desc">A TanjaMall logo variant where the T sits inside a simplified shopping bag shape with a friendly checkout curve.</desc>
+  <style>
+    .word { font-family: "Tajawal", "Cairo", "Aptos Display", Arial, sans-serif; font-size: 50px; font-weight: 800; letter-spacing: -0.4px; }
+    .tag { font-family: "Tajawal", "Cairo", Arial, sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0; }
+  </style>
+
+  <rect x="8" y="12" width="84" height="84" rx="18" fill="#131921"/>
+  <path d="M30 36c0-13 8.4-21 20-21s20 8 20 21" fill="none" stroke="#ff9900" stroke-linecap="round" stroke-width="6"/>
+  <path d="M27 42h46v11H57.5v25h-14V53H27Z" fill="#fffdf8"/>
+  <path d="M30 70c11 7.5 29 7.5 40 0" fill="none" stroke="#ff9900" stroke-linecap="round" stroke-width="6"/>
+
+  <text class="word" x="116" y="66" fill="#131921">Tanja</text>
+  <text class="word" x="247" y="66" fill="#c75a00">Mall</text>
+  <text class="tag" x="118" y="86" fill="#68736c">Fast local shopping with cash on delivery</text>
+</svg>

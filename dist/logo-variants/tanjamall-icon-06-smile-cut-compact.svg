@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" role="img" aria-labelledby="title desc">
+  <title id="title">TanjaMall icon - compact smile cut</title>
+  <desc id="desc">Compact orange TanjaMall icon with a black T visually tucked behind a white smile.</desc>
+  <rect x="8" y="8" width="92" height="92" rx="21" fill="#ff9900"/>
+  <path d="M30 32h48v13H60.5v21h-13V45H30Z" fill="#131921"/>
+  <path d="M31 65.5c13 10.5 33 10.5 46 0" fill="none" stroke="#fffdf8" stroke-linecap="round" stroke-width="8.5"/>
+</svg>

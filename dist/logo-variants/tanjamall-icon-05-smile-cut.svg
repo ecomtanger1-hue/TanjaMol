@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" role="img" aria-labelledby="title desc">
+  <title id="title">TanjaMall icon - smile cut</title>
+  <desc id="desc">Orange rounded icon with a black T ending behind a white marketplace smile.</desc>
+  <rect x="8" y="8" width="92" height="92" rx="21" fill="#ff9900"/>
+  <path d="M31 31h46v13H60.5v25h-13V44H31Z" fill="#131921"/>
+  <path d="M32 65c12.8 9.7 31.2 9.7 44 0" fill="none" stroke="#fffdf8" stroke-linecap="round" stroke-width="8.5"/>
+</svg>
