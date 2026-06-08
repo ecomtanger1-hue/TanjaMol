@@ -3,14 +3,17 @@ import { Grid3X3, Home, Menu, Search, ShoppingCart, X } from 'lucide-react';
 import {
   categories,
   categoryRoute,
+  collectionTitle,
   defaultSettings,
   orderTotal,
   parseOrderForm,
   productRoute,
+  productsForCollection,
   productsForCategory,
   searchProducts,
   searchRoute,
   type CartItem,
+  type CollectionId,
   type Product,
   type StoreSettings,
   type StoredOrder,
@@ -205,6 +208,37 @@ export function CategoryPage(props: StoreActions & { categoryId: string | null }
         <section className="mx-auto max-w-[1180px] px-4 py-5 sm:px-6 lg:px-8">
           <div className="min-w-0">
             <ProductGrid {...props} products={listedProducts} />
+          </div>
+        </section>
+      </main>
+    </PageShell>
+  );
+}
+
+export function CollectionPage(props: StoreActions & { collectionId: CollectionId }) {
+  const title = collectionTitle(props.collectionId);
+  const listedProducts = productsForCollection(props.products, props.collectionId);
+
+  return (
+    <PageShell cartCount={props.cartCount} onNavigate={props.onNavigate} onOpenCart={props.onOpenCart} onOpenSearch={props.onOpenSearch}>
+      <main className="overflow-x-hidden">
+        <section className="bg-[var(--tm-header)] text-white">
+          <div className="mx-auto max-w-[1180px] px-4 py-5 sm:px-6 lg:px-8">
+            <div className="tm-breadcrumb text-xs sm:text-sm">
+              <button type="button" onClick={() => props.onNavigate('#/')} className="tm-breadcrumb-link">Ø§Ù„Ø±Ø¦ÙŠØ³ÙŠØ©</button>
+              <span className="tm-breadcrumb-dot" />
+              <span className="tm-breadcrumb-current">{title}</span>
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-[1180px] px-4 py-5 sm:px-6 lg:px-8">
+          <div className="tm-panel-white mb-4 flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <h1 className="font-heading text-2xl font-black text-[#17201b] sm:text-3xl">{title}</h1>
+            {props.collectionId !== 'all' ? <p className="tm-num text-sm font-black text-[#68736c]">{listedProducts.length} {'\u0645\u0646\u062a\u062c'}</p> : null}
+          </div>
+          <div className="min-w-0">
+            <ProductGrid {...props} products={listedProducts} columns="lg:grid-cols-4" />
           </div>
         </section>
       </main>
@@ -425,6 +459,7 @@ export function CartPopup({
                       <div>
                         <h2 className="tm-product-card-title line-clamp-2 text-sm">{item.title}</h2>
                         {item.variant ? <p className="tm-text-muted mt-1 text-xs font-bold">{item.variant}</p> : null}
+                        <p className="tm-num mt-1 text-[11px] font-black text-[#68736c]">{item.priceLabel} x {item.quantity}</p>
                       </div>
                       {!directItem ? <button aria-label={`حذف ${item.title} من السلة`} onClick={() => onRemove(item.id, item.variant)} className="tm-press tm-icon-button shrink-0 bg-[var(--tm-warning-soft)] text-sm font-black text-[var(--tm-warning)]" type="button">×</button> : null}
                     </div>
@@ -434,7 +469,7 @@ export function CartPopup({
                         <span className="tm-num grid h-11 w-10 place-items-center border-x border-[#d9e1dc] text-sm font-black">{item.quantity}</span>
                         <button aria-label="زيادة الكمية" className="tm-press tm-touch grid place-items-center font-black" type="button" onClick={() => onQuantityChange(item.id, item.variant, item.quantity + 1)}>+</button>
                       </div>
-                      <p className="tm-num tm-price-text font-heading text-lg font-black">{item.price * item.quantity} درهم</p>
+                      <p className="tm-num tm-price-text font-heading text-lg font-black">{item.price * item.quantity} {'\u062f\u0631\u0647\u0645'}</p>
                     </div>
                   </div>
                 </article>
@@ -449,36 +484,36 @@ export function CartPopup({
             </div>
           )}
 
-          {items.length > 0 ? <form id="tm-cart-order-form" className="tm-panel-white mt-4 grid gap-3 p-3" onSubmit={event => onPlaceOrder(items, directItem ? 'direct-product' : 'cart', event)}>
+          {items.length > 0 ? <form id="tm-cart-order-form" className="tm-panel-white mt-4 grid scroll-mt-24 gap-3 p-3" onSubmit={event => onPlaceOrder(items, directItem ? 'direct-product' : 'cart', event)}>
             <div>
               <h2 className="tm-heading font-heading text-xl font-black">معلومات العميل</h2>
               <p id="tm-cart-form-help" className="tm-field-help">اكتب بيانات واضحة حتى نؤكد الطلب عبر واتساب قبل التوصيل.</p>
             </div>
             <label className="grid gap-1" htmlFor="tm-cart-name">
               <span className="tm-field-label">الاسم الكامل *</span>
-              <input id="tm-cart-name" required name="name" className="tm-field bg-[var(--tm-surface-soft)]" autoComplete="name" aria-describedby="tm-cart-form-help" />
+              <input id="tm-cart-name" required name="name" className="tm-field bg-[var(--tm-surface-soft)]" autoComplete="name" enterKeyHint="next" aria-describedby="tm-cart-form-help" />
             </label>
             <label className="grid gap-1" htmlFor="tm-cart-phone">
               <span className="tm-field-label">رقم الهاتف *</span>
-              <input id="tm-cart-phone" required name="phone" className="tm-field bg-[var(--tm-surface-soft)]" inputMode="tel" autoComplete="tel" aria-describedby="tm-cart-form-help" />
+              <input id="tm-cart-phone" required name="phone" className="tm-field bg-[var(--tm-surface-soft)]" type="tel" inputMode="tel" autoComplete="tel" enterKeyHint="next" aria-describedby="tm-cart-form-help" />
             </label>
             <label className="grid gap-1" htmlFor="tm-cart-address">
               <span className="tm-field-label">العنوان داخل طنجة *</span>
-              <input id="tm-cart-address" required name="address" className="tm-field bg-[var(--tm-surface-soft)]" autoComplete="street-address" aria-describedby="tm-cart-form-help" />
+              <input id="tm-cart-address" required name="address" className="tm-field bg-[var(--tm-surface-soft)]" autoComplete="address-line1" enterKeyHint="next" aria-describedby="tm-cart-form-help" />
             </label>
             <label className="grid gap-1" htmlFor="tm-cart-note">
               <span className="tm-field-label">ملاحظة اختيارية</span>
-              <textarea id="tm-cart-note" name="note" className="min-h-[76px] rounded-md border border-[var(--tm-border-strong)] bg-[var(--tm-surface-soft)] px-3 py-2 text-sm font-semibold leading-6 outline-none focus:border-[var(--tm-brand-strong)]" aria-describedby="tm-cart-form-help" />
+              <textarea id="tm-cart-note" name="note" enterKeyHint="send" className="min-h-[76px] rounded-md border border-[var(--tm-border-strong)] bg-[var(--tm-surface-soft)] px-3 py-2 text-sm font-semibold leading-6 outline-none focus:border-[var(--tm-brand-strong)]" aria-describedby="tm-cart-form-help" />
             </label>
           </form> : null}
         </div>
 
         {items.length > 0 ? <footer className="border-t border-[var(--tm-border)] bg-[var(--tm-surface-white)] p-3 sm:p-4" style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
           <div id="tm-cart-summary" className="mb-3 grid gap-1 text-sm font-bold">
-            <div className="flex justify-between"><span>المجموع</span><span className="tm-num tm-price-text font-heading text-lg font-black">{total} درهم</span></div>
+            <div className="flex justify-between"><span>المجموع</span><span className="tm-num tm-price-text font-heading text-lg font-black">{total} {'\u062f\u0631\u0647\u0645'}</span></div>
             <p className="tm-copy tm-text-muted text-xs leading-5">لا يوجد دفع مسبق. نؤكد تفاصيل الطلب معك قبل الإرسال.</p>
           </div>
-          <button form="tm-cart-order-form" disabled={items.length === 0} className="tm-press tm-button-primary w-full px-5 text-base" type="submit">إرسال الطلب عبر واتساب</button>
+          <button form="tm-cart-order-form" disabled={items.length === 0} className="tm-press tm-button-primary min-h-[52px] w-full px-5 text-base" type="submit">إرسال الطلب عبر واتساب</button>
           <button onClick={onClose} className="tm-press tm-button-secondary mt-2 w-full px-5 text-sm" type="button">متابعة التسوق</button>
         </footer> : null}
       </section>
@@ -687,8 +722,8 @@ function ProductGrid({ products, columns = 'lg:grid-cols-3', ...props }: StoreAc
 
   return (
     <div className={`grid w-full max-w-full grid-cols-[repeat(2,minmax(0,1fr))] gap-2.5 sm:gap-4 lg:mt-5 ${columns}`}>
-      {products.map(product => (
-        <ProductCard key={product.id} product={product} onOpenProduct={props.onOpenProduct} onAddToCart={props.onAddToCart} onOrderProduct={props.onOrderProduct} />
+      {products.map((product, index) => (
+        <ProductCard key={product.id} product={product} imagePriority={index < 2} onOpenProduct={props.onOpenProduct} onAddToCart={props.onAddToCart} onOrderProduct={props.onOrderProduct} />
       ))}
     </div>
   );

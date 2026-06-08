@@ -16,6 +16,8 @@ export type Product = {
   delivery?: string;
   reviewsEnabled?: boolean;
   manualReviewsEnabled?: boolean;
+  rating?: number;
+  reviewCount?: number;
   showRelated?: boolean;
   showPolicies?: boolean;
   details?: ProductDetailBlock[];
@@ -108,7 +110,7 @@ export type StoreSettings = {
 
 export const defaultSettings: StoreSettings = {
   storeName: 'TanjaMall',
-  whatsappNumber: '212600000000',
+  whatsappNumber: '212708012888',
   phone: '06 00 00 00 00',
   city: 'طنجة',
   deliveryText: '24 إلى 48 ساعة',
@@ -531,6 +533,12 @@ export function categoryRoute(id: string) {
   return `#/category/${encodeURIComponent(id)}`;
 }
 
+export type CollectionId = 'all' | 'bestsellers' | 'offers' | 'new-arrivals';
+
+export function collectionRoute(id: CollectionId) {
+  return id === 'all' ? '#/products' : `#/collection/${id}`;
+}
+
 export function searchRoute(query: string) {
   return `#/search?q=${encodeURIComponent(query.trim())}`;
 }
@@ -543,6 +551,14 @@ export function parseProductSlug(hash: string) {
 export function parseCategoryId(hash: string) {
   const match = hash.match(/^#\/category\/([^/?#]+)/);
   return match ? decodeURIComponent(match[1]) : null;
+}
+
+export function parseCollectionId(hash: string): CollectionId | null {
+  if (hash === '#/products') return 'all';
+  const match = hash.match(/^#\/collection\/([^/?#]+)/);
+  if (!match) return null;
+  const id = decodeURIComponent(match[1]);
+  return ['bestsellers', 'offers', 'new-arrivals'].includes(id) ? id as CollectionId : null;
 }
 
 export function parseSearchQuery(hash: string) {
@@ -574,6 +590,39 @@ export function productsForCategory(productList: Product[], categoryId: string |
   return productList.filter(product => product.category === category.title || product.category.includes(category.title.split(' ')[0]));
 }
 
+function priceNumber(label: string) {
+  const match = label.replace(',', '.').match(/\d+(?:\.\d+)?/);
+  return match ? Number(match[0]) : 0;
+}
+
+function discountValue(product: Product) {
+  return Math.max(0, priceNumber(product.oldPrice) - product.price);
+}
+
+export function collectionTitle(id: CollectionId) {
+  if (id === 'bestsellers') return 'الأكثر طلبا';
+  if (id === 'offers') return 'عروض مختارة';
+  if (id === 'new-arrivals') return 'وصل حديثا';
+  return 'كل المنتجات';
+}
+
+export function productsForCollection(productList: Product[], id: CollectionId) {
+  const available = productList.filter(product => product.stock !== 0);
+  if (id === 'all') return available;
+  if (id === 'new-arrivals') return available;
+  if (id === 'offers') {
+    return available
+      .filter(product => discountValue(product) > 0 || product.badge.includes('تخفيض') || product.badge.includes('عرض'))
+      .sort((a, b) => discountValue(b) - discountValue(a));
+  }
+
+  return [...available].sort((a, b) => {
+    const aPopular = a.badge.includes('الأكثر') ? 1 : 0;
+    const bPopular = b.badge.includes('الأكثر') ? 1 : 0;
+    return bPopular - aPopular || discountValue(b) - discountValue(a) || (b.stock ?? 0) - (a.stock ?? 0);
+  });
+}
+
 export function searchProducts(productList: Product[], query: string) {
   const normalized = query.trim().toLowerCase();
   if (!normalized) return productList;
@@ -582,26 +631,41 @@ export function searchProducts(productList: Product[], query: string) {
 
 export function buildWhatsAppOrderUrl(order: StoredOrder, settings: StoreSettings) {
   const phone = settings.whatsappNumber.replace(/[^\d]/g, '') || defaultSettings.whatsappNumber;
+  const labels = {
+    newOrder: '\u0637\u0644\u0628 \u062c\u062f\u064a\u062f \u0645\u0646',
+    orderNumber: '\u0631\u0642\u0645 \u0627\u0644\u0637\u0644\u0628',
+    name: '\u0627\u0644\u0627\u0633\u0645',
+    phone: '\u0627\u0644\u0647\u0627\u062a\u0641',
+    address: '\u0627\u0644\u0639\u0646\u0648\u0627\u0646',
+    note: '\u0645\u0644\u0627\u062d\u0638\u0629',
+    products: '\u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a',
+    options: '\u0627\u0644\u0627\u062e\u062a\u064a\u0627\u0631\u0627\u062a',
+    quantity: '\u0627\u0644\u0643\u0645\u064a\u0629',
+    total: '\u0627\u0644\u0645\u062c\u0645\u0648\u0639',
+    cod: '\u0627\u0644\u062f\u0641\u0639 \u0639\u0646\u062f \u0627\u0644\u0627\u0633\u062a\u0644\u0627\u0645',
+    currency: '\u062f\u0631\u0647\u0645',
+  };
   const items = order.items.map((item, index) => {
-    const variant = item.variant ? ` - ${item.variant}` : '';
-    return `${index + 1}. ${item.title}${variant} x${item.quantity} - ${item.price * item.quantity} درهم`;
+    const variant = item.variant ? `\n   ${labels.options}: ${item.variant}` : '';
+    return `${index + 1}. ${item.title}${variant}\n   ${labels.quantity}: ${item.quantity}\n   ${labels.total}: ${item.price * item.quantity} ${labels.currency}`;
   }).join('\n');
   const message = [
-    `طلب جديد من ${settings.storeName}`,
-    `رقم الطلب: ${order.id}`,
-    `الاسم: ${order.name}`,
-    `الهاتف: ${order.phone}`,
-    `العنوان: ${order.address}`,
-    order.note ? `ملاحظة: ${order.note}` : '',
+    `${labels.newOrder} ${settings.storeName}`,
+    `${labels.orderNumber}: ${order.id}`,
+    `${labels.name}: ${order.name}`,
+    `${labels.phone}: ${order.phone}`,
+    `${labels.address}: ${order.address}`,
+    order.note ? `${labels.note}: ${order.note}` : '',
     '',
+    labels.products,
     items,
     '',
-    `المجموع: ${order.total} درهم`,
+    `${labels.total}: ${order.total} ${labels.currency}`,
+    labels.cod,
   ].filter(Boolean).join('\n');
 
   return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 }
-
 export function parseOrderForm(event: FormEvent<HTMLFormElement>, source: string, items: CartItem[]): OrderDraft | null {
   event.preventDefault();
   const form = event.currentTarget;

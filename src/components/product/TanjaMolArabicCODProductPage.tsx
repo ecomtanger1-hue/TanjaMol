@@ -87,6 +87,8 @@ export const TanjaMolArabicCODProductPage = ({
   const productSpecs = product?.specs?.length ? product.specs : specs;
   const productDetails = product?.details?.length ? product.details : [];
   const showReviews = product?.reviewsEnabled ?? true;
+  const productRating = product?.rating ?? 4.8;
+  const productReviewCount = product?.reviewCount ?? 127;
   const showRelated = product?.showRelated ?? true;
   const showPolicies = product?.showPolicies ?? true;
   const activeCategory = categories.find(category => category.title === productCategory || productCategory.includes(category.title.split(' ')[0]));
@@ -110,6 +112,10 @@ export const TanjaMolArabicCODProductPage = ({
   const productVariants = (product?.variants?.filter(variant => variant.enabled) ?? []).length
     ? product!.variants!.filter(variant => variant.enabled)
     : fallbackVariants;
+  const activeVariantGroups = visibleVariantOptions.map(group => ({
+    ...group,
+    values: group.values.filter(value => value.label.trim()),
+  })).filter(group => group.values.length);
   const getGroupVariants = (group: typeof visibleVariantOptions[number]) => productVariants.filter(variant => {
     const optionValue = variant.optionValues?.[group.label];
     return Boolean(optionValue) || group.values.some(value => value.label.trim() && variant.name === value.label.trim());
@@ -136,12 +142,83 @@ export const TanjaMolArabicCODProductPage = ({
     return group.values.find(value => value.label === colorLabel)?.color ?? colors.find(color => color.name === variant.name || color.name === colorLabel)?.value;
   };
   const getVariantLabel = (group: typeof visibleVariantOptions[number], variant: ProductVariant) => getGroupVariantValue(group, variant);
+  const hasCombinationVariants = productVariants.some(variant =>
+    activeVariantGroups.every(group => Boolean(variant.optionValues?.[group.label]))
+  );
+  const getOptionValueLabel = (value: typeof activeVariantGroups[number]['values'][number]) => value.label.trim();
+  const variantMatchesValue = (
+    variant: ProductVariant,
+    group: typeof activeVariantGroups[number],
+    value: typeof activeVariantGroups[number]['values'][number],
+  ) => {
+    const label = getOptionValueLabel(value);
+    return variant.optionValues?.[group.label] === label || variant.name === label;
+  };
+  const getValueVariant = (
+    group: typeof activeVariantGroups[number],
+    value: typeof activeVariantGroups[number]['values'][number] | undefined,
+  ) => {
+    if (!value) return undefined;
+    return productVariants.find(variant => variantMatchesValue(variant, group, value));
+  };
+  const getSelectedValue = (group: typeof activeVariantGroups[number]) => {
+    const selectedId = selectedVariantIds[group.id];
+    return group.values.find(value => value.id === selectedId) ?? group.values.find(value => {
+      const variant = getValueVariant(group, value);
+      return !variant || variant.stock > 0;
+    }) ?? group.values[0];
+  };
+  const resolvedSelectedValues = activeVariantGroups.map(group => ({
+    group,
+    value: getSelectedValue(group),
+  })).filter(item => Boolean(item.value));
+  const getSelectionLabels = (
+    overrideGroup?: typeof activeVariantGroups[number],
+    overrideValue?: typeof activeVariantGroups[number]['values'][number],
+  ) => new Map(resolvedSelectedValues.map(({ group, value }) => [
+    group.label,
+    overrideGroup?.id === group.id && overrideValue ? getOptionValueLabel(overrideValue) : getOptionValueLabel(value),
+  ]));
+  const findCombinationVariant = (
+    overrideGroup?: typeof activeVariantGroups[number],
+    overrideValue?: typeof activeVariantGroups[number]['values'][number],
+  ) => {
+    const labels = getSelectionLabels(overrideGroup, overrideValue);
+    return productVariants.find(variant =>
+      activeVariantGroups.every(group => variant.optionValues?.[group.label] === labels.get(group.label))
+    );
+  };
+  const isResolvedValueAvailable = (
+    group: typeof activeVariantGroups[number],
+    value: typeof activeVariantGroups[number]['values'][number],
+  ) => {
+    if (hasCombinationVariants) return Boolean(findCombinationVariant(group, value)?.stock);
+    const variant = getValueVariant(group, value);
+    return !variant || variant.stock > 0;
+  };
+  const resolvedCombinationVariant = hasCombinationVariants ? findCombinationVariant() : undefined;
+  const resolvedValueVariants = resolvedSelectedValues.map(({ group, value }) => getValueVariant(group, value)).filter(Boolean) as ProductVariant[];
+  const resolvedVariantLabel = resolvedSelectedValues.map(({ group, value }) => `${group.label}: ${getOptionValueLabel(value)}`).filter(Boolean).join('، ');
+  const resolvedPriceVariant = resolvedCombinationVariant ?? resolvedValueVariants.find(variant => variant.priceLabel && variant.priceLabel !== productPriceLabel) ?? resolvedValueVariants[0];
+  const resolvedImageVariant = resolvedCombinationVariant?.image ? resolvedCombinationVariant : resolvedValueVariants.find(variant => variant.image);
+  const resolvedVariantPriceLabel = resolvedPriceVariant?.priceLabel || productPriceLabel;
+  const resolvedVariantPrice = getPriceFromLabel(resolvedVariantPriceLabel, product?.price ?? 249);
+  const resolvedVariantStock = resolvedCombinationVariant?.stock ?? (resolvedValueVariants.length ? Math.min(...resolvedValueVariants.map(variant => variant.stock)) : product?.stock ?? 99);
+  const isResolvedSoldOut = resolvedVariantStock <= 0;
+  const getResolvedValueColor = (
+    group: typeof activeVariantGroups[number],
+    value: typeof activeVariantGroups[number]['values'][number],
+  ) => {
+    if (group.type !== 'color' && !group.label.includes('Ù„ÙˆÙ†')) return undefined;
+    const label = getOptionValueLabel(value);
+    const variant = getValueVariant(group, value);
+    return value.color ?? colors.find(color => color.name === variant?.name || color.name === label)?.value;
+  };
 
   useEffect(() => {
     const nextSelected: Record<string, string> = {};
-    visibleVariantOptions.forEach(group => {
-      const groupVariants = getGroupVariants(group);
-      const firstAvailable = groupVariants.find(variant => variant.stock > 0) ?? groupVariants[0];
+    activeVariantGroups.forEach(group => {
+      const firstAvailable = group.values.find(value => isResolvedValueAvailable(group, value)) ?? group.values[0];
       if (firstAvailable) nextSelected[group.id] = firstAvailable.id;
     });
     setSelectedVariantIds(nextSelected);
@@ -149,6 +226,18 @@ export const TanjaMolArabicCODProductPage = ({
     setQuantity(1);
     setShowOrderForm(false);
   }, [product?.id]);
+
+  useEffect(() => {
+    if (resolvedVariantStock > 0 && quantity > resolvedVariantStock) {
+      setQuantity(resolvedVariantStock);
+    }
+  }, [quantity, resolvedVariantStock]);
+
+  useEffect(() => {
+    if (!resolvedImageVariant?.image) return;
+    const nextImageIndex = productGallery.findIndex(image => image.src === resolvedImageVariant.image);
+    if (nextImageIndex >= 0) setSelectedImage(nextImageIndex);
+  }, [resolvedImageVariant?.image, product?.id]);
 
   const goHome = (sectionId?: string) => {
     window.location.hash = '#/';
@@ -170,11 +259,11 @@ export const TanjaMolArabicCODProductPage = ({
     id: product?.id ?? 'smart-watch',
     slug: product?.slug ?? 'smart-watch',
     title: productTitle,
-    price: selectedVariantPrice,
-    priceLabel: selectedVariantPriceLabel,
+    price: resolvedVariantPrice,
+    priceLabel: resolvedVariantPriceLabel,
     quantity,
-    image: selectedImageVariant?.image ?? product?.image ?? productGallery[0].src,
-    variant: selectedVariantLabel,
+    image: resolvedImageVariant?.image ?? product?.image ?? productGallery[0].src,
+    variant: resolvedVariantLabel,
   };
 
   const relatedItems = products.filter(item => item.id !== orderItem.id).slice(0, relatedProducts.length);
@@ -190,6 +279,7 @@ export const TanjaMolArabicCODProductPage = ({
     if (draft) onPlaceOrder(draft);
   };
   const addProduct = () => {
+    if (isResolvedSoldOut) return;
     onAddToCart(orderItem);
     setAdded(true);
     window.setTimeout(() => setAdded(false), 1300);
@@ -211,6 +301,7 @@ export const TanjaMolArabicCODProductPage = ({
   };
 
   const handleOrderNow = () => {
+    if (isResolvedSoldOut) return;
     if (!showOrderForm) {
       scrollToOrder();
       return;
@@ -270,7 +361,7 @@ export const TanjaMolArabicCODProductPage = ({
                       <img src={image.src} alt={image.alt} className="tm-image h-[82px] w-full rounded-md object-cover" loading={index === 0 ? 'eager' : 'lazy'} decoding={index === 0 ? 'sync' : 'async'} width="184" height="164" sizes="92px" />
                     </button>)}
                 </div>
-                <img src={productGallery[selectedImage]?.src ?? productGallery[0].src} alt={productGallery[selectedImage]?.alt ?? productGallery[0].alt} className="tm-image h-[600px] w-full rounded-lg object-cover" fetchPriority="high" decoding="sync" width="1040" height="1200" sizes="58vw" />
+                <img src={productGallery[selectedImage]?.src ?? productGallery[0].src} alt={productGallery[selectedImage]?.alt ?? productGallery[0].alt} className="tm-image h-[600px] w-full rounded-lg object-cover" fetchPriority="high" loading="eager" decoding="sync" width="1040" height="1200" sizes="58vw" />
               </div>
 
               <div className="mt-5 grid grid-cols-3 gap-2 text-center text-xs font-extrabold text-white md:text-sm">
@@ -303,19 +394,21 @@ export const TanjaMolArabicCODProductPage = ({
 
               <div className="mt-4 flex items-center border-y border-[#dde6df] py-3">
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <p className="tm-num tm-price text-3xl text-[#b45309] sm:text-[2.15rem]">{selectedVariantPriceLabel}</p>
+                  <p className="tm-num tm-price text-3xl text-[#b45309] sm:text-[2.15rem]">{resolvedVariantPriceLabel}</p>
                   <p className="tm-num text-sm font-semibold text-[#939a95] line-through">{productOldPrice}</p>
                 </div>
+                {showReviews ? <div className="mr-auto text-left">
+                  <p className="tm-num text-sm font-black text-[#17201b]">{productRating}/5</p>
+                  <p className="text-xs font-bold text-[#68736c]">{productReviewCount} {'\u062a\u0642\u064a\u064a\u0645'}</p>
+                </div> : null}
               </div>
 
               <div className="mt-4 grid gap-3">
-                {visibleVariantOptions.map(group => {
-                  const groupVariants = getGroupVariants(group);
-                  if (!groupVariants.length) return null;
-                  const selectedId = selectedVariantIds[group.id] ?? groupVariants[0]?.id;
-                  const isColorGroup = group.type === 'color' || groupVariants.some(variant => Boolean(getVariantColor(group, variant)));
-                  const selectedVariant = groupVariants.find(variant => variant.id === selectedId) ?? groupVariants[0];
-                  const selectedLabel = selectedVariant ? getVariantLabel(group, selectedVariant) : '';
+                {activeVariantGroups.map(group => {
+                  const selectedId = selectedVariantIds[group.id] ?? group.values[0]?.id;
+                  const isColorGroup = group.type === 'color' || group.values.some(value => Boolean(getResolvedValueColor(group, value)));
+                  const selectedValue = group.values.find(value => value.id === selectedId) ?? group.values[0];
+                  const selectedLabel = selectedValue ? getOptionValueLabel(selectedValue) : '';
                   return (
                     <div key={group.id} className={`tm-variant-group ${isColorGroup ? 'tm-variant-group-color' : ''}`}>
                       <div className="tm-variant-heading">
@@ -323,12 +416,12 @@ export const TanjaMolArabicCODProductPage = ({
                         {isColorGroup && selectedLabel ? <p className="tm-variant-selected-name">{selectedLabel}</p> : null}
                       </div>
                       <div className={`tm-variant-row ${isColorGroup ? 'tm-variant-row-colors' : ''}`}>
-                        {groupVariants.map(variant => {
-                          const variantColor = getVariantColor(group, variant);
-                          const isSelected = selectedId === variant.id;
-                          const isSoldOut = variant.stock <= 0;
-                          const label = getVariantLabel(group, variant);
-                          return <button key={variant.id} type="button" disabled={isSoldOut} aria-label={`${group.label}: ${label}`} title={label} aria-pressed={isSelected} onClick={() => setSelectedVariantIds(current => ({ ...current, [group.id]: variant.id }))} className={`tm-press tm-touch tm-ui-label tm-variant-choice ${isColorGroup ? 'tm-variant-swatch' : 'tm-variant-pill'} ${isSelected ? 'is-selected border-[#b45309] bg-[#fff3df] text-[#b45309]' : 'border-[#d9e1dc] bg-white text-[#17201b]'} ${isSoldOut ? 'cursor-not-allowed opacity-45' : ''}`}>
+                        {group.values.map(value => {
+                          const variantColor = getResolvedValueColor(group, value);
+                          const isSelected = selectedId === value.id;
+                          const isSoldOut = !isResolvedValueAvailable(group, value);
+                          const label = getOptionValueLabel(value);
+                          return <button key={value.id} type="button" disabled={isSoldOut} aria-label={`${group.label}: ${label}`} title={label} aria-pressed={isSelected} onClick={() => setSelectedVariantIds(current => ({ ...current, [group.id]: value.id }))} className={`tm-press tm-touch tm-ui-label tm-variant-choice ${isColorGroup ? 'tm-variant-swatch' : 'tm-variant-pill'} ${isSelected ? 'is-selected border-[#b45309] bg-[#fff3df] text-[#b45309]' : 'border-[#d9e1dc] bg-white text-[#17201b]'} ${isSoldOut ? 'cursor-not-allowed opacity-45' : ''}`}>
                             {isColorGroup ? <span className="tm-variant-color-dot" style={{ backgroundColor: variantColor || '#d9e1dc' }} /> : <span>{label}</span>}
                           </button>;
                         })}
@@ -343,15 +436,15 @@ export const TanjaMolArabicCODProductPage = ({
                 <div className="flex w-fit items-center overflow-hidden rounded-md border border-[var(--tm-border)] bg-[var(--tm-surface-white)]">
                   <button className="tm-press tm-touch tm-button-label grid place-items-center text-lg" type="button" aria-label="تقليل الكمية" onClick={() => setQuantity(value => Math.max(1, value - 1))}>-</button>
                   <span className="tm-num tm-ui-label grid h-11 w-14 place-items-center border-x border-[var(--tm-border)] text-lg">{quantity}</span>
-                  <button className="tm-press tm-touch tm-button-label grid place-items-center text-lg" type="button" aria-label="زيادة الكمية" onClick={() => setQuantity(value => value + 1)}>+</button>
+                  <button className="tm-press tm-touch tm-button-label grid place-items-center text-lg" type="button" aria-label="زيادة الكمية" disabled={isResolvedSoldOut || quantity >= resolvedVariantStock} onClick={() => setQuantity(value => Math.min(resolvedVariantStock, value + 1))}>+</button>
                 </div>
               </div>
 
               <div className="mt-4 grid gap-2">
-                <button className="tm-press tm-order-cta tm-button-primary px-5 text-base" type="button" onClick={handleOrderNow}>
+                <button className="tm-press tm-order-cta tm-button-primary px-5 text-base disabled:cursor-not-allowed disabled:opacity-55" type="button" disabled={isResolvedSoldOut} onClick={handleOrderNow}>
                   اطلب الآن
                 </button>
-                <button className={`tm-press tm-secondary-label relative overflow-hidden px-5 text-sm ${added ? 'tm-add-button-added tm-button-dark' : 'tm-button-secondary'}`} type="button" onClick={addProduct} aria-live="polite" aria-label={added ? `تمت إضافة ${productTitle} للسلة` : `أضف ${productTitle} للسلة`}>
+                <button className={`tm-press tm-secondary-label relative overflow-hidden px-5 text-sm disabled:cursor-not-allowed disabled:opacity-55 ${added ? 'tm-add-button-added tm-button-dark' : 'tm-button-secondary'}`} type="button" disabled={isResolvedSoldOut} onClick={addProduct} aria-live="polite" aria-label={added ? `تمت إضافة ${productTitle} للسلة` : `أضف ${productTitle} للسلة`}>
                   <span className="relative z-10 inline-flex items-center justify-center gap-2">
                     {added ? <Check className="h-4 w-4" aria-hidden="true" strokeWidth={3} /> : null}
                     {added ? 'تمت الإضافة' : 'أضف للسلة'}
@@ -362,7 +455,7 @@ export const TanjaMolArabicCODProductPage = ({
               </div>
 
               {showOrderForm ? (
-                <form id="product-order-details" className="tm-panel-white mt-4 grid gap-3 p-3" onSubmit={submitOrder}>
+                <form id="product-order-details" className="tm-panel-white mt-4 grid scroll-mt-24 gap-3 p-3" onSubmit={submitOrder}>
                   <div>
                     <p className="tm-modal-title">معلومات الطلب</p>
                     <p className="tm-small-copy tm-text-muted mt-1">نؤكد التفاصيل على واتساب قبل الإرسال. لا يوجد دفع مسبق.</p>
@@ -370,18 +463,18 @@ export const TanjaMolArabicCODProductPage = ({
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
                     <label className="grid gap-1" htmlFor="product-order-name">
                       <span className="tm-field-label">الاسم الكامل *</span>
-                      <input id="product-order-name" required name="name" className="tm-field" autoComplete="name" />
+                      <input id="product-order-name" required name="name" className="tm-field" autoComplete="name" enterKeyHint="next" />
                     </label>
                     <label className="grid gap-1" htmlFor="product-order-phone">
                       <span className="tm-field-label">رقم الهاتف *</span>
-                      <input id="product-order-phone" required name="phone" className="tm-field" inputMode="tel" autoComplete="tel" />
+                      <input id="product-order-phone" required name="phone" className="tm-field" type="tel" inputMode="tel" autoComplete="tel" enterKeyHint="next" />
                     </label>
                   </div>
                   <label className="grid gap-1" htmlFor="product-order-address">
                     <span className="tm-field-label">الحي أو العنوان داخل طنجة *</span>
-                    <input id="product-order-address" required name="address" className="tm-field" autoComplete="street-address" />
+                    <input id="product-order-address" required name="address" className="tm-field" autoComplete="address-line1" enterKeyHint="send" />
                   </label>
-                  <button className="tm-press tm-button-primary px-5 text-base" type="submit">إرسال الطلب عبر واتساب</button>
+                  <button className="tm-press tm-button-primary min-h-[52px] px-5 text-base" type="submit">إرسال الطلب عبر واتساب</button>
                 </form>
               ) : (
                 <div className="tm-body-copy tm-panel-white mt-3 px-3 py-2.5 text-sm leading-7 text-[var(--tm-ink-soft)]">
@@ -404,15 +497,18 @@ export const TanjaMolArabicCODProductPage = ({
             <details className="tm-surface rounded-lg bg-white p-4 open:bg-[#fffdf8] sm:p-5 lg:p-7" open>
               <summary className="cursor-pointer font-heading text-xl font-black sm:text-2xl">تفاصيل المنتج</summary>
               {productDetails.length ? <div className="mt-6 grid gap-4 lg:gap-6">
-                {productDetails.map((detail, index) => <article key={detail.id} dir="ltr" className="tm-panel-white grid gap-4 overflow-hidden rounded-lg bg-[#f8fafc] lg:min-h-[320px] lg:grid-cols-2 lg:items-stretch lg:gap-6">
-                  <div dir="rtl" className={`order-1 flex flex-col justify-center p-5 lg:p-7 ${index % 2 === 0 ? 'lg:order-2' : 'lg:order-1'}`}>
-                    <ProductDetailTitle detail={detail} />
-                    <ProductDetailRichText detail={detail} />
-                  </div>
-                  <figure className={`order-2 min-h-[220px] overflow-hidden ${index % 2 === 0 ? 'lg:order-1' : 'lg:order-2'}`}>
-                    <ProductDetailMedia detail={detail} src={detail.mediaUrl || productGallery[(index + 1) % productGallery.length]?.src || productGallery[0].src} className="tm-image h-full min-h-[220px] w-full object-cover lg:min-h-[320px]" />
-                  </figure>
-                </article>)}
+                {productDetails.map((detail, index) => {
+                  const reverse = detail.reverse ?? index % 2 === 1;
+                  return <article key={detail.id} dir="ltr" className="tm-panel-white grid gap-4 overflow-hidden rounded-lg bg-[#f8fafc] lg:min-h-[320px] lg:grid-cols-2 lg:items-stretch lg:gap-6">
+                    <div dir="rtl" className={`order-1 flex flex-col justify-center p-5 lg:p-7 ${reverse ? 'lg:order-1' : 'lg:order-2'}`}>
+                      <ProductDetailTitle detail={detail} />
+                      <ProductDetailRichText detail={detail} />
+                    </div>
+                    <figure className={`order-2 min-h-[220px] overflow-hidden ${reverse ? 'lg:order-2' : 'lg:order-1'}`}>
+                      <ProductDetailMedia detail={detail} src={detail.mediaUrl || productGallery[(index + 1) % productGallery.length]?.src || productGallery[0].src} className="tm-image h-full min-h-[220px] w-full object-cover lg:min-h-[320px]" />
+                    </figure>
+                  </article>;
+                })}
               </div> : null}
               <div className={productDetails.length ? 'hidden' : 'lg:hidden'}>
                 <p className="tm-body-copy tm-text-muted mt-3 max-w-[860px] text-sm sm:text-base">
@@ -568,14 +664,15 @@ export const TanjaMolArabicCODProductPage = ({
 
       <SiteFooter onNavigate={(nextRoute) => { window.location.hash = nextRoute; }} />
 
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 bg-transparent px-4 py-3 md:hidden" style={{
-      paddingBottom: 'max(12px, env(safe-area-inset-bottom))'
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 bg-transparent px-3 py-3 md:hidden" style={{
+      paddingBottom: 'max(14px, env(safe-area-inset-bottom))'
     }}>
-        <div className="tm-surface pointer-events-auto mx-auto flex max-w-[520px] items-center gap-3 rounded-lg bg-white/95 p-2 shadow-[0_18px_48px_-22px_rgba(23,32,27,0.65)]">
+        <div className="tm-mobile-order-bar pointer-events-auto mx-auto flex max-w-[520px] items-center gap-3 rounded-lg p-2">
           <div className="min-w-0 flex-1">
-            <p className="tm-num font-heading text-xl font-black text-[#b45309]">{selectedVariantPriceLabel}</p>
+            <p className="tm-num font-heading text-xl font-black text-[#b45309]">{resolvedVariantPriceLabel}</p>
+            <p className="truncate text-[11px] font-extrabold text-[#68736c]">{'\u0627\u0644\u062f\u0641\u0639 \u0639\u0646\u062f \u0627\u0644\u0627\u0633\u062a\u0644\u0627\u0645'}</p>
           </div>
-          <button className="tm-press tm-order-cta min-h-[50px] overflow-hidden rounded-md bg-[#ff9900] px-5 text-sm font-black text-[#131921] shadow-[0_16px_34px_-18px_rgba(255,153,0,0.95)]" type="button" onClick={handleOrderNow}>
+          <button className="tm-press tm-order-cta min-h-[52px] min-w-[138px] overflow-hidden rounded-md bg-[#ff9900] px-5 text-sm font-black text-[#131921] shadow-[0_16px_34px_-18px_rgba(255,153,0,0.95)] disabled:cursor-not-allowed disabled:opacity-60" type="button" disabled={isResolvedSoldOut} onClick={handleOrderNow}>
             اطلب الآن
           </button>
         </div>

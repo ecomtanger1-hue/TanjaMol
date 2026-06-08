@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Grid3X3, Home, PackageSearch, Search, ShoppingCart } from 'lucide-react';
-import { categories, categoryRoute, type CartItem, type OrderDraft, type Product } from '../../storefrontRuntime';
+import { categories, categoryRoute, collectionRoute, type CartItem, type OrderDraft, type Product } from '../../storefrontRuntime';
 import { ProductCard as StoreProductCard } from './ProductCard';
 import { SiteFooter, SiteHeader } from './StorefrontPages';
 
@@ -39,6 +39,56 @@ function scrollToPageTop() {
   window.setTimeout(scroll, 160);
   window.setTimeout(scroll, 360);
   window.setTimeout(scroll, 720);
+}
+
+function getPriceNumber(label: string, fallback = 0) {
+  const match = label.replace(',', '.').match(/\d+(?:\.\d+)?/);
+  return match ? Number(match[0]) : fallback;
+}
+
+function getDiscountValue(product: Product) {
+  const oldPrice = getPriceNumber(product.oldPrice);
+  return Math.max(0, oldPrice - product.price);
+}
+
+function pickUniqueProducts(candidates: Product[], limit: number, exclude: Product[] = []) {
+  const seen = new Set(exclude.map(product => product.id));
+  const picked: Product[] = [];
+
+  candidates.forEach(product => {
+    if (seen.has(product.id) || picked.length >= limit) return;
+    seen.add(product.id);
+    picked.push(product);
+  });
+
+  return picked;
+}
+
+function getHomepageSections(products: Product[]) {
+  const availableProducts = products.filter(product => product.stock !== 0);
+  const rankedProducts = [...availableProducts].sort((a, b) => {
+    const aPopular = a.badge.includes('\u0627\u0644\u0623\u0643\u062b\u0631') ? 1 : 0;
+    const bPopular = b.badge.includes('\u0627\u0644\u0623\u0643\u062b\u0631') ? 1 : 0;
+    const aDiscount = getDiscountValue(a);
+    const bDiscount = getDiscountValue(b);
+    return bPopular - aPopular || bDiscount - aDiscount || (b.stock ?? 0) - (a.stock ?? 0);
+  });
+  const offerProducts = pickUniqueProducts(
+    [...availableProducts]
+      .filter(product => getDiscountValue(product) > 0 || product.badge.includes('\u062a\u062e\u0641\u064a\u0636') || product.badge.includes('\u0639\u0631\u0636'))
+      .sort((a, b) => getDiscountValue(b) - getDiscountValue(a)),
+    8,
+  );
+  const bestSellerProducts = pickUniqueProducts(rankedProducts, 8);
+  const newArrivalProducts = pickUniqueProducts(availableProducts, 4, [bestSellerProducts[0]].filter(Boolean));
+  const featuredProduct = rankedProducts.find(product => product.badge.includes('\u0627\u0644\u0623\u0643\u062b\u0631')) ?? rankedProducts[0] ?? products[0];
+
+  return {
+    featuredProduct,
+    bestSellerProducts,
+    offerProducts,
+    newArrivalProducts,
+  };
 }
 
 function ProductCard({
@@ -89,8 +139,12 @@ export const CODTangerArabicStoreLanding = ({
   onOrderProduct,
   onNavigate,
 }: StorefrontProps) => {
-  const newArrivals = products.slice(8, 12);
-  const featuredProduct = products[0];
+  const {
+    featuredProduct,
+    bestSellerProducts,
+    offerProducts,
+    newArrivalProducts,
+  } = getHomepageSections(products);
   const shortcutCategories = categories.slice(0, 6);
   const navigate = onNavigate || ((route: string) => { window.location.hash = route; });
   const [heroSlide, setHeroSlide] = useState(0);
@@ -132,10 +186,10 @@ export const CODTangerArabicStoreLanding = ({
       <section id="categories" className="scroll-mt-20 bg-[var(--tm-surface-white)]">
         <div className="mx-auto w-full max-w-[1180px]">
           <div className="flex gap-4 overflow-x-auto px-4 py-4 sm:px-6 lg:justify-center lg:gap-8 lg:overflow-visible lg:px-8 lg:py-6">
-            {shortcutCategories.map(category => (
+            {shortcutCategories.map((category, index) => (
               <button key={category.id} type="button" onClick={() => navigate(categoryRoute(category.id))} className="tm-press w-[88px] shrink-0 text-center sm:w-[96px] lg:w-[116px]">
                 <span className="relative mx-auto grid h-16 w-16 place-items-center overflow-hidden rounded-full bg-[#fff7ed] shadow-[0_0_0_1px_rgba(0,0,0,0.06),0_10px_24px_rgba(23,32,27,0.08)] sm:h-20 sm:w-20 lg:h-24 lg:w-24">
-                  <img src={category.image} alt={category.title} className="h-full w-full object-cover outline outline-1 outline-offset-[-1px] outline-[rgba(0,0,0,0.1)]" loading="lazy" decoding="async" width="160" height="160" sizes="(max-width: 640px) 64px, (max-width: 1024px) 80px, 96px" />
+                  <img src={category.image} alt={category.title} className="h-full w-full object-cover outline outline-1 outline-offset-[-1px] outline-[rgba(0,0,0,0.1)]" fetchPriority={index === 0 ? 'high' : undefined} loading={index < 4 ? 'eager' : 'lazy'} decoding={index < 4 ? 'sync' : 'async'} width="160" height="160" sizes="(max-width: 640px) 64px, (max-width: 1024px) 80px, 96px" />
                 </span>
                 <span className="tm-compact-label mt-2 block min-h-[34px] whitespace-normal break-words text-xs text-[#17201b] sm:text-sm lg:mt-3 lg:min-h-0 lg:truncate lg:text-[15px]">{category.title}</span>
               </button>
@@ -218,11 +272,11 @@ export const CODTangerArabicStoreLanding = ({
           </div>
 
           <div className="mt-4 grid grid-cols-2 gap-2.5 sm:gap-4 lg:grid-cols-4 lg:gap-5">
-            {products.slice(0, 8).map(product => <StoreProductCard key={product.id} product={product} onOpenProduct={onOpenProduct} onAddToCart={onAddToCart} onOrderProduct={onOrderProduct} />)}
+            {bestSellerProducts.map((product, index) => <StoreProductCard key={product.id} product={product} imagePriority={index < 2} onOpenProduct={onOpenProduct} onAddToCart={onAddToCart} onOrderProduct={onOrderProduct} />)}
           </div>
 
           <div className="mt-5 text-center">
-              <button type="button" className="tm-press tm-button-dark px-7 text-base">
+              <button type="button" onClick={() => navigate(collectionRoute('all'))} className="tm-press tm-button-dark px-7 text-base">
               عرض كل المنتجات
             </button>
           </div>
@@ -245,17 +299,33 @@ export const CODTangerArabicStoreLanding = ({
         </div>
       </section>
 
+      {offerProducts.length ? <section id="offers" className="mx-auto w-full max-w-[1180px] scroll-mt-20 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <p className="tm-kicker text-[#b45309]">{'\u0639\u0631\u0648\u0636 \u0645\u062e\u062a\u0627\u0631\u0629'}</p>
+          </div>
+          <button type="button" onClick={() => navigate(collectionRoute('offers'))} className="tm-press tm-button-dark hidden px-5 text-sm sm:block">
+            {'\u0639\u0631\u0636 \u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a'}
+          </button>
+        </div>
+        <div className="-mx-4 mt-4 flex snap-x gap-3 overflow-x-auto px-4 pb-3 lg:mx-0 lg:grid lg:grid-cols-4 lg:gap-5 lg:overflow-visible lg:px-0 lg:pb-0">
+          {offerProducts.slice(0, 4).map(product => <div key={product.id} className="w-[72vw] flex-none snap-start lg:w-auto">
+            <StoreProductCard product={product} compact onOpenProduct={onOpenProduct} onAddToCart={onAddToCart} onOrderProduct={onOrderProduct} />
+          </div>)}
+        </div>
+      </section> : null}
+
       <section id="new-arrivals" className="mx-auto w-full max-w-[1180px] scroll-mt-20 px-4 py-6 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
         <div className="flex items-end justify-between gap-4">
           <div>
             <p className="tm-kicker text-[#b45309]">وصل حديثا</p>
           </div>
-          <button type="button" className="tm-press tm-button-dark hidden px-5 text-sm sm:block">
+          <button type="button" onClick={() => navigate(collectionRoute('new-arrivals'))} className="tm-press tm-button-dark hidden px-5 text-sm sm:block">
             عرض الجديد
           </button>
         </div>
         <div className="-mx-4 mt-4 flex snap-x gap-3 overflow-x-auto px-4 pb-3 lg:mx-0 lg:grid lg:grid-cols-4 lg:gap-5 lg:overflow-visible lg:px-0 lg:pb-0">
-          {newArrivals.map(product => <div key={product.id} className="w-[72vw] flex-none snap-start lg:w-auto">
+          {newArrivalProducts.map(product => <div key={product.id} className="w-[72vw] flex-none snap-start lg:w-auto">
             <StoreProductCard product={product} compact onOpenProduct={onOpenProduct} onAddToCart={onAddToCart} onOrderProduct={onOrderProduct} />
           </div>)}
         </div>

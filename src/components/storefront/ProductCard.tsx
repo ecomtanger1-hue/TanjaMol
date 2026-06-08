@@ -5,6 +5,7 @@ import { cartItemFromProduct, type CartItem, type Product } from '../../storefro
 type ProductCardProps = {
   product: Product;
   compact?: boolean;
+  imagePriority?: boolean;
   onOpenProduct: (slug: string) => void;
   onAddToCart: (item: CartItem) => void;
   onOrderProduct: (item: CartItem) => void;
@@ -13,6 +14,7 @@ type ProductCardProps = {
 export function ProductCard({
   product,
   compact = false,
+  imagePriority = false,
   onOpenProduct,
   onAddToCart,
 }: ProductCardProps) {
@@ -36,8 +38,9 @@ export function ProductCard({
             src={product.image}
             alt={product.title}
             className={`tm-image w-full object-cover ${compact ? 'h-[150px] sm:h-[180px]' : 'h-[150px] sm:h-[220px]'}`}
-            loading="lazy"
-            decoding="async"
+            fetchPriority={imagePriority ? 'high' : undefined}
+            loading={imagePriority ? 'eager' : 'lazy'}
+            decoding={imagePriority ? 'sync' : 'async'}
             width="640"
             height="640"
             sizes="(max-width: 768px) 50vw, 25vw"

@@ -172,34 +172,46 @@ function makeVariantSku(name: string, index: number) {
 }
 
 function generateVariantsFromOptions(groups: VariantOptionDraft[], current: ProductVariant[], defaultPrice: string) {
-  const rows = groups.flatMap(group => {
-    const label = group.label.trim();
-    if (!label) return [];
-    return group.values
-      .filter(value => value.label.trim())
-      .map(value => ({ groupId: group.id, valueId: value.id, groupLabel: label, valueLabel: value.label.trim() }));
-  });
+  const activeGroups = groups
+    .map(group => ({
+      ...group,
+      label: group.label.trim(),
+      values: group.values.filter(value => value.label.trim()),
+    }))
+    .filter(group => group.label && group.values.length);
 
-  if (!rows.length) return [];
+  if (!activeGroups.length) return [];
 
-  return rows.map((row, index) => {
-    const stableId = `variant-${row.groupId}-${row.valueId}`;
+  const combinations = activeGroups.reduce<Array<Array<{ groupId: string; valueId: string; groupLabel: string; valueLabel: string }>>>((sets, group) => {
+    const values = group.values.map(value => ({
+      groupId: group.id,
+      valueId: value.id,
+      groupLabel: group.label,
+      valueLabel: value.label.trim(),
+    }));
+    if (!sets.length) return values.map(value => [value]);
+    return sets.flatMap(set => values.map(value => [...set, value]));
+  }, []);
+
+  return combinations.map((combination, index) => {
+    const stableId = `variant-${combination.map(row => `${row.groupId}-${row.valueId}`).join('-')}`;
+    const optionValues = Object.fromEntries(combination.map(row => [row.groupLabel, row.valueLabel]));
+    const name = combination.map(row => row.valueLabel).join(' / ');
     const existing = current.find(variant => {
       if (variant.id === stableId) return true;
-      const existingValue = variant.optionValues?.[row.groupLabel];
-      return existingValue === row.valueLabel || (!variant.optionValues && variant.name === row.valueLabel);
+      if (!variant.optionValues) return variant.name === name;
+      return combination.every(row => variant.optionValues?.[row.groupLabel] === row.valueLabel);
     });
-    const name = row.valueLabel;
 
     return {
       id: existing?.id || stableId,
       name,
-      sku: existing?.sku || makeVariantSku(`${row.groupLabel}-${name}`, index),
+      sku: existing?.sku || makeVariantSku(name, index),
       priceLabel: existing?.priceLabel || priceLabel(defaultPrice),
       stock: existing?.stock ?? 10,
       enabled: existing?.enabled ?? true,
       image: existing?.image,
-      optionValues: { [row.groupLabel]: row.valueLabel },
+      optionValues,
     };
   });
 }
@@ -330,6 +342,8 @@ export const TanjaMolAddProductPage = ({
     setManualReviewsEnabled(product.manualReviewsEnabled ?? true);
     setShowRelated(product.showRelated ?? true);
     setShowPolicies(product.showPolicies ?? true);
+    setRating(product.rating ? String(product.rating) : '4.8');
+    setReviewCount(product.reviewCount ? String(product.reviewCount) : '127');
   }, [product]);
 
   const cleanGallery = gallery.map(item => item.trim()).filter(Boolean);
@@ -372,13 +386,15 @@ export const TanjaMolAddProductPage = ({
     delivery,
     reviewsEnabled,
     manualReviewsEnabled,
+    rating: Number(rating) || 4.8,
+    reviewCount: Number(reviewCount) || 0,
     showRelated,
     showPolicies,
     details: details.map((detail, index) => ({ ...detail, reverse: detail.reverse ?? index % 2 === 1 })),
     specs: specs.filter(spec => spec.label.trim() && spec.value.trim()).map(spec => [spec.label, spec.value] as [string, string]),
     variantOptions: variantsEnabled ? variantOptions.filter(group => group.label.trim() && group.values.some(value => value.label.trim())) : [],
     variants: variantsEnabled ? variants : [],
-  }), [badge, category, cleanGallery, delivery, details, manualReviewsEnabled, oldPrice, price, reviewsEnabled, shortDescription, showPolicies, showRelated, slug, specs, stock, title, variantOptions, variants, variantsEnabled]);
+  }), [badge, category, cleanGallery, delivery, details, manualReviewsEnabled, oldPrice, price, rating, reviewCount, reviewsEnabled, shortDescription, showPolicies, showRelated, slug, specs, stock, title, variantOptions, variants, variantsEnabled]);
 
   const addVariant = () => {
     const index = variants.length + 1;

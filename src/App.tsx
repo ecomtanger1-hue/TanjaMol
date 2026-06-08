@@ -12,6 +12,7 @@ import {
   AdminSettingsPage,
   CartPopup,
   CategoryPage,
+  CollectionPage,
   InfoPage,
   NotFoundPage,
   SearchResultsPage,
@@ -22,6 +23,7 @@ import {
   defaultSettings,
   orderTotal,
   parseCategoryId,
+  parseCollectionId,
   parseOrderForm,
   parseProductSlug,
   parseSearchQuery,
@@ -77,6 +79,7 @@ export function App() {
       ...defaultSettings,
       ...storedSettings,
       storeName: !storedSettings.storeName || storedSettings.storeName === 'TanjaMol' ? defaultSettings.storeName : storedSettings.storeName,
+      whatsappNumber: !storedSettings.whatsappNumber || storedSettings.whatsappNumber === '212600000000' ? defaultSettings.whatsappNumber : storedSettings.whatsappNumber,
     };
   });
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -165,6 +168,7 @@ export function App() {
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const productSlug = parseProductSlug(route);
   const categoryId = parseCategoryId(route);
+  const collectionId = parseCollectionId(route);
   const searchQuery = parseSearchQuery(route);
   const adminProducts = useMemo(() => {
     const deleted = new Set(deletedProductSlugs);
@@ -315,7 +319,7 @@ export function App() {
       return next;
     });
     setHiddenProductSlugs(current => {
-      const next = current.filter(slug => slug !== product.slug);
+      const next = current.filter(slug => slug !== product.slug && slug !== previousSlug);
       localStorage.setItem(ADMIN_HIDDEN_PRODUCTS_KEY, JSON.stringify(next));
       return next;
     });
@@ -478,6 +482,7 @@ export function App() {
     }
 
     if (categoryId) return <CategoryPage categoryId={categoryId} {...commonProps} />;
+    if (collectionId) return <CollectionPage collectionId={collectionId} {...commonProps} />;
     if (route.startsWith('#/search')) return <SearchResultsPage query={searchQuery} {...commonProps} />;
     if (route === '#/about') return <InfoPage page="about" cartCount={cartCount} onNavigate={navigate} onOpenCart={commonProps.onOpenCart} onOpenSearch={commonProps.onOpenSearch} settings={settings} />;
     if (route === '#/contact') return <InfoPage page="contact" cartCount={cartCount} onNavigate={navigate} onOpenCart={commonProps.onOpenCart} onOpenSearch={commonProps.onOpenSearch} settings={settings} />;
@@ -504,7 +509,7 @@ export function App() {
     }
 
     return <NotFoundPage cartCount={cartCount} onNavigate={navigate} onOpenCart={commonProps.onOpenCart} onOpenSearch={commonProps.onOpenSearch} />;
-  }, [activeProduct, adminProducts, cartCount, categoryId, commonProps, hiddenProductSlugs, isAdminLoggedIn, orders, productSlug, route, searchQuery, settings, storefrontProducts]);
+  }, [activeProduct, adminProducts, cartCount, categoryId, collectionId, commonProps, hiddenProductSlugs, isAdminLoggedIn, orders, productSlug, route, searchQuery, settings, storefrontProducts]);
 
   return (
     <>
