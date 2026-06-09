@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { BarChart3, LayoutDashboard, Package, Settings, ShoppingBag, Store, Users } from 'lucide-react';
+import { LayoutDashboard, Package, Settings, ShoppingBag, Store } from 'lucide-react';
 import { TanjaMallLogo } from '../brand/TanjaMallLogo';
 
 type AdminShellProps = {
@@ -14,8 +14,6 @@ const adminNav = [
   { label: 'لوحة التحكم', route: '#/admin', icon: LayoutDashboard },
   { label: 'المنتجات', route: '#/admin/products', icon: Package },
   { label: 'الطلبات', route: '#/admin/orders', icon: ShoppingBag },
-  { label: 'الزوار', route: '#/admin', icon: Users, active: false },
-  { label: 'التقارير', route: '#/admin', icon: BarChart3, active: false },
   { label: 'الإعدادات', route: '#/admin/settings', icon: Settings },
 ];
 
@@ -41,7 +39,7 @@ export function AdminSidebar({ onNavigate = defaultNavigate }: { onNavigate?: (r
         <nav className="mt-8 grid gap-1 text-sm font-extrabold">
           {adminNav.map(item => {
             const Icon = item.icon;
-            const active = item.active === false ? false : isActive(item.route, currentRoute);
+            const active = isActive(item.route, currentRoute);
 
             return (
               <button
@@ -77,15 +75,15 @@ export function AdminShell({ title, eyebrow, actions, children, onNavigate = def
       <AdminSidebar onNavigate={onNavigate} />
       <main className="min-w-0 lg:pr-[76px]">
         <header className="sticky top-0 z-30 border-b border-[#d9dfd8] bg-[#f8f7f1]/94">
-          <div className="mx-auto flex min-h-[72px] max-w-[1440px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto flex min-h-[64px] max-w-[1360px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
             <div className="min-w-0">
               {eyebrow ? <p className="text-xs font-black text-[#b45309]">{eyebrow}</p> : null}
-              <h1 className="truncate font-heading text-2xl font-black sm:text-3xl">{title}</h1>
+              <h1 className="truncate font-heading text-xl font-black sm:text-2xl">{title}</h1>
             </div>
             {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : null}
           </div>
         </header>
-        <div className="mx-auto grid max-w-[1440px] gap-5 px-4 py-5 sm:px-6 lg:px-8">{children}</div>
+        <div className="mx-auto grid max-w-[1360px] gap-4 px-4 py-4 sm:px-6 lg:px-8">{children}</div>
       </main>
     </div>
   );

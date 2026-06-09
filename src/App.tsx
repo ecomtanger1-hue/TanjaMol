@@ -20,6 +20,7 @@ import {
 import {
   buildWhatsAppOrderUrl,
   cartItemFromProduct,
+  categories as storeCategories,
   defaultSettings,
   orderTotal,
   parseCategoryId,
@@ -66,9 +67,142 @@ function getRoute() {
   return window.location.hash || '#/';
 }
 
+function cleanText(value: string, maxLength: number) {
+  return value.replace(/\s+/g, ' ').trim().slice(0, maxLength);
+}
+
+function absoluteAssetUrl(src: string) {
+  if (!src) return window.location.origin;
+  if (src.startsWith('data:')) return src;
+  try {
+    return new URL(src, window.location.origin).href;
+  } catch {
+    return window.location.origin;
+  }
+}
+
+function upsertMeta(selector: string, attributes: Record<string, string>) {
+  const [attribute, rawValue] = selector.startsWith('meta[')
+    ? selector.replace(/^meta\[|\]$/g, '').split('=')
+    : ['rel', selector.replace(/^link\[rel="|"?\]$/g, '')];
+  const value = rawValue?.replace(/^"|"$/g, '');
+  let element = document.head.querySelector(selector) as HTMLMetaElement | HTMLLinkElement | null;
+
+  if (!element) {
+    element = document.createElement(selector.startsWith('meta[') ? 'meta' : 'link');
+    if (attribute && value) element.setAttribute(attribute, value);
+    document.head.appendChild(element);
+  }
+
+  Object.entries(attributes).forEach(([key, nextValue]) => element?.setAttribute(key, nextValue));
+}
+
+function upsertJsonLd(id: string, data: Record<string, unknown> | null) {
+  const existing = document.getElementById(id);
+  if (!data) {
+    existing?.remove();
+    return;
+  }
+
+  const script = (existing ?? document.createElement('script')) as HTMLScriptElement;
+  script.id = id;
+  script.type = 'application/ld+json';
+  script.textContent = JSON.stringify(data);
+  if (!existing) document.head.appendChild(script);
+}
+
+function applyPageSeo(product: Product | undefined, settings: StoreSettings) {
+  const storeName = settings.storeName || defaultSettings.storeName;
+  const baseUrl = `${window.location.origin}${window.location.pathname}`;
+  const defaultDescription = `TanjaMol COD store in Tanger with cash on delivery and fast local confirmation.`;
+
+  if (!product) {
+    document.title = `${storeName} | COD Tanger`;
+    upsertMeta('meta[name="description"]', { name: 'description', content: defaultDescription });
+    upsertMeta('meta[property="og:title"]', { property: 'og:title', content: storeName });
+    upsertMeta('meta[property="og:description"]', { property: 'og:description', content: defaultDescription });
+    upsertMeta('meta[property="og:type"]', { property: 'og:type', content: 'website' });
+    upsertMeta('meta[property="og:url"]', { property: 'og:url', content: baseUrl });
+    upsertMeta('meta[property="og:image"]', { property: 'og:image', content: absoluteAssetUrl('/tanjamall-icon.svg') });
+    upsertMeta('meta[name="twitter:card"]', { name: 'twitter:card', content: 'summary_large_image' });
+    upsertMeta('meta[name="twitter:title"]', { name: 'twitter:title', content: storeName });
+    upsertMeta('meta[name="twitter:description"]', { name: 'twitter:description', content: defaultDescription });
+    upsertMeta('link[rel="canonical"]', { rel: 'canonical', href: baseUrl });
+    upsertJsonLd('tm-product-jsonld', null);
+    upsertJsonLd('tm-breadcrumb-jsonld', null);
+    return;
+  }
+
+  const productUrl = `${baseUrl}${productRoute(product.slug)}`;
+  const title = cleanText(`${product.title} | ${storeName}`, 62);
+  const description = cleanText(product.description || `${product.title} available from ${storeName} with cash on delivery in Tanger.`, 158);
+  const image = absoluteAssetUrl(product.image || product.gallery?.[0] || '/tanjamall-icon.svg');
+  const category = storeCategories.find(item => item.title === product.category || product.category.includes(item.title.split(' ')[0]));
+  const categoryUrl = category ? `${baseUrl}#/category/${encodeURIComponent(category.id)}` : baseUrl;
+  const sku = product.variants?.find(variant => variant.enabled && variant.sku)?.sku || product.slug;
+  const priceValidUntil = new Date(Date.now() + 1000 * 60 * 60 * 24 * 60).toISOString().slice(0, 10);
+
+  document.title = title;
+  upsertMeta('meta[name="description"]', { name: 'description', content: description });
+  upsertMeta('meta[property="og:title"]', { property: 'og:title', content: title });
+  upsertMeta('meta[property="og:description"]', { property: 'og:description', content: description });
+  upsertMeta('meta[property="og:type"]', { property: 'og:type', content: 'product' });
+  upsertMeta('meta[property="og:url"]', { property: 'og:url', content: productUrl });
+  upsertMeta('meta[property="og:image"]', { property: 'og:image', content: image });
+  upsertMeta('meta[name="twitter:card"]', { name: 'twitter:card', content: 'summary_large_image' });
+  upsertMeta('meta[name="twitter:title"]', { name: 'twitter:title', content: title });
+  upsertMeta('meta[name="twitter:description"]', { name: 'twitter:description', content: description });
+  upsertMeta('meta[name="twitter:image"]', { name: 'twitter:image', content: image });
+  upsertMeta('link[rel="canonical"]', { rel: 'canonical', href: productUrl });
+
+  const productJsonLd: Record<string, unknown> = {
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.title,
+    description,
+    image: (product.gallery?.length ? product.gallery : [product.image]).filter(Boolean).map(absoluteAssetUrl),
+    sku,
+    brand: {
+      '@type': 'Brand',
+      name: storeName,
+    },
+    offers: {
+      '@type': 'Offer',
+      url: productUrl,
+      priceCurrency: 'MAD',
+      price: product.price,
+      availability: product.stock === 0 ? 'https://schema.org/OutOfStock' : 'https://schema.org/InStock',
+      priceValidUntil,
+      itemCondition: 'https://schema.org/NewCondition',
+    },
+  };
+
+  if (product.reviewsEnabled && product.rating && product.reviewCount) {
+    productJsonLd.aggregateRating = {
+      '@type': 'AggregateRating',
+      ratingValue: product.rating,
+      reviewCount: product.reviewCount,
+      bestRating: 5,
+      worstRating: 1,
+    };
+  }
+
+  upsertJsonLd('tm-product-jsonld', productJsonLd);
+  upsertJsonLd('tm-breadcrumb-jsonld', {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: storeName, item: baseUrl },
+      { '@type': 'ListItem', position: 2, name: product.category, item: categoryUrl },
+      { '@type': 'ListItem', position: 3, name: product.title, item: productUrl },
+    ],
+  });
+}
+
 export function App() {
   const [route, setRoute] = useState(getRoute);
   const [customProducts, setCustomProducts] = useState<Product[]>(() => readStored<Product[]>(ADMIN_PRODUCTS_KEY, []));
+  const [remoteProducts, setRemoteProducts] = useState<Product[] | null>(null);
   const [deletedProductSlugs, setDeletedProductSlugs] = useState<string[]>(() => readStored<string[]>(ADMIN_DELETED_PRODUCTS_KEY, []));
   const [hiddenProductSlugs, setHiddenProductSlugs] = useState<string[]>(() => readStored<string[]>(ADMIN_HIDDEN_PRODUCTS_KEY, []));
   const [cart, setCart] = useState<CartItem[]>(() => readStored<CartItem[]>(CART_KEY, []));
@@ -118,6 +252,27 @@ export function App() {
   }, [settings]);
 
   useEffect(() => {
+    let active = true;
+
+    void Promise.all([
+      import('./lib/supabaseProducts').then(({ fetchProductsFromSupabase }) => fetchProductsFromSupabase(false)),
+      import('./lib/supabaseSettings').then(({ fetchStoreSettingsFromSupabase }) => fetchStoreSettingsFromSupabase()),
+    ])
+      .then(([productsFromSupabase, settingsFromSupabase]) => {
+        if (!active) return;
+        setRemoteProducts(current => productsFromSupabase.length || current ? productsFromSupabase : null);
+        if (settingsFromSupabase) setSettings(current => ({ ...current, ...settingsFromSupabase }));
+      })
+      .catch(error => {
+        console.error('Failed to load Supabase storefront data', error);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
     if (!route.startsWith('#/admin')) {
       setIsAdminLoading(false);
       return;
@@ -136,7 +291,17 @@ export function App() {
         const restored = await restoreAdminSession();
         if (!active) return;
         setIsAdminLoggedIn(restored);
-        if (restored) setOrders(await fetchAdminOrders());
+        if (restored) {
+          const [{ fetchProductsFromSupabase }, nextOrders] = await Promise.all([
+            import('./lib/supabaseProducts'),
+            fetchAdminOrders(),
+          ]);
+          if (!active) return;
+          setOrders(nextOrders);
+          const nextProducts = await fetchProductsFromSupabase(true);
+          if (!active) return;
+          setRemoteProducts(current => nextProducts.length || current ? nextProducts : null);
+        }
       })
       .catch(() => undefined)
       .finally(() => {
@@ -151,11 +316,16 @@ export function App() {
   useEffect(() => {
     if (!isAdminLoggedIn || !route.startsWith('#/admin')) return;
 
-    void import('./lib/supabaseAdmin')
-      .then(({ fetchAdminOrders }) => fetchAdminOrders())
-      .then(setOrders)
+    void Promise.all([
+      import('./lib/supabaseAdmin').then(({ fetchAdminOrders }) => fetchAdminOrders()),
+      import('./lib/supabaseProducts').then(({ fetchProductsFromSupabase }) => fetchProductsFromSupabase(true)),
+    ])
+      .then(([nextOrders, nextProducts]) => {
+        setOrders(nextOrders);
+        setRemoteProducts(current => nextProducts.length || current ? nextProducts : null);
+      })
       .catch(error => {
-        console.error('Failed to load admin orders', error);
+        console.error('Failed to load admin data', error);
       });
   }, [isAdminLoggedIn, route]);
 
@@ -170,7 +340,7 @@ export function App() {
   const categoryId = parseCategoryId(route);
   const collectionId = parseCollectionId(route);
   const searchQuery = parseSearchQuery(route);
-  const adminProducts = useMemo(() => {
+  const localAdminProducts = useMemo(() => {
     const deleted = new Set(deletedProductSlugs);
     const customSlugs = new Set(customProducts.map(product => product.slug));
 
@@ -179,11 +349,21 @@ export function App() {
       ...seedProducts.filter(product => !deleted.has(product.slug) && !customSlugs.has(product.slug)),
     ];
   }, [customProducts, deletedProductSlugs]);
+  const adminProducts = remoteProducts ?? localAdminProducts;
+  const effectiveHiddenProductSlugs = useMemo(() => (
+    remoteProducts
+      ? remoteProducts.filter(product => product.isVisible === false).map(product => product.slug)
+      : hiddenProductSlugs
+  ), [hiddenProductSlugs, remoteProducts]);
   const storefrontProducts = useMemo(() => {
-    const hidden = new Set(hiddenProductSlugs);
-    return adminProducts.filter(product => !hidden.has(product.slug));
-  }, [adminProducts, hiddenProductSlugs]);
+    const hidden = new Set(effectiveHiddenProductSlugs);
+    return adminProducts.filter(product => !hidden.has(product.slug) && product.isVisible !== false);
+  }, [adminProducts, effectiveHiddenProductSlugs]);
   const activeProduct = productSlug ? storefrontProducts.find(product => product.slug === productSlug) : undefined;
+
+  useEffect(() => {
+    applyPageSeo(activeProduct, settings);
+  }, [activeProduct, settings]);
 
   const navigate = (nextRoute: string) => {
     window.history.pushState(null, '', nextRoute);
@@ -280,7 +460,13 @@ export function App() {
     try {
       const { fetchAdminOrders, signInAdmin } = await import('./lib/supabaseAdmin');
       await signInAdmin(email, password);
-      setOrders(await fetchAdminOrders());
+      const [{ fetchProductsFromSupabase }, nextOrders] = await Promise.all([
+        import('./lib/supabaseProducts'),
+        fetchAdminOrders(),
+      ]);
+      setOrders(nextOrders);
+      const nextProducts = await fetchProductsFromSupabase(true);
+      setRemoteProducts(nextProducts);
       setIsAdminLoggedIn(true);
       navigate('#/admin');
     } catch {
@@ -307,12 +493,28 @@ export function App() {
     onPlaceOrder: placeOrderFromForm,
   };
 
+  const saveStoreSettings = (nextSettings: StoreSettings) => {
+    setSettings(nextSettings);
+    void import('./lib/supabaseSettings')
+      .then(({ saveStoreSettingsToSupabase }) => saveStoreSettingsToSupabase(nextSettings))
+      .then(() => setNotice('تم حفظ إعدادات المتجر'))
+      .catch(error => {
+        console.error('Failed to save store settings to Supabase', error);
+        setNotice('تم حفظ الإعدادات محليا');
+      });
+  };
+
   const saveProduct = (product: Product, previousSlug = product.slug) => {
+    const previousProduct = adminProducts.find(item => item.slug === previousSlug || item.slug === product.slug);
+    const isVisible = previousProduct?.isVisible ?? !effectiveHiddenProductSlugs.includes(previousSlug);
+    const nextProduct = { ...product, isVisible };
+
     setCustomProducts(current => {
-      const next = [product, ...current.filter(item => item.slug !== product.slug && item.slug !== previousSlug)];
+      const next = [nextProduct, ...current.filter(item => item.slug !== product.slug && item.slug !== previousSlug)];
       localStorage.setItem(ADMIN_PRODUCTS_KEY, JSON.stringify(next));
       return next;
     });
+    setRemoteProducts(current => current ? [nextProduct, ...current.filter(item => item.slug !== product.slug && item.slug !== previousSlug)] : current);
     setDeletedProductSlugs(current => {
       const next = current.filter(slug => slug !== product.slug && slug !== previousSlug);
       localStorage.setItem(ADMIN_DELETED_PRODUCTS_KEY, JSON.stringify(next));
@@ -324,6 +526,13 @@ export function App() {
       return next;
     });
     setNotice('تم نشر المنتج');
+
+    void import('./lib/supabaseProducts')
+      .then(({ upsertProductToSupabase }) => upsertProductToSupabase(nextProduct, previousSlug, isVisible))
+      .catch(error => {
+        console.error('Failed to save product to Supabase', error);
+        setNotice('تم حفظ المنتج محليا فقط');
+      });
   };
 
   const deleteProduct = (product: Product) => {
@@ -345,17 +554,113 @@ export function App() {
       localStorage.setItem(ADMIN_HIDDEN_PRODUCTS_KEY, JSON.stringify(next));
       return next;
     });
+    setRemoteProducts(current => current ? current.filter(item => item.slug !== product.slug) : current);
     setNotice('تم حذف المنتج');
+
+    void import('./lib/supabaseProducts')
+      .then(({ deleteProductFromSupabase }) => deleteProductFromSupabase(product.slug))
+      .catch(error => {
+        console.error('Failed to delete product from Supabase', error);
+        setNotice('تم حذف المنتج محليا فقط');
+      });
+  };
+
+  const deleteProducts = (productsToDelete: Product[]) => {
+    const slugs = productsToDelete.map(product => product.slug);
+    if (!slugs.length) return;
+
+    setCustomProducts(current => {
+      const next = current.filter(item => !slugs.includes(item.slug));
+      localStorage.setItem(ADMIN_PRODUCTS_KEY, JSON.stringify(next));
+      return next;
+    });
+    setDeletedProductSlugs(current => {
+      const next = Array.from(new Set([...current, ...slugs]));
+      localStorage.setItem(ADMIN_DELETED_PRODUCTS_KEY, JSON.stringify(next));
+      return next;
+    });
+    setHiddenProductSlugs(current => {
+      const next = current.filter(slug => !slugs.includes(slug));
+      localStorage.setItem(ADMIN_HIDDEN_PRODUCTS_KEY, JSON.stringify(next));
+      return next;
+    });
+    setRemoteProducts(current => current ? current.filter(product => !slugs.includes(product.slug)) : current);
+    setNotice('تم حذف المنتجات المحددة');
+
+    void Promise.all(slugs.map(slug => import('./lib/supabaseProducts').then(({ deleteProductFromSupabase }) => deleteProductFromSupabase(slug))))
+      .catch(error => {
+        console.error('Failed to delete selected products from Supabase', error);
+        setNotice('تم حذف المنتجات محليا فقط');
+      });
   };
 
   const toggleProductVisibility = (slug: string) => {
+    const isCurrentlyHidden = effectiveHiddenProductSlugs.includes(slug);
     setHiddenProductSlugs(current => {
-      const isHidden = current.includes(slug);
-      const next = isHidden ? current.filter(item => item !== slug) : [...current, slug];
+      const next = isCurrentlyHidden ? current.filter(item => item !== slug) : Array.from(new Set([...current, slug]));
       localStorage.setItem(ADMIN_HIDDEN_PRODUCTS_KEY, JSON.stringify(next));
-      setNotice(isHidden ? 'تم إظهار المنتج' : 'تم إخفاء المنتج');
+      setNotice(isCurrentlyHidden ? 'تم إظهار المنتج' : 'تم إخفاء المنتج');
       return next;
     });
+    setRemoteProducts(current => current ? current.map(product => product.slug === slug ? { ...product, isVisible: isCurrentlyHidden } : product) : current);
+
+    void import('./lib/supabaseProducts')
+      .then(({ setProductVisibilityInSupabase }) => setProductVisibilityInSupabase(slug, isCurrentlyHidden))
+      .catch(error => {
+        console.error('Failed to update product visibility in Supabase', error);
+        setNotice('تم تغيير الظهور محليا فقط');
+      });
+  };
+
+  const hideProducts = (slugs: string[]) => {
+    setHiddenProductSlugs(current => {
+      const next = Array.from(new Set([...current, ...slugs]));
+      localStorage.setItem(ADMIN_HIDDEN_PRODUCTS_KEY, JSON.stringify(next));
+      setNotice('تم إخفاء المنتجات المحددة');
+      return next;
+    });
+    setRemoteProducts(current => current ? current.map(product => slugs.includes(product.slug) ? { ...product, isVisible: false } : product) : current);
+    void import('./lib/supabaseProducts')
+      .then(({ setProductsVisibilityInSupabase }) => setProductsVisibilityInSupabase(slugs, false))
+      .catch(error => {
+        console.error('Failed to hide products in Supabase', error);
+        setNotice('تم إخفاء المنتجات محليا فقط');
+      });
+  };
+
+  const showProducts = (slugs: string[]) => {
+    setHiddenProductSlugs(current => {
+      const selected = new Set(slugs);
+      const next = current.filter(slug => !selected.has(slug));
+      localStorage.setItem(ADMIN_HIDDEN_PRODUCTS_KEY, JSON.stringify(next));
+      setNotice('تم إظهار المنتجات المحددة');
+      return next;
+    });
+    setRemoteProducts(current => current ? current.map(product => slugs.includes(product.slug) ? { ...product, isVisible: true } : product) : current);
+    void import('./lib/supabaseProducts')
+      .then(({ setProductsVisibilityInSupabase }) => setProductsVisibilityInSupabase(slugs, true))
+      .catch(error => {
+        console.error('Failed to show products in Supabase', error);
+        setNotice('تم إظهار المنتجات محليا فقط');
+      });
+  };
+
+  const syncProductsToSupabase = async () => {
+    try {
+      const { fetchProductsFromSupabase, upsertProductToSupabase } = await import('./lib/supabaseProducts');
+      const productsToSync = adminProducts.length ? adminProducts : localAdminProducts;
+
+      for (const [index, product] of productsToSync.entries()) {
+        const isVisible = product.isVisible ?? !effectiveHiddenProductSlugs.includes(product.slug);
+        await upsertProductToSupabase({ ...product, sortOrder: product.sortOrder ?? index, isVisible }, undefined, isVisible);
+      }
+
+      setRemoteProducts(await fetchProductsFromSupabase(true));
+      setNotice('تمت مزامنة المنتجات');
+    } catch (error) {
+      console.error('Failed to sync products to Supabase', error);
+      setNotice('تعذرت مزامنة المنتجات');
+    }
   };
 
   const renderedPage = useMemo(() => {
@@ -376,6 +681,7 @@ export function App() {
         <TanjaMallAdminProductDashboard
           products={adminProducts}
           orders={orders}
+          hiddenSlugs={effectiveHiddenProductSlugs}
           onAddProduct={() => navigate('#/admin/products/new')}
           onOpenProducts={() => navigate('#/admin/products')}
           onOpenStorefront={() => navigate('#/')}
@@ -391,9 +697,13 @@ export function App() {
         <AdminProductsPage
           products={adminProducts}
           orders={orders}
-          hiddenSlugs={hiddenProductSlugs}
+          hiddenSlugs={effectiveHiddenProductSlugs}
           onNavigate={navigate}
           onDeleteProduct={deleteProduct}
+          onDeleteProducts={deleteProducts}
+          onHideProducts={hideProducts}
+          onShowProducts={showProducts}
+          onSyncProducts={syncProductsToSupabase}
           onToggleVisibility={toggleProductVisibility}
         />
       );
@@ -407,9 +717,13 @@ export function App() {
           <AdminProductsPage
             products={adminProducts}
             orders={orders}
-            hiddenSlugs={hiddenProductSlugs}
+            hiddenSlugs={effectiveHiddenProductSlugs}
             onNavigate={navigate}
             onDeleteProduct={deleteProduct}
+            onDeleteProducts={deleteProducts}
+            onHideProducts={hideProducts}
+            onShowProducts={showProducts}
+            onSyncProducts={syncProductsToSupabase}
             onToggleVisibility={toggleProductVisibility}
           />
         );
@@ -454,7 +768,7 @@ export function App() {
     }
 
     if (route === '#/admin/settings') {
-      return <AdminSettingsPage settings={settings} onSave={setSettings} onNavigate={navigate} />;
+      return <AdminSettingsPage settings={settings} onSave={saveStoreSettings} onNavigate={navigate} />;
     }
 
     if (productSlug) {
@@ -509,7 +823,7 @@ export function App() {
     }
 
     return <NotFoundPage cartCount={cartCount} onNavigate={navigate} onOpenCart={commonProps.onOpenCart} onOpenSearch={commonProps.onOpenSearch} />;
-  }, [activeProduct, adminProducts, cartCount, categoryId, collectionId, commonProps, hiddenProductSlugs, isAdminLoggedIn, orders, productSlug, route, searchQuery, settings, storefrontProducts]);
+  }, [activeProduct, adminProducts, cartCount, categoryId, collectionId, commonProps, effectiveHiddenProductSlugs, isAdminLoggedIn, orders, productSlug, route, searchQuery, settings, storefrontProducts]);
 
   return (
     <>

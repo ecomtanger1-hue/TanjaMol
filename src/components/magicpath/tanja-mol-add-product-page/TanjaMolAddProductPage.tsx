@@ -253,6 +253,21 @@ function readFiles(files: FileList | null): Promise<string[]> {
   })));
 }
 
+async function uploadOrReadFiles(files: FileList | null, folder: string) {
+  if (!files?.length) return [];
+  const fileArray = Array.from(files);
+
+  try {
+    const { uploadProductImages } = await import('../../../lib/supabaseStorage');
+    const uploadedImages = await uploadProductImages(fileArray, folder);
+    if (uploadedImages.length) return uploadedImages;
+  } catch (error) {
+    console.error('Failed to upload images to Supabase Storage', error);
+  }
+
+  return readFiles(files);
+}
+
 export const TanjaMolAddProductPage = ({
   product,
   products,
@@ -536,14 +551,14 @@ export const TanjaMolAddProductPage = ({
   };
 
   const handleImageUpload = async (files: FileList | null) => {
-    const nextImages = await readFiles(files);
+    const nextImages = await uploadOrReadFiles(files, slug || makeSlug(title || 'product'));
     if (!nextImages.length) return;
     setGallery(current => [...current.filter(Boolean), ...nextImages]);
     if (uploadInputRef.current) uploadInputRef.current.value = '';
   };
 
   const handleBlockImageUpload = async (detailId: string, files: FileList | null) => {
-    const nextImages = await readFiles(files);
+    const nextImages = await uploadOrReadFiles(files, slug || makeSlug(title || 'product'));
     const selectedImage = nextImages[0];
     if (!selectedImage) return;
 
@@ -692,35 +707,36 @@ export const TanjaMolAddProductPage = ({
 
         <main className="min-w-0 lg:col-start-2 lg:row-start-1">
           <header className="sticky top-0 z-30 border-b border-[#d9dfd8] bg-[#f8f7f1]/96">
-            <div className="mx-auto flex min-h-[76px] max-w-[1280px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto flex min-h-[66px] max-w-[1120px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
               <div className="min-w-0">
-                <p className="text-[11px] font-black text-[#6a746d]">المنتجات / إضافة منتج</p>
-                <h1 className="mt-1 truncate font-heading text-[26px] font-black leading-none sm:text-[30px]">إضافة منتج جديد</h1>
+                <h1 className="truncate font-heading text-[22px] font-black leading-none sm:text-[26px]">{product ? 'تعديل منتج' : 'إضافة منتج جديد'}</h1>
               </div>
 
               <div className="flex shrink-0 items-center gap-2">
-                <button type="button" onClick={() => setDraftSaved(true)} className="tm-admin-press min-h-[40px] rounded-md border border-[#cfd8d1] bg-white px-4 text-sm font-extrabold">
+                <button type="button" onClick={onBack} className="tm-admin-press min-h-[38px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">
+                  رجوع
+                </button>
+                <button type="button" onClick={() => setDraftSaved(true)} className="tm-admin-press min-h-[38px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">
                   حفظ مسودة
                 </button>
-                <button type="submit" className="tm-admin-press min-h-[40px] rounded-md bg-[#ff9900] px-4 text-sm font-black text-[#131921] shadow-[0_14px_30px_-22px_rgba(255,153,0,0.9)]">
+                <button type="submit" className="tm-admin-press min-h-[38px] rounded-md bg-[#ff9900] px-3 text-xs font-black text-[#131921] shadow-[0_14px_30px_-22px_rgba(255,153,0,0.9)]">
                   نشر المنتج
                 </button>
               </div>
             </div>
 
             <div className="border-t border-[#e3e6df] bg-white/62">
-              <div className="mx-auto flex max-w-[1280px] items-center gap-3 px-4 py-2 sm:px-6 lg:px-8">
+              <div className="mx-auto flex max-w-[1120px] items-center gap-3 px-4 py-2 sm:px-6 lg:px-8">
                 <span className="tm-admin-num text-xs font-black text-[#b45309]">{readiness}%</span>
                 <div className="h-2 flex-1 overflow-hidden rounded-full bg-[#dfe6df]">
                   <div className="h-full rounded-full bg-[#ff9900]" style={{ width: `${readiness}%` }} />
                 </div>
-                <span className="text-xs font-black text-[#66736b]">جاهزية النشر</span>
               </div>
             </div>
           </header>
 
-          <div className="mx-auto grid max-w-[1280px] gap-4 px-4 py-5 sm:px-6 lg:px-8">
-            <AdminSection title="البيانات الأساسية" badge="مطلوب" summary={basicSummary} status={title.trim() && slug.trim() ? 'done' : 'missing'} defaultOpen={false}>
+          <div className="mx-auto grid max-w-[1120px] gap-3 px-4 py-4 sm:px-6 lg:px-8">
+            <AdminSection title="البيانات الأساسية" badge="مطلوب" summary={basicSummary} status={title.trim() && slug.trim() ? 'done' : 'missing'}>
               <div className="grid gap-4 lg:grid-cols-2">
                 <TextField label="اسم المنتج" value={title} onChange={value => {
                   setTitle(value);
@@ -747,14 +763,6 @@ export const TanjaMolAddProductPage = ({
                 <TextField label="السعر قبل التخفيض" value={oldPrice} onChange={setOldPrice} numeric />
                 <TextField label="المخزون" value={stock} onChange={setStock} numeric />
                 <TextField label="مدة التوصيل" value={delivery} onChange={setDelivery} numeric />
-              </div>
-              <div className="mt-4 grid gap-3 lg:grid-cols-3">
-                {['الدفع عند الاستلام', 'تأكيد بالهاتف', 'توصيل داخل طنجة'].map(item => (
-                  <label key={item} className="flex min-h-[42px] items-center gap-3 rounded-md border border-[#dfe5df] bg-[#fbfaf6] px-3 text-sm font-extrabold">
-                    <input type="checkbox" defaultChecked className="h-4 w-4 accent-[#ff9900]" />
-                    {item}
-                  </label>
-                ))}
               </div>
             </AdminSection>
 
@@ -1047,7 +1055,7 @@ export const TanjaMolAddProductPage = ({
               </div>
             </AdminSection>
 
-            <AdminSection title="معاينة مصغرة" summary="شكل سريع قبل النشر" status="neutral" defaultOpen={false}>
+            <AdminSection title="معاينة مصغرة" status="neutral" defaultOpen={false}>
               <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
                 <div className="grid aspect-[4/3] place-items-center overflow-hidden rounded-md bg-[#eef3ef] text-sm font-black text-[#65716a]">
                   <img src={previewProduct.image} alt={previewProduct.title} className="h-full w-full object-cover" />
@@ -1067,20 +1075,6 @@ export const TanjaMolAddProductPage = ({
                 </div>
               </div>
             </AdminSection>
-
-            <div className="flex flex-col gap-3 pb-8 sm:flex-row sm:items-center sm:justify-between">
-              <button type="button" onClick={onBack} className="tm-admin-press min-h-[42px] rounded-md border border-[#cfd8d1] bg-white px-4 text-sm font-extrabold">
-                العودة إلى لوحة التحكم
-              </button>
-              <div className="flex items-center gap-2">
-                <button type="button" onClick={() => setDraftSaved(true)} className="tm-admin-press min-h-[42px] rounded-md border border-[#cfd8d1] bg-white px-4 text-sm font-extrabold">
-                  حفظ مسودة
-                </button>
-                <button type="submit" className="tm-admin-press min-h-[42px] rounded-md bg-[#ff9900] px-4 text-sm font-black text-[#131921]">
-                  نشر المنتج
-                </button>
-              </div>
-            </div>
 
             {draftSaved ? <div className="fixed bottom-4 left-4 z-[70] rounded-md bg-[#131921] px-4 py-3 text-sm font-black text-white shadow-[0_18px_48px_-22px_rgba(23,32,27,0.65)]" role="status">تم حفظ المسودة</div> : null}
           </div>
@@ -1240,17 +1234,16 @@ function AdminSection({
   return (
     <section className={`tm-admin-surface overflow-hidden rounded-md bg-white transition-shadow ${isOpen ? 'shadow-[0_16px_44px_-32px_rgba(19,25,33,0.45)]' : ''}`}>
       <div className="flex flex-wrap items-center justify-between gap-3 p-3 sm:p-4">
-        <button type="button" aria-expanded={isOpen} onClick={() => setIsOpen(current => !current)} className="tm-admin-press flex min-h-[48px] min-w-0 flex-1 items-center gap-3 rounded-md px-1 text-right">
-          <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-md bg-[#eef3ef] text-[#131921] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
+        <button type="button" aria-expanded={isOpen} onClick={() => setIsOpen(current => !current)} className="tm-admin-press flex min-h-[42px] min-w-0 flex-1 items-center gap-3 rounded-md px-1 text-right">
+          <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-md bg-[#eef3ef] text-[#131921] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
             <AdminIcon name="chevron" />
           </span>
           <span className="min-w-0">
             <span className="flex flex-wrap items-center gap-2">
-              <span className="font-heading text-[20px] font-black leading-tight sm:text-[22px]">{title}</span>
+              <span className="font-heading text-base font-black leading-tight sm:text-lg">{title}</span>
               {badge ? <span className="rounded-md bg-[#fff3df] px-3 py-1 text-xs font-black text-[#b45309]">{badge}</span> : null}
               <span className={`rounded-md px-2.5 py-1 text-[11px] font-black ${statusClass}`}>{statusLabel}</span>
             </span>
-            {summary ? <span className="mt-1 block truncate text-xs font-bold text-[#65716a] sm:text-sm">{summary}</span> : null}
           </span>
         </button>
         {action ? <div className="shrink-0">{action}</div> : null}

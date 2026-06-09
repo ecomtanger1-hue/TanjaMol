@@ -1,15 +1,12 @@
-import type { CartItem, OrderDraft, Product } from '../../../storefrontRuntime';
-import { AdminSidebar } from '../../admin/AdminLayout';
-import { TanjaMallLogo } from '../../brand/TanjaMallLogo';
-
-type StoredOrder = OrderDraft & {
-  id: string;
-  createdAt: string;
-};
+import { AlertTriangle, EyeOff, ImageOff, PackagePlus, ShoppingBag, Store, Wallet } from 'lucide-react';
+import type { CartItem, Product, StoredOrder } from '../../../storefrontRuntime';
+import { productRoute } from '../../../storefrontRuntime';
+import { AdminShell } from '../../admin/AdminLayout';
 
 type DashboardProps = {
   products: Product[];
   orders: StoredOrder[];
+  hiddenSlugs?: string[];
   onAddProduct: () => void;
   onOpenProducts?: () => void;
   onOpenStorefront: () => void;
@@ -18,275 +15,277 @@ type DashboardProps = {
   onOpenSettings?: () => void;
 };
 
-const trafficSources = [
-  ['Facebook Ads', '46%', 'w-[46%]'],
-  ['Instagram', '27%', 'w-[27%]'],
-  ['بحث مباشر', '18%', 'w-[18%]'],
-  ['إحالات', '9%', 'w-[9%]'],
-];
-
-const chartHeights = [42, 64, 58, 88, 73, 96, 124, 112, 138, 122, 154, 170];
-
 function orderTotal(items: CartItem[]) {
   return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+}
+
+function productRevenue(product: Product, orders: StoredOrder[]) {
+  return orders.reduce((sum, order) => {
+    const productItems = order.items.filter(item => item.slug === product.slug || item.id === product.id);
+    return sum + productItems.reduce((itemSum, item) => itemSum + item.price * item.quantity, 0);
+  }, 0);
+}
+
+function productOrders(product: Product, orders: StoredOrder[]) {
+  return orders.reduce((sum, order) => sum + order.items.filter(item => item.slug === product.slug || item.id === product.id).reduce((itemSum, item) => itemSum + item.quantity, 0), 0);
+}
+
+function needsDetails(product: Product) {
+  return !product.details?.some(detail => detail.title.trim() && detail.text.trim() && detail.mediaUrl.trim());
+}
+
+function needsImages(product: Product) {
+  return !product.image || (product.gallery?.filter(Boolean).length || 0) < 2;
+}
+
+function formatDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat('ar-MA', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }).format(date);
 }
 
 export const TanjaMallAdminProductDashboard = ({
   products,
   orders,
+  hiddenSlugs = [],
   onAddProduct,
   onOpenProducts,
   onOpenStorefront,
   onOpenProduct,
   onOpenOrders,
-  onOpenSettings,
 }: DashboardProps) => {
-  const salesTotal = orders.reduce((sum, order) => sum + orderTotal(order.items), 0);
-  const publishedProducts = products.length;
-  const productsNeedImages = products.filter(product => product.gallery.length < 3).length;
-  const lowStock = products.filter(product => (product.stock ?? 24) < 10).length;
-  const topProducts = products.slice(0, 4);
-  const latestOrders = orders.slice(0, 5);
+  const hiddenSet = new Set(hiddenSlugs);
+  const revenue = orders.reduce((sum, order) => sum + (order.total || orderTotal(order.items)), 0);
+  const visibleProducts = products.filter(product => !hiddenSet.has(product.slug));
+  const hiddenProducts = products.filter(product => hiddenSet.has(product.slug));
+  const lowStockProducts = products.filter(product => (product.stock ?? 0) > 0 && (product.stock ?? 0) < 10);
+  const outOfStockProducts = products.filter(product => (product.stock ?? 0) <= 0);
+  const productsMissingImages = products.filter(needsImages);
+  const productsMissingDetails = products.filter(needsDetails);
+  const attentionProducts = products
+    .map(product => {
+      const issues = [
+        hiddenSet.has(product.slug) ? 'مخفي' : '',
+        needsImages(product) ? 'صور ناقصة' : '',
+        needsDetails(product) ? 'تفاصيل ناقصة' : '',
+        (product.stock ?? 0) <= 0 ? 'نفد المخزون' : (product.stock ?? 0) < 10 ? 'مخزون منخفض' : '',
+      ].filter(Boolean);
+
+      return { product, issues };
+    })
+    .filter(row => row.issues.length)
+    .slice(0, 6);
+  const topProducts = [...products]
+    .sort((a, b) => productRevenue(b, orders) - productRevenue(a, orders))
+    .slice(0, 5);
+  const recentOrders = [...orders].slice(0, 6);
 
   const metrics = [
-    ['المبيعات اليوم', `${salesTotal.toLocaleString('fr-MA')} درهم`, orders.length ? '+18%' : '0%', 'طلبات واتساب'],
-    ['طلبات مسجلة', String(orders.length), `${Math.min(orders.length, 31)} مؤكد`, 'الدفع عند الاستلام'],
-    ['منتجات منشورة', String(publishedProducts), `${productsNeedImages} تحتاج صور`, 'تظهر في واجهة المتجر'],
-    ['معدل التحويل', orders.length ? '3.2%' : '0%', orders.length ? '+0.4%' : 'ابدأ البيع', 'زيارات وطلبات'],
-  ];
-
-  const orderFlow = [
-    ['جديدة', orders.length, 'bg-[#ff9900]'],
-    ['بانتظار التأكيد', Math.ceil(orders.length * 0.25), 'bg-[#f59e0b]'],
-    ['جاهزة للإرسال', Math.ceil(orders.length * 0.45), 'bg-[#256dff]'],
-    ['تم التسليم', Math.ceil(orders.length * 0.3), 'bg-[#131921]'],
-  ];
-
-  const productHealth = [
-    ['منتجات منشورة', String(publishedProducts), 'جاهزة للبيع'],
-    ['تحتاج صور', String(productsNeedImages), 'أقل من 3 صور في المعرض'],
-    ['مخزون منخفض', String(lowStock), 'أقل من 10 قطع'],
-    ['صفحات كاملة', String(Math.max(0, publishedProducts - productsNeedImages)), 'تفاصيل وصور جاهزة'],
+    {
+      label: 'الطلبات',
+      value: orders.length.toLocaleString('fr-MA'),
+      hint: 'طلبات محفوظة',
+      icon: ShoppingBag,
+      onClick: onOpenOrders,
+    },
+    {
+      label: 'المداخيل',
+      value: `${revenue.toLocaleString('fr-MA')} درهم`,
+      hint: 'حسب الطلبات الحالية',
+      icon: Wallet,
+      onClick: onOpenOrders,
+    },
+    {
+      label: 'المنتجات الظاهرة',
+      value: visibleProducts.length.toLocaleString('fr-MA'),
+      hint: `${hiddenProducts.length} مخفي`,
+      icon: Store,
+      onClick: onOpenProducts,
+    },
+    {
+      label: 'تحتاج انتباها',
+      value: String(lowStockProducts.length + outOfStockProducts.length + productsMissingImages.length + productsMissingDetails.length),
+      hint: 'مخزون أو محتوى',
+      icon: AlertTriangle,
+      onClick: onOpenProducts,
+    },
   ];
 
   return (
-    <div dir="rtl" className="min-h-screen w-full bg-[#f4f2eb] text-[#17201b]">
-      <AdminSidebar />
-      <div className="grid min-h-screen lg:grid-cols-[76px_minmax(0,1fr)]">
-        <aside className="hidden">
-          <div className="sticky top-0 flex h-screen flex-col px-4 py-5">
-            <div className="flex items-center gap-3 px-2">
-              <button type="button" onClick={onOpenStorefront} className="tm-admin-press">
-                <TanjaMallLogo iconOnly />
+    <AdminShell
+      title="لوحة التحكم"
+      eyebrow="إدارة المتجر"
+      onNavigate={route => {
+        window.location.hash = route;
+      }}
+      actions={
+        <>
+          <button type="button" onClick={onOpenStorefront} className="tm-admin-press hidden min-h-[38px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black sm:inline-flex">
+            فتح المتجر
+          </button>
+          <button type="button" onClick={onAddProduct} className="tm-admin-press inline-flex min-h-[38px] items-center gap-2 rounded-md bg-[#ff9900] px-3 text-xs font-black text-[#131921]">
+            <PackagePlus className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
+            إضافة منتج
+          </button>
+        </>
+      }
+    >
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {metrics.map(metric => {
+          const Icon = metric.icon;
+          return (
+            <button key={metric.label} type="button" onClick={metric.onClick} className="tm-admin-press tm-admin-surface rounded-md bg-white p-4 text-right">
+              <span className="flex items-start justify-between gap-3">
+                <span>
+                  <span className="block text-xs font-extrabold text-[#65716a]">{metric.label}</span>
+                  <span className="tm-admin-num mt-2 block font-heading text-2xl font-black text-[#17201b]">{metric.value}</span>
+                  <span className="mt-1 block text-xs font-bold text-[#65716a]">{metric.hint}</span>
+                </span>
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-[#fff3df] text-[#b45309]">
+                  <Icon className="h-5 w-5" aria-hidden="true" strokeWidth={2.35} />
+                </span>
+              </span>
+            </button>
+          );
+        })}
+      </section>
+
+      <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_420px]">
+        <article className="tm-admin-surface rounded-md bg-white">
+          <div className="flex items-center justify-between gap-3 border-b border-[#dfe5df] p-4">
+            <h2 className="font-heading text-lg font-black">منتجات تحتاج مراجعة</h2>
+            <button type="button" onClick={onOpenProducts} className="tm-admin-press min-h-[34px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">كل المنتجات</button>
+          </div>
+          <div className="grid divide-y divide-[#e4e9e4]">
+            {attentionProducts.map(({ product, issues }) => (
+              <button key={product.slug} type="button" onClick={() => onOpenProduct(product.slug)} className="tm-admin-press flex items-center gap-3 p-3 text-right">
+                <img src={product.image} alt={product.title} className="h-12 w-12 rounded-md object-cover" loading="lazy" decoding="async" />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-heading text-sm font-black">{product.title}</span>
+                  <span className="mt-1 flex flex-wrap gap-1">
+                    {issues.map(issue => <span key={issue} className="rounded-md bg-[#fff1d5] px-2 py-1 text-[11px] font-black text-[#9a5a00]">{issue}</span>)}
+                  </span>
+                </span>
+                <span className="tm-admin-num shrink-0 text-xs font-black text-[#65716a]">{product.stock ?? 0} في المخزون</span>
               </button>
-              <div>
-                <p className="font-heading text-xl font-black">TanjaMall</p>
-                <p className="text-xs font-bold text-white/58">إدارة المتجر</p>
+            ))}
+            {!attentionProducts.length ? (
+              <div className="grid min-h-[180px] place-items-center p-6 text-center">
+                <div>
+                  <p className="font-heading text-lg font-black">كل المنتجات مرتبة</p>
+                  <p className="mt-1 text-sm font-bold text-[#65716a]">لا توجد عناصر تحتاج مراجعة الآن.</p>
+                </div>
               </div>
-            </div>
-
-            <nav className="mt-8 grid gap-1 text-sm font-extrabold">
-              {['لوحة التحكم', 'المنتجات', 'الطلبات', 'الزوار', 'التقارير', 'الإعدادات'].map((item, index) => (
-                <button key={item} type="button" onClick={index === 1 ? onAddProduct : index === 2 ? onOpenOrders : index === 5 ? onOpenSettings : undefined} className={`min-h-[42px] rounded-md px-3 text-right transition-colors ${index === 0 ? 'bg-white text-[#131921]' : 'text-white/72 hover:bg-white/10 hover:text-white'}`}>
-                  {item}
-                </button>
-              ))}
-            </nav>
-
-            <div className="mt-auto rounded-md bg-white/10 p-4">
-              <p className="text-xs font-bold text-white/58">صحة المتجر اليوم</p>
-              <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/12">
-                <div className="h-full rounded-full bg-[#ffb84d]" style={{ width: `${Math.min(92, 64 + publishedProducts)}%` }} />
-              </div>
-              <p className="mt-3 text-sm font-extrabold leading-6">الأداء جيد. راقب المنتجات التي تحتاج صورا أو مخزونا قبل إطلاق الحملات.</p>
-            </div>
+            ) : null}
           </div>
-        </aside>
+        </article>
 
-        <main className="min-w-0 lg:col-start-2">
-          <header className="sticky top-0 z-30 border-b border-[#d9dfd8] bg-[#f8f7f1]/94">
-            <div className="mx-auto flex min-h-[72px] max-w-[1440px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-              <div className="min-w-0">
-                <p className="text-xs font-black text-[#b45309]">نظرة عامة</p>
-                <h1 className="truncate font-heading text-2xl font-black sm:text-3xl">لوحة تحكم TanjaMall</h1>
-              </div>
-              <div className="flex items-center gap-2">
-                <button type="button" onClick={onOpenStorefront} className="tm-admin-press hidden min-h-[42px] rounded-md border border-[#cfd8d1] bg-white px-4 text-sm font-extrabold text-[#17201b] sm:block">
-                  فتح المتجر
-                </button>
-                <button type="button" onClick={onAddProduct} className="tm-admin-press min-h-[42px] rounded-md bg-[#ff9900] px-4 text-sm font-black text-[#131921] shadow-[0_14px_34px_-22px_rgba(255,153,0,0.9)]">
-                  إضافة منتج
-                </button>
-              </div>
-            </div>
-          </header>
-
-          <div className="mx-auto grid max-w-[1440px] gap-5 px-4 py-5 sm:px-6 lg:px-8">
-            <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              {metrics.map(([label, value, delta, hint]) => (
-                <article key={label} className="tm-admin-surface rounded-md bg-white p-4">
-                  <div className="flex items-start justify-between gap-3">
-                    <p className="text-xs font-extrabold text-[#65716a]">{label}</p>
-                    <span className={`rounded-md px-2 py-1 text-xs font-black ${delta.startsWith('+') ? 'bg-[#fff3df] text-[#b45309]' : 'bg-[#fff1d5] text-[#9a5a00]'}`}>{delta}</span>
-                  </div>
-                  <p className="tm-admin-num mt-3 font-heading text-3xl font-black text-[#17201b]">{value}</p>
-                  <p className="mt-1 text-xs font-bold text-[#65716a]">{hint}</p>
-                </article>
-              ))}
-            </section>
-
-            <section className="grid gap-5 xl:grid-cols-[minmax(0,1.25fr)_420px]">
-              <article className="tm-admin-surface rounded-md bg-white p-4 sm:p-5">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                  <div>
-                    <h2 className="font-heading text-2xl font-black">المبيعات والطلبات</h2>
-                    <p className="mt-1 text-sm font-semibold text-[#65716a]">قراءة سريعة للأداء والطلبات.</p>
-                  </div>
-                  <div className="flex gap-2 text-xs font-black">
-                    <span className="rounded-md bg-[#eef3ef] px-3 py-2 text-[#4e5a52]">اليوم</span>
-                    <span className="rounded-md bg-[#17201b] px-3 py-2 text-white">7 أيام</span>
-                    <span className="rounded-md bg-[#eef3ef] px-3 py-2 text-[#4e5a52]">30 يوم</span>
-                  </div>
-                </div>
-
-                <div className="mt-6 flex h-[260px] items-end gap-3 border-b border-[#dfe5df] px-1">
-                  {chartHeights.map((height, index) => (
-                    <div key={height + index} className="flex flex-1 flex-col items-center gap-2">
-                      <div className="w-full rounded-t-md bg-[#ff9900]" style={{ height: `${Math.max(18, height + orders.length * 2)}px` }} />
-                      <span className="tm-admin-num text-[11px] font-bold text-[#65716a]">{index + 1}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-5 grid gap-3 sm:grid-cols-4">
-                  {orderFlow.map(([label, count, color]) => (
-                    <div key={label} className="rounded-md bg-[#f4f7f4] p-3">
-                      <div className={`h-1.5 rounded-full ${color}`} />
-                      <p className="mt-3 text-xs font-extrabold text-[#65716a]">{label}</p>
-                      <p className="tm-admin-num mt-1 font-heading text-2xl font-black">{count}</p>
-                    </div>
-                  ))}
-                </div>
-              </article>
-
-              <article className="tm-admin-surface rounded-md bg-[#131921] p-4 text-white sm:p-5">
-                <h2 className="font-heading text-2xl font-black">تنبيهات تحتاج قرار</h2>
-                <div className="mt-4 grid gap-3">
-                  {[
-                    [`${productsNeedImages} منتجات تحتاج صورا إضافية`, 'أكمل المعرض قبل تشغيل الإعلانات'],
-                    [`${lowStock} منتجات بمخزون منخفض`, 'راجع المورد قبل زيادة الطلبات'],
-                    [orders.length ? `${orders.length} طلبات واتساب` : 'لا توجد طلبات بعد', 'راجع واجهة المتجر'],
-                  ].map(([title, action]) => (
-                    <div key={title} className="rounded-md bg-white/10 p-3">
-                      <p className="text-sm font-extrabold">{title}</p>
-                      <p className="mt-1 text-xs font-bold text-[#ffb84d]">{action}</p>
-                    </div>
-                  ))}
-                </div>
-                <button type="button" onClick={onAddProduct} className="tm-admin-press mt-4 min-h-[42px] w-full rounded-md bg-white text-sm font-black text-[#131921]">
-                  فتح صفحة إضافة منتج
-                </button>
-              </article>
-            </section>
-
-            <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-              <article className="tm-admin-surface rounded-md bg-white p-4 sm:p-5">
-                <div className="flex items-center justify-between gap-3">
-                  <h2 className="font-heading text-2xl font-black">أكثر المنتجات أداء</h2>
-                  <button type="button" onClick={onAddProduct} className="tm-admin-press min-h-[36px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">إضافة منتج</button>
-                </div>
-                <div className="mt-4 grid gap-3">
-                  {topProducts.map((product, index) => (
-                    <button key={product.id} type="button" onClick={() => onOpenProduct(product.slug)} className="tm-admin-press flex items-center gap-3 rounded-md border border-[#dfe5df] bg-[#fbfaf6] p-3 text-right">
-                      <img src={product.image} alt={product.title} className="tm-admin-image h-14 w-14 rounded-md object-cover" />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate font-heading text-base font-black">{product.title}</p>
-                        <p className="mt-1 text-xs font-bold text-[#65716a]">{index + 3} طلبات</p>
-                      </div>
-                      <div className="text-left">
-                        <p className="tm-admin-num font-heading text-xl font-black text-[#b45309]">{product.priceLabel}</p>
-                        <p className="text-xs font-bold text-[#65716a]">السعر</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </article>
-
-              <article className="tm-admin-surface rounded-md bg-white p-4 sm:p-5">
-                <h2 className="font-heading text-2xl font-black">مصادر الزيارات</h2>
-                <div className="mt-4 grid gap-4">
-                  {trafficSources.map(([source, value, width]) => (
-                    <div key={source}>
-                      <div className="flex items-center justify-between text-sm font-extrabold">
-                        <span>{source}</span>
-                        <span className="tm-admin-num text-[#b45309]">{value}</span>
-                      </div>
-                      <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#e1e7e1]">
-                        <div className={`h-full rounded-full bg-[#ff9900] ${width}`} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </article>
-            </section>
-
-            <section className="grid gap-5 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
-              <article className="tm-admin-surface overflow-hidden rounded-md bg-white">
-                <div className="flex items-center justify-between gap-3 border-b border-[#dfe5df] p-4">
-                  <h2 className="font-heading text-2xl font-black">آخر الطلبات</h2>
-                  <button type="button" onClick={onOpenStorefront} className="tm-admin-press min-h-[36px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">فتح المتجر</button>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[720px] text-sm">
-                    <thead className="bg-[#f4f7f4] text-xs font-black text-[#65716a]">
-                      <tr>
-                        <th className="px-4 py-3 text-right">الطلب</th>
-                        <th className="px-4 py-3 text-right">الزبون</th>
-                        <th className="px-4 py-3 text-right">المنتج</th>
-                        <th className="px-4 py-3 text-right">المبلغ</th>
-                        <th className="px-4 py-3 text-right">الحالة</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(latestOrders.length ? latestOrders : []).map(order => (
-                        <tr key={order.id} className="border-t border-[#e4e9e4]">
-                          <td className="tm-admin-num px-4 py-3 font-black">{order.id}</td>
-                          <td className="px-4 py-3 font-bold">{order.name}</td>
-                          <td className="px-4 py-3 text-[#65716a]">{order.items[0]?.title || 'طلب مباشر'}</td>
-                          <td className="tm-admin-num px-4 py-3 font-black">{orderTotal(order.items)} درهم</td>
-                          <td className="px-4 py-3">
-                            <span className="rounded-md bg-[#eef3ef] px-2.5 py-1 text-xs font-black text-[#4e5a52]">واتساب</span>
-                          </td>
-                        </tr>
-                      ))}
-                      {!latestOrders.length ? (
-                        <tr className="border-t border-[#e4e9e4]">
-                          <td colSpan={5} className="px-4 py-8 text-center font-bold text-[#65716a]">لا توجد طلبات بعد. جرّب تقديم طلب من صفحة منتج.</td>
-                        </tr>
-                      ) : null}
-                    </tbody>
-                  </table>
-                </div>
-              </article>
-
-              <article className="tm-admin-surface rounded-md bg-white p-4 sm:p-5">
-                <h2 className="font-heading text-2xl font-black">صحة المنتجات</h2>
-                <div className="mt-4 grid gap-2">
-                  {productHealth.map(([label, value, hint]) => (
-                    <div key={label} className="flex items-center justify-between gap-3 rounded-md bg-[#fbfaf6] px-3 py-3">
-                      <div>
-                        <p className="font-heading text-base font-black">{label}</p>
-                        <p className="mt-1 text-xs font-bold text-[#65716a]">{hint}</p>
-                      </div>
-                      <p className="tm-admin-num font-heading text-2xl font-black text-[#b45309]">{value}</p>
-                    </div>
-                  ))}
-                </div>
-              </article>
-            </section>
+        <article className="tm-admin-surface rounded-md bg-[#131921] p-4 text-white">
+          <h2 className="font-heading text-lg font-black">صحة الكتالوج</h2>
+          <div className="mt-4 grid gap-2">
+            {[
+              ['مخزون منخفض', lowStockProducts.length, 'أقل من 10'],
+              ['نفد المخزون', outOfStockProducts.length, 'غير قابل للبيع'],
+              ['صور ناقصة', productsMissingImages.length, 'معرض غير مكتمل'],
+              ['تفاصيل ناقصة', productsMissingDetails.length, 'قسم التفاصيل'],
+              ['منتجات مخفية', hiddenProducts.length, 'غير ظاهرة للعملاء'],
+            ].map(([label, value, hint]) => (
+              <button key={label} type="button" onClick={onOpenProducts} className="tm-admin-press flex items-center justify-between gap-3 rounded-md bg-white/10 px-3 py-3 text-right">
+                <span>
+                  <span className="block text-sm font-black">{label}</span>
+                  <span className="text-xs font-bold text-white/58">{hint}</span>
+                </span>
+                <span className="tm-admin-num font-heading text-2xl font-black text-[#ffb84d]">{value}</span>
+              </button>
+            ))}
           </div>
-        </main>
-      </div>
-    </div>
+        </article>
+      </section>
+
+      <section className="grid gap-4 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+        <article className="tm-admin-surface overflow-hidden rounded-md bg-white">
+          <div className="flex items-center justify-between gap-3 border-b border-[#dfe5df] p-4">
+            <h2 className="font-heading text-lg font-black">آخر الطلبات</h2>
+            <button type="button" onClick={onOpenOrders} className="tm-admin-press min-h-[34px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">فتح الطلبات</button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[680px] text-sm">
+              <thead className="bg-[#f4f7f4] text-xs font-black text-[#65716a]">
+                <tr>
+                  <th className="px-4 py-3 text-right">الطلب</th>
+                  <th className="px-4 py-3 text-right">الزبون</th>
+                  <th className="px-4 py-3 text-right">المنتجات</th>
+                  <th className="px-4 py-3 text-right">المبلغ</th>
+                  <th className="px-4 py-3 text-right">الوقت</th>
+                </tr>
+              </thead>
+              <tbody>
+                {recentOrders.map(order => (
+                  <tr key={order.id} className="border-t border-[#e4e9e4]">
+                    <td className="tm-admin-num px-4 py-3 font-black">{order.id}</td>
+                    <td className="px-4 py-3 font-bold">{order.name}</td>
+                    <td className="px-4 py-3 font-bold text-[#65716a]">{order.items.length}</td>
+                    <td className="tm-admin-num px-4 py-3 font-black">{(order.total || orderTotal(order.items)).toLocaleString('fr-MA')} درهم</td>
+                    <td className="px-4 py-3 text-xs font-bold text-[#65716a]">{formatDate(order.createdAt)}</td>
+                  </tr>
+                ))}
+                {!recentOrders.length ? (
+                  <tr className="border-t border-[#e4e9e4]">
+                    <td colSpan={5} className="px-4 py-8 text-center font-bold text-[#65716a]">لا توجد طلبات بعد.</td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </article>
+
+        <article className="tm-admin-surface rounded-md bg-white p-4">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-heading text-lg font-black">أفضل المنتجات</h2>
+            <button type="button" onClick={onOpenProducts} className="tm-admin-press min-h-[34px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">إدارة</button>
+          </div>
+          <div className="mt-3 grid gap-2">
+            {topProducts.map(product => {
+              const ordersCount = productOrders(product, orders);
+              const revenueTotal = productRevenue(product, orders);
+              return (
+                <button key={product.slug} type="button" onClick={() => onOpenProduct(product.slug)} className="tm-admin-press flex items-center gap-3 rounded-md border border-[#dfe5df] bg-[#fbfaf6] p-3 text-right">
+                  <img src={product.image} alt={product.title} className="h-12 w-12 rounded-md object-cover" loading="lazy" decoding="async" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-heading text-sm font-black">{product.title}</span>
+                    <span className="tm-admin-num mt-1 block text-xs font-bold text-[#65716a]">{ordersCount} طلب</span>
+                  </span>
+                  <span className="tm-admin-num shrink-0 font-heading text-base font-black text-[#b45309]">{revenueTotal.toLocaleString('fr-MA')} درهم</span>
+                </button>
+              );
+            })}
+          </div>
+        </article>
+      </section>
+
+      <section className="grid gap-3 sm:grid-cols-3">
+        <button type="button" onClick={onOpenProducts} className="tm-admin-press tm-admin-surface flex items-center justify-between rounded-md bg-white p-4 text-right">
+          <span>
+            <span className="block font-heading text-base font-black">إدارة المنتجات</span>
+            <span className="text-xs font-bold text-[#65716a]">{products.length} منتج</span>
+          </span>
+          <Store className="h-5 w-5 text-[#b45309]" aria-hidden="true" strokeWidth={2.35} />
+        </button>
+        <button type="button" onClick={onOpenProducts} className="tm-admin-press tm-admin-surface flex items-center justify-between rounded-md bg-white p-4 text-right">
+          <span>
+            <span className="block font-heading text-base font-black">المنتجات المخفية</span>
+            <span className="text-xs font-bold text-[#65716a]">{hiddenProducts.length} منتج</span>
+          </span>
+          <EyeOff className="h-5 w-5 text-[#b45309]" aria-hidden="true" strokeWidth={2.35} />
+        </button>
+        <button type="button" onClick={onOpenProducts} className="tm-admin-press tm-admin-surface flex items-center justify-between rounded-md bg-white p-4 text-right">
+          <span>
+            <span className="block font-heading text-base font-black">صور ناقصة</span>
+            <span className="text-xs font-bold text-[#65716a]">{productsMissingImages.length} منتج</span>
+          </span>
+          <ImageOff className="h-5 w-5 text-[#b45309]" aria-hidden="true" strokeWidth={2.35} />
+        </button>
+      </section>
+    </AdminShell>
   );
 };

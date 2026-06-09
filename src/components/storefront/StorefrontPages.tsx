@@ -35,6 +35,42 @@ type StoreActions = {
   onPlaceOrder: (items: CartItem[], source: string, event: FormEvent<HTMLFormElement>) => void;
 };
 
+type ListingSort = 'newest' | 'price-asc' | 'price-desc' | 'availability';
+
+const listingLabels = {
+  home: '\u0627\u0644\u0631\u0626\u064a\u0633\u064a\u0629',
+  products: '\u0645\u0646\u062a\u062c\u0627\u062a',
+  searchLabel: '\u0627\u0644\u0628\u062d\u062b \u062f\u0627\u062e\u0644 \u0647\u0630\u0647 \u0627\u0644\u0642\u0627\u0626\u0645\u0629',
+  searchPlaceholder: '\u0627\u0628\u062d\u062b \u0639\u0646 \u0645\u0646\u062a\u062c',
+  sortLabel: '\u062a\u0631\u062a\u064a\u0628',
+  newest: '\u0627\u0644\u0623\u062d\u062f\u062b',
+  priceAsc: '\u0627\u0644\u0633\u0639\u0631: \u0645\u0646 \u0627\u0644\u0623\u0642\u0644',
+  priceDesc: '\u0627\u0644\u0633\u0639\u0631: \u0645\u0646 \u0627\u0644\u0623\u0639\u0644\u0649',
+  availability: '\u0627\u0644\u0645\u062a\u0648\u0641\u0631 \u0623\u0648\u0644\u0627',
+  visible: '\u0645\u0639\u0631\u0648\u0636',
+  from: '\u0645\u0646',
+  clearSearch: '\u0645\u0633\u062d \u0627\u0644\u0628\u062d\u062b',
+  loadMore: '\u0639\u0631\u0636 \u0645\u0646\u062a\u062c\u0627\u062a \u0623\u0643\u062b\u0631',
+  noResultsTitle: '\u0644\u0627 \u062a\u0648\u062c\u062f \u0646\u062a\u0627\u0626\u062c \u0645\u0637\u0627\u0628\u0642\u0629',
+  noResultsCopy: '\u062c\u0631\u0628 \u0643\u0644\u0645\u0629 \u0623\u062e\u0631\u0649 \u0623\u0648 \u0627\u0645\u0633\u062d \u0627\u0644\u0628\u062d\u062b \u0644\u0631\u0624\u064a\u0629 \u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a.',
+};
+
+const listingPageSize = 8;
+
+function sortListingProducts(products: Product[], sort: ListingSort) {
+  const sorted = [...products];
+  if (sort === 'price-asc') return sorted.sort((a, b) => a.price - b.price);
+  if (sort === 'price-desc') return sorted.sort((a, b) => b.price - a.price);
+  if (sort === 'availability') {
+    return sorted.sort((a, b) => {
+      const aStock = a.stock ?? 0;
+      const bStock = b.stock ?? 0;
+      return Number(bStock > 0) - Number(aStock > 0) || bStock - aStock;
+    });
+  }
+  return sorted;
+}
+
 export function SiteHeader({
   cartCount,
   onNavigate,
@@ -193,25 +229,12 @@ export function CategoryPage(props: StoreActions & { categoryId: string | null }
   const listedProducts = productsForCategory(props.products, activeCategory.id);
 
   return (
-    <PageShell cartCount={props.cartCount} onNavigate={props.onNavigate} onOpenCart={props.onOpenCart} onOpenSearch={props.onOpenSearch}>
-      <main className="overflow-x-hidden">
-        <section className="bg-[var(--tm-header)] text-white">
-          <div className="mx-auto max-w-[1180px] px-4 py-5 sm:px-6 lg:px-8">
-            <div className="tm-breadcrumb text-xs sm:text-sm">
-              <button type="button" onClick={() => props.onNavigate('#/')} className="tm-breadcrumb-link">الرئيسية</button>
-              <span className="tm-breadcrumb-dot" />
-              <span className="tm-breadcrumb-current">{activeCategory.title}</span>
-            </div>
-          </div>
-        </section>
-
-        <section className="mx-auto max-w-[1180px] px-4 py-5 sm:px-6 lg:px-8">
-          <div className="min-w-0">
-            <ProductGrid {...props} products={listedProducts} />
-          </div>
-        </section>
-      </main>
-    </PageShell>
+    <ProductListingPage
+      {...props}
+      title={activeCategory.title}
+      products={listedProducts}
+      showCount
+    />
   );
 }
 
@@ -220,12 +243,60 @@ export function CollectionPage(props: StoreActions & { collectionId: CollectionI
   const listedProducts = productsForCollection(props.products, props.collectionId);
 
   return (
+    <ProductListingPage
+      {...props}
+      title={title}
+      products={listedProducts}
+      showCount={props.collectionId !== 'all'}
+      columns="lg:grid-cols-4"
+    />
+  );
+}
+
+function ProductListingPage({
+  title,
+  products,
+  showCount = false,
+  columns = 'lg:grid-cols-3',
+  ...props
+}: StoreActions & {
+  title: string;
+  products: Product[];
+  showCount?: boolean;
+  columns?: string;
+}) {
+  const [query, setQuery] = useState('');
+  const [sort, setSort] = useState<ListingSort>('newest');
+  const [visibleCount, setVisibleCount] = useState(listingPageSize);
+  const normalizedQuery = query.trim().toLowerCase();
+
+  useEffect(() => {
+    setQuery('');
+    setSort('newest');
+    setVisibleCount(listingPageSize);
+  }, [title]);
+
+  useEffect(() => {
+    setVisibleCount(listingPageSize);
+  }, [query, sort, products]);
+
+  const filteredProducts = useMemo(() => {
+    const searched = normalizedQuery
+      ? products.filter(product => [product.title, product.category, product.badge, product.description].join(' ').toLowerCase().includes(normalizedQuery))
+      : products;
+    return sortListingProducts(searched, sort);
+  }, [normalizedQuery, products, sort]);
+
+  const visibleProducts = filteredProducts.slice(0, visibleCount);
+  const hasMore = visibleProducts.length < filteredProducts.length;
+
+  return (
     <PageShell cartCount={props.cartCount} onNavigate={props.onNavigate} onOpenCart={props.onOpenCart} onOpenSearch={props.onOpenSearch}>
       <main className="overflow-x-hidden">
         <section className="bg-[var(--tm-header)] text-white">
           <div className="mx-auto max-w-[1180px] px-4 py-5 sm:px-6 lg:px-8">
             <div className="tm-breadcrumb text-xs sm:text-sm">
-              <button type="button" onClick={() => props.onNavigate('#/')} className="tm-breadcrumb-link">Ø§Ù„Ø±Ø¦ÙŠØ³ÙŠØ©</button>
+              <button type="button" onClick={() => props.onNavigate('#/')} className="tm-breadcrumb-link">{listingLabels.home}</button>
               <span className="tm-breadcrumb-dot" />
               <span className="tm-breadcrumb-current">{title}</span>
             </div>
@@ -233,12 +304,66 @@ export function CollectionPage(props: StoreActions & { collectionId: CollectionI
         </section>
 
         <section className="mx-auto max-w-[1180px] px-4 py-5 sm:px-6 lg:px-8">
-          <div className="tm-panel-white mb-4 flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <h1 className="font-heading text-2xl font-black text-[#17201b] sm:text-3xl">{title}</h1>
-            {props.collectionId !== 'all' ? <p className="tm-num text-sm font-black text-[#68736c]">{listedProducts.length} {'\u0645\u0646\u062a\u062c'}</p> : null}
+          <div className="tm-panel-white mb-3 grid gap-3 p-3 sm:mb-4 sm:gap-4 sm:p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h1 className="font-heading text-xl font-black leading-tight text-[#17201b] sm:text-3xl">{title}</h1>
+              </div>
+              {showCount ? <p className="tm-num shrink-0 text-xs font-black text-[#68736c] sm:text-sm">{filteredProducts.length} {'\u0645\u0646\u062a\u062c'}</p> : null}
+            </div>
+
+            <div className="grid grid-cols-[minmax(0,1fr)_128px] gap-2 sm:gap-3 md:grid-cols-[minmax(0,1fr)_220px]">
+              <label className="grid gap-1">
+                <span className="sr-only md:not-sr-only md:text-xs md:font-black md:text-[#65716a]">{listingLabels.searchLabel}</span>
+                <input
+                  value={query}
+                  onChange={event => setQuery(event.target.value)}
+                  className="tm-field min-h-[44px] bg-[var(--tm-surface-soft)] text-sm"
+                  type="search"
+                  placeholder={listingLabels.searchPlaceholder}
+                />
+              </label>
+              <label className="grid gap-1">
+                <span className="sr-only md:not-sr-only md:text-xs md:font-black md:text-[#65716a]">{listingLabels.sortLabel}</span>
+                <select
+                  value={sort}
+                  onChange={event => setSort(event.target.value as ListingSort)}
+                  className="tm-field min-h-[44px] bg-[var(--tm-surface-soft)] text-sm"
+                  aria-label={listingLabels.sortLabel}
+                >
+                  <option value="newest">{listingLabels.newest}</option>
+                  <option value="price-asc">{listingLabels.priceAsc}</option>
+                  <option value="price-desc">{listingLabels.priceDesc}</option>
+                  <option value="availability">{listingLabels.availability}</option>
+                </select>
+              </label>
+            </div>
+
+            <div className="hidden flex-wrap items-center justify-between gap-2 text-xs font-black text-[#68736c] sm:flex">
+              {showCount ? <p className="tm-num">{listingLabels.visible}: {visibleProducts.length} {listingLabels.from} {filteredProducts.length}</p> : <span />}
+              {query.trim() ? <button type="button" onClick={() => setQuery('')} className="tm-press min-h-[34px] rounded-md bg-[#fff1d5] px-3 text-xs font-black text-[#9a5a00]">{listingLabels.clearSearch}</button> : null}
+            </div>
           </div>
+
           <div className="min-w-0">
-            <ProductGrid {...props} products={listedProducts} columns="lg:grid-cols-4" />
+            {visibleProducts.length ? (
+              <>
+                <ProductGrid {...props} products={visibleProducts} columns={columns} />
+                {hasMore ? (
+                  <div className="mt-5 grid place-items-center">
+                    <button type="button" onClick={() => setVisibleCount(current => current + listingPageSize)} className="tm-press tm-button-dark px-6 text-sm">
+                      {listingLabels.loadMore}
+                    </button>
+                  </div>
+                ) : null}
+              </>
+            ) : (
+              <div className="tm-panel-white mt-5 p-6 text-center">
+                <p className="tm-heading font-heading text-2xl font-black">{listingLabels.noResultsTitle}</p>
+                <p className="tm-copy tm-text-muted mx-auto mt-2 max-w-[420px] text-sm font-semibold leading-7">{listingLabels.noResultsCopy}</p>
+                <button type="button" onClick={() => setQuery('')} className="tm-press tm-button-secondary mt-5 px-5 text-sm">{listingLabels.clearSearch}</button>
+              </div>
+            )}
           </div>
         </section>
       </main>

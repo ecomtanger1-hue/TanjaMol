@@ -24,6 +24,10 @@ export type Product = {
   specs?: Array<[string, string]>;
   variantOptions?: ProductVariantOption[];
   variants?: ProductVariant[];
+  isVisible?: boolean;
+  sortOrder?: number;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export type ProductDetailBlock = {
