@@ -505,7 +505,7 @@ export const TanjaMolArabicCODProductPage = ({
                     backgroundColor: detail.backgroundColor || '#f8fafc',
                     color: detail.textColor || undefined,
                   };
-                  return <article key={detail.id} dir="ltr" className="tm-panel-white grid gap-4 overflow-hidden rounded-lg bg-white p-1 lg:min-h-[320px] lg:grid-cols-2 lg:items-stretch lg:gap-5">
+                  return <article key={detail.id} dir="ltr" className="grid gap-4 lg:min-h-[320px] lg:grid-cols-2 lg:items-stretch lg:gap-6">
                     <div dir="rtl" style={textPanelStyle} className={`order-1 flex flex-col justify-center rounded-md p-5 shadow-[inset_0_0_0_1px_rgba(23,32,27,0.045)] lg:p-7 ${reverse ? 'lg:order-1' : 'lg:order-2'}`}>
                       <ProductDetailTitle detail={detail} />
                       <ProductDetailRichText detail={detail} />
