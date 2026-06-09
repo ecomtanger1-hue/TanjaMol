@@ -85,6 +85,24 @@ const editorFontSizes = [
   { label: '32px', value: '6' },
 ];
 
+const commonColors = [
+  { label: 'أسود', color: '#111827' },
+  { label: 'أبيض', color: '#ffffff' },
+  { label: 'رمادي', color: '#6b7280' },
+  { label: 'فضي', color: '#b8beb9' },
+  { label: 'أحمر', color: '#dc2626' },
+  { label: 'أزرق', color: '#2563eb' },
+  { label: 'أخضر', color: '#16a34a' },
+  { label: 'أصفر', color: '#facc15' },
+  { label: 'برتقالي', color: '#f97316' },
+  { label: 'وردي', color: '#ec4899' },
+  { label: 'بنفسجي', color: '#7c3aed' },
+  { label: 'بني', color: '#92400e' },
+  { label: 'ذهبي', color: '#d4af37' },
+  { label: 'بيج', color: '#d6b98c' },
+  { label: 'شفاف', color: '#f8fafc' },
+];
+
 const commonVariantTypes = [
   { type: 'color', label: 'اللون', supportsColor: true, examples: ['أسود', 'أبيض', 'أحمر'] },
   { type: 'size', label: 'المقاس', examples: ['S', 'M', 'L'] },
@@ -437,6 +455,11 @@ export const TanjaMolAddProductPage = ({
     syncVariantOptions(current => current.map(group => group.id === groupId ? { ...group, values: group.values.map(value => value.id === valueId ? { ...value, ...next } : value) } : group));
   };
 
+  const updateColorVariantValue = (groupId: string, valueId: string, label: string) => {
+    const pickedColor = commonColors.find(color => color.label === label);
+    updateVariantOptionValue(groupId, valueId, { label, color: pickedColor?.color });
+  };
+
   const removeVariantOptionValue = (groupId: string, valueId: string) => {
     syncVariantOptions(current => current.map(group => group.id === groupId ? { ...group, values: group.values.filter(value => value.id !== valueId) } : group));
   };
@@ -691,7 +714,7 @@ export const TanjaMolAddProductPage = ({
 
         <main className="min-w-0 lg:col-start-2 lg:row-start-1">
           <header className="sticky top-0 z-30 border-b border-[#d9dfd8] bg-[#f8f7f1]/96">
-            <div className="mx-auto flex min-h-[66px] max-w-[1120px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto flex min-h-[66px] max-w-[1600px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
               <div className="min-w-0">
                 <h1 className="truncate font-heading text-[22px] font-black leading-none sm:text-[26px]">{product ? 'تعديل منتج' : 'إضافة منتج جديد'}</h1>
               </div>
@@ -710,7 +733,7 @@ export const TanjaMolAddProductPage = ({
             </div>
 
             <div className="border-t border-[#e3e6df] bg-white/62">
-              <div className="mx-auto flex max-w-[1120px] items-center gap-3 px-4 py-2 sm:px-6 lg:px-8">
+              <div className="mx-auto flex max-w-[1600px] items-center gap-3 px-4 py-2 sm:px-6 lg:px-8">
                 <span className="tm-admin-num text-xs font-black text-[#b45309]">{readiness}%</span>
                 <div className="h-2 flex-1 overflow-hidden rounded-full bg-[#dfe6df]">
                   <div className="h-full rounded-full bg-[#ff9900]" style={{ width: `${readiness}%` }} />
@@ -719,7 +742,7 @@ export const TanjaMolAddProductPage = ({
             </div>
           </header>
 
-          <div className="mx-auto grid max-w-[1120px] gap-3 px-4 py-4 sm:px-6 lg:px-8">
+          <div className="mx-auto grid max-w-[1600px] gap-3 px-4 py-4 sm:px-6 lg:px-8">
             <AdminSection title="البيانات الأساسية" badge="مطلوب" summary={basicSummary} status={title.trim() && slug.trim() ? 'done' : 'missing'}>
               <div className="grid gap-4 lg:grid-cols-2">
                 <TextField label="اسم المنتج" value={title} onChange={value => {
@@ -834,7 +857,7 @@ export const TanjaMolAddProductPage = ({
                   return (
                     <article key={group.id} className="overflow-hidden rounded-md border border-[#dfe5df] bg-white">
                       <div className="overflow-x-auto">
-                        <table className="w-auto min-w-max table-auto text-sm">
+                        <table className="w-full min-w-[1180px] table-fixed text-sm">
                           <thead className="bg-[#f4f7f4] text-xs font-black text-[#65716a]">
                             <tr>
                               <th className="whitespace-nowrap px-3 py-3 text-right">نوع المتغير</th>
@@ -866,23 +889,35 @@ export const TanjaMolAddProductPage = ({
                                       </div>
                                     </td>
                                   ) : null}
-                                  <td className="w-[190px] px-3 py-3">
-                                    <input
-                                      value={row.value?.label ?? row.valueLabel}
-                                      onChange={event => {
-                                        if (row.value) {
-                                          updateVariantOptionValue(group.id, row.value.id, { label: event.target.value });
-                                          return;
-                                        }
-                                        if (row.variant) updateVariant(row.variant.id, { name: event.target.value });
-                                      }}
-                                      placeholder={typeConfig?.examples[valueIndex] || 'قيمة'}
-                                      className="w-[172px] rounded-md bg-[#fbfaf6] px-3 py-2 text-sm font-black text-[#17201b] outline-none focus:ring-1 focus:ring-[#b45309]"
-                                    />
+                                  <td className="w-[170px] px-3 py-3">
+                                    {supportsColor && row.value ? (
+                                      <select
+                                        value={row.value.label}
+                                        onChange={event => updateColorVariantValue(group.id, row.value!.id, event.target.value)}
+                                        className="w-full rounded-md bg-[#fbfaf6] px-3 py-2 text-sm font-black text-[#17201b] outline-none focus:ring-1 focus:ring-[#b45309]"
+                                      >
+                                        <option value="">اختر لونا</option>
+                                        {commonColors.map(color => <option key={color.label} value={color.label}>{color.label}</option>)}
+                                      </select>
+                                    ) : (
+                                      <input
+                                        value={row.value?.label ?? row.valueLabel}
+                                        onChange={event => {
+                                          if (row.value) {
+                                            updateVariantOptionValue(group.id, row.value.id, { label: event.target.value });
+                                            return;
+                                          }
+                                          if (row.variant) updateVariant(row.variant.id, { name: event.target.value });
+                                        }}
+                                        placeholder={typeConfig?.examples[valueIndex] || 'قيمة'}
+                                        className="w-full rounded-md bg-[#fbfaf6] px-3 py-2 text-sm font-black text-[#17201b] outline-none focus:ring-1 focus:ring-[#b45309]"
+                                      />
+                                    )}
                                   </td>
                                   {supportsColor ? (
-                                    <td className="w-[92px] px-3 py-3">
+                                    <td className="w-[112px] px-3 py-3">
                                       <div className="flex items-center gap-2">
+                                        <span className="h-8 w-8 rounded-md border border-[#cfd8d1]" style={{ backgroundColor: row.value?.color || '#ffffff' }} />
                                         <input
                                           type="color"
                                           value={row.value?.color || '#17201b'}
@@ -894,17 +929,17 @@ export const TanjaMolAddProductPage = ({
                                       </div>
                                     </td>
                                   ) : null}
-                                  <td className="w-[150px] px-3 py-3">
-                                    <input value={row.variant?.sku || ''} disabled={!row.variant} onChange={event => row.variant ? updateVariant(row.variant.id, { sku: event.target.value }) : undefined} className="tm-admin-num w-[132px] rounded-md bg-[#fbfaf6] px-3 py-2 text-sm font-black text-[#17201b] outline-none focus:ring-1 focus:ring-[#b45309] disabled:text-[#9aa39c]" />
+                                  <td className="w-[130px] px-3 py-3">
+                                    <input value={row.variant?.sku || ''} disabled={!row.variant} onChange={event => row.variant ? updateVariant(row.variant.id, { sku: event.target.value }) : undefined} className="tm-admin-num w-full rounded-md bg-[#fbfaf6] px-3 py-2 text-sm font-black text-[#17201b] outline-none focus:ring-1 focus:ring-[#b45309] disabled:text-[#9aa39c]" />
                                   </td>
-                                  <td className="w-[116px] px-3 py-3">
-                                    <input value={row.variant?.priceLabel || ''} disabled={!row.variant} onChange={event => row.variant ? updateVariant(row.variant.id, { priceLabel: event.target.value }) : undefined} className="tm-admin-num w-[98px] rounded-md bg-[#fbfaf6] px-3 py-2 text-sm font-black text-[#17201b] outline-none focus:ring-1 focus:ring-[#b45309] disabled:text-[#9aa39c]" />
+                                  <td className="w-[112px] px-3 py-3">
+                                    <input value={row.variant?.priceLabel || ''} disabled={!row.variant} onChange={event => row.variant ? updateVariant(row.variant.id, { priceLabel: event.target.value }) : undefined} className="tm-admin-num w-full rounded-md bg-[#fbfaf6] px-3 py-2 text-sm font-black text-[#17201b] outline-none focus:ring-1 focus:ring-[#b45309] disabled:text-[#9aa39c]" />
                                   </td>
                                   <td className="w-[86px] px-3 py-3">
-                                    <input value={row.variant ? String(row.variant.stock) : ''} disabled={!row.variant} onChange={event => row.variant ? updateVariant(row.variant.id, { stock: Number(event.target.value) || 0 }) : undefined} className="tm-admin-num w-[68px] rounded-md bg-[#fbfaf6] px-3 py-2 text-sm font-black text-[#17201b] outline-none focus:ring-1 focus:ring-[#b45309] disabled:text-[#9aa39c]" />
+                                    <input value={row.variant ? String(row.variant.stock) : ''} disabled={!row.variant} onChange={event => row.variant ? updateVariant(row.variant.id, { stock: Number(event.target.value) || 0 }) : undefined} className="tm-admin-num w-full rounded-md bg-[#fbfaf6] px-3 py-2 text-sm font-black text-[#17201b] outline-none focus:ring-1 focus:ring-[#b45309] disabled:text-[#9aa39c]" />
                                   </td>
                                   <td className="w-[150px] px-3 py-3">
-                                    <input value={row.variant?.image || ''} disabled={!row.variant} onChange={event => row.variant ? updateVariant(row.variant.id, { image: event.target.value }) : undefined} placeholder="رابط الصورة" className="w-[132px] rounded-md bg-[#fbfaf6] px-3 py-2 text-sm font-bold text-[#17201b] outline-none focus:ring-1 focus:ring-[#b45309] disabled:text-[#9aa39c]" />
+                                    <input value={row.variant?.image || ''} disabled={!row.variant} onChange={event => row.variant ? updateVariant(row.variant.id, { image: event.target.value }) : undefined} placeholder="رابط الصورة" className="w-full rounded-md bg-[#fbfaf6] px-3 py-2 text-sm font-bold text-[#17201b] outline-none focus:ring-1 focus:ring-[#b45309] disabled:text-[#9aa39c]" />
                                   </td>
                                   <td className="w-[96px] px-3 py-3">
                                     <label className={`flex min-h-[38px] w-[82px] items-center justify-center gap-2 rounded-md px-2.5 text-xs font-black ${row.variant?.enabled ? 'bg-[#fff3df] text-[#b45309]' : 'bg-[#eef3ef] text-[#65716a]'}`}>
@@ -1217,8 +1252,8 @@ function AdminSection({
 
   return (
     <section className={`tm-admin-surface overflow-hidden rounded-md bg-white transition-shadow ${isOpen ? 'shadow-[0_16px_44px_-32px_rgba(19,25,33,0.45)]' : ''}`}>
-      <div className="flex flex-wrap items-center justify-between gap-3 p-3 sm:p-4">
-        <button type="button" aria-expanded={isOpen} onClick={() => setIsOpen(current => !current)} className="tm-admin-press flex min-h-[42px] min-w-0 flex-1 items-center gap-3 rounded-md px-1 text-right">
+      <div className="flex flex-wrap items-center gap-3 p-3 sm:p-4">
+        <button type="button" aria-expanded={isOpen} onClick={() => setIsOpen(current => !current)} className="tm-admin-press flex min-h-[42px] min-w-0 items-center gap-3 rounded-md px-1 text-right">
           <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-md bg-[#eef3ef] text-[#131921] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
             <AdminIcon name="chevron" />
           </span>
