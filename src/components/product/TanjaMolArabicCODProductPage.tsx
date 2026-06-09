@@ -501,12 +501,16 @@ export const TanjaMolArabicCODProductPage = ({
               {productDetails.length ? <div className="mt-6 grid gap-4 lg:gap-6">
                 {productDetails.map((detail, index) => {
                   const reverse = detail.reverse ?? index % 2 === 1;
-                  return <article key={detail.id} dir="ltr" className="tm-panel-white grid gap-4 overflow-hidden rounded-lg bg-[#f8fafc] lg:min-h-[320px] lg:grid-cols-2 lg:items-stretch lg:gap-6">
-                    <div dir="rtl" className={`order-1 flex flex-col justify-center p-5 lg:p-7 ${reverse ? 'lg:order-1' : 'lg:order-2'}`}>
+                  const textPanelStyle = {
+                    backgroundColor: detail.backgroundColor || '#f8fafc',
+                    color: detail.textColor || undefined,
+                  };
+                  return <article key={detail.id} dir="ltr" className="tm-panel-white grid gap-4 overflow-hidden rounded-lg bg-white p-1 lg:min-h-[320px] lg:grid-cols-2 lg:items-stretch lg:gap-5">
+                    <div dir="rtl" style={textPanelStyle} className={`order-1 flex flex-col justify-center rounded-md p-5 shadow-[inset_0_0_0_1px_rgba(23,32,27,0.045)] lg:p-7 ${reverse ? 'lg:order-1' : 'lg:order-2'}`}>
                       <ProductDetailTitle detail={detail} />
                       <ProductDetailRichText detail={detail} />
                     </div>
-                    <figure className={`order-2 min-h-[220px] overflow-hidden ${reverse ? 'lg:order-2' : 'lg:order-1'}`}>
+                    <figure className={`order-2 min-h-[220px] overflow-hidden rounded-md shadow-[inset_0_0_0_1px_rgba(23,32,27,0.055)] ${reverse ? 'lg:order-2' : 'lg:order-1'}`}>
                       <ProductDetailMedia detail={detail} src={detail.mediaUrl || productGallery[(index + 1) % productGallery.length]?.src || productGallery[0].src} className="tm-image h-full min-h-[220px] w-full object-cover lg:min-h-[320px]" />
                     </figure>
                   </article>;

@@ -124,7 +124,7 @@ function sanitizeRichHtml(html: string) {
 
 export function ProductDetailTitle({ detail }: { detail: ProductDetailBlock }) {
   return (
-    <h3 className={`tm-heading font-heading font-black ${titleSizeClass[detail.headingSize || 'h3']} ${textAlignClass[detail.textAlign || 'right']}`}>
+    <h3 className={`tm-heading font-heading font-black ${titleSizeClass[detail.headingSize || 'h3']} ${textAlignClass[detail.textAlign || 'right']}`} style={{ color: detail.textColor || undefined }}>
       {detail.title}
     </h3>
   );

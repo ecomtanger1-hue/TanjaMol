@@ -103,6 +103,17 @@ const commonColors = [
   { label: 'شفاف', color: '#f8fafc' },
 ];
 
+const detailColorTemplates = [
+  { id: 'clean', label: 'نظيف وواضح', backgroundColor: '#f8fafc', textColor: '#17201b' },
+  { id: 'warm', label: 'دافئ ومريح', backgroundColor: '#fff3df', textColor: '#3b2710' },
+  { id: 'fresh', label: 'منعش', backgroundColor: '#e8f7ef', textColor: '#0f3d2e' },
+  { id: 'premium', label: 'فاخر', backgroundColor: '#131921', textColor: '#ffffff' },
+  { id: 'rose', label: 'ناعم', backgroundColor: '#fff1f2', textColor: '#4a1d2f' },
+  { id: 'sand', label: 'هادئ', backgroundColor: '#f7ecd9', textColor: '#2f261c' },
+  { id: 'blue', label: 'تقني', backgroundColor: '#eef6ff', textColor: '#12314d' },
+  { id: 'contrast', label: 'قوي', backgroundColor: '#fff7ed', textColor: '#9a3412' },
+];
+
 const commonVariantTypes = [
   { type: 'color', label: 'اللون', supportsColor: true, examples: ['أسود', 'أبيض', 'أحمر'] },
   { type: 'size', label: 'المقاس', examples: ['S', 'M', 'L'] },
@@ -1036,6 +1047,10 @@ export const TanjaMolAddProductPage = ({
                           />
                         </div>
                         <div className={`grid self-start gap-3 ${detail.reverse ? 'lg:col-start-1' : 'lg:col-start-2'} lg:row-start-1 lg:[direction:rtl]`}>
+                          <DetailColorTemplatePicker
+                            detail={detail}
+                            onChange={next => updateDetail(detail.id, next)}
+                          />
                           <input value={detail.title} onFocus={() => setActiveDetail(index)} onChange={event => updateDetail(detail.id, { title: event.target.value })} className="min-h-[40px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-3 text-sm font-black outline-none focus:border-[#b45309]" />
                           <BlockEditorToolbar
                             detailId={detail.id}
@@ -1134,6 +1149,91 @@ export const TanjaMolAddProductPage = ({
     </form>
   );
 };
+
+function DetailColorTemplatePicker({
+  detail,
+  onChange,
+}: {
+  detail: DetailDraft;
+  onChange: (next: Partial<DetailDraft>) => void;
+}) {
+  const backgroundColor = detail.backgroundColor || '#f8fafc';
+  const textColor = detail.textColor || '#17201b';
+  const activeTemplate = detailColorTemplates.find(template =>
+    template.backgroundColor.toLowerCase() === backgroundColor.toLowerCase()
+    && template.textColor.toLowerCase() === textColor.toLowerCase()
+  );
+
+  return (
+    <div className="relative rounded-md border border-[#dfe5df] bg-[#fbfaf6] p-2">
+      <details className="group relative">
+        <summary className="tm-admin-press flex min-h-[46px] cursor-pointer list-none items-center justify-between gap-3 rounded-md bg-white px-3 shadow-[0_0_0_1px_rgba(19,25,33,0.08)] marker:hidden">
+          <span className="flex min-w-0 items-center gap-3">
+            <span className="grid h-8 w-12 overflow-hidden rounded-md border border-[#dfe5df] bg-white">
+              <span style={{ backgroundColor }} />
+              <span style={{ backgroundColor: textColor }} />
+            </span>
+            <span className="grid min-w-0">
+              <span className="text-xs font-black text-[#65716a]">ستايل النص</span>
+              <span className="truncate text-sm font-black text-[#17201b]">{activeTemplate?.label || 'إعداد يدوي'}</span>
+            </span>
+          </span>
+          <span className="text-xs font-black text-[#b45309] group-open:hidden">اختيار</span>
+          <span className="hidden text-xs font-black text-[#b45309] group-open:inline">إغلاق</span>
+        </summary>
+
+        <div className="absolute right-0 z-30 mt-2 w-full rounded-lg border border-[#dfe5df] bg-white p-3 shadow-[0_22px_55px_-30px_rgba(19,25,33,0.45)]">
+          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+            {detailColorTemplates.map(template => {
+              const selected = template.id === activeTemplate?.id;
+              return (
+                <button
+                  key={template.id}
+                  type="button"
+                  onClick={() => onChange({ backgroundColor: template.backgroundColor, textColor: template.textColor })}
+                  className={`tm-admin-press overflow-hidden rounded-md border p-2 text-right ${selected ? 'border-[#ff9900] ring-2 ring-[#ff9900]/20' : 'border-[#dfe5df]'}`}
+                  style={{ backgroundColor: template.backgroundColor, color: template.textColor }}
+                >
+                  <span className="block text-xs font-black opacity-80">{template.label}</span>
+                  <span className="mt-1 block font-heading text-base font-black leading-6">عنوان واضح</span>
+                  <span className="mt-1 block text-xs font-bold leading-5 opacity-75">نص مريح للقراءة داخل البلوك</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-3 grid gap-2 rounded-md bg-[#f8fafc] p-2 sm:grid-cols-[1fr_1fr_auto]">
+            <label className="flex min-h-[40px] items-center justify-between gap-3 rounded-md bg-white px-3 text-xs font-black text-[#17201b]">
+              خلفية النص
+              <input
+                type="color"
+                value={backgroundColor}
+                onChange={event => onChange({ backgroundColor: event.target.value })}
+                className="h-7 w-10 cursor-pointer rounded border border-[#dfe5df] bg-white"
+              />
+            </label>
+            <label className="flex min-h-[40px] items-center justify-between gap-3 rounded-md bg-white px-3 text-xs font-black text-[#17201b]">
+              لون النص
+              <input
+                type="color"
+                value={textColor}
+                onChange={event => onChange({ textColor: event.target.value })}
+                className="h-7 w-10 cursor-pointer rounded border border-[#dfe5df] bg-white"
+              />
+            </label>
+            <button
+              type="button"
+              onClick={() => onChange({ backgroundColor: '', textColor: '' })}
+              className="tm-admin-press min-h-[40px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black text-[#65716a]"
+            >
+              افتراضي
+            </button>
+          </div>
+        </div>
+      </details>
+    </div>
+  );
+}
 
 function BlockEditorToolbar({
   detailId,

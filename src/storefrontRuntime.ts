@@ -45,6 +45,7 @@ export type ProductDetailBlock = {
   textItalic?: boolean;
   textUnderline?: boolean;
   textColor?: string;
+  backgroundColor?: string;
 };
 
 export type ProductVariant = {
