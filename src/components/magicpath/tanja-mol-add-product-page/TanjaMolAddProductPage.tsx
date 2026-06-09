@@ -85,12 +85,6 @@ const editorFontSizes = [
   { label: '32px', value: '6' },
 ];
 
-const initialVariants: ProductVariant[] = [
-  { id: 'variant-1', name: 'أسود', sku: 'TM-WATCH-BLK', priceLabel: '249 درهم', stock: 18, enabled: true },
-  { id: 'variant-2', name: 'فضي', sku: 'TM-WATCH-SLV', priceLabel: '249 درهم', stock: 12, enabled: true },
-  { id: 'variant-3', name: 'أخضر', sku: 'TM-WATCH-GRN', priceLabel: '259 درهم', stock: 8, enabled: true },
-];
-
 const commonVariantTypes = [
   { type: 'color', label: 'اللون', supportsColor: true, examples: ['أسود', 'أبيض', 'أحمر'] },
   { type: 'size', label: 'المقاس', examples: ['S', 'M', 'L'] },
@@ -100,17 +94,6 @@ const commonVariantTypes = [
   { type: 'scent', label: 'الرائحة', examples: ['ورد', 'فانيلا'] },
   { type: 'bundle', label: 'الحزمة', examples: ['قطعة', 'قطعتان'] },
 ] as const;
-const initialVariantOptions: VariantOptionDraft[] = [{
-  id: 'option-color',
-  type: 'color',
-  label: 'اللون',
-  values: [
-    { id: 'color-black', label: 'أسود', color: '#17201b' },
-    { id: 'color-silver', label: 'فضي', color: '#b8beb9' },
-    { id: 'color-green', label: 'أخضر', color: '#b45309' },
-  ],
-}];
-
 const initialDetails: DetailDraft[] = [
   {
     id: 'detail-1',
@@ -217,7 +200,7 @@ function generateVariantsFromOptions(groups: VariantOptionDraft[], current: Prod
 }
 
 function inferVariantOptionsFromVariants(variants: ProductVariant[]): VariantOptionDraft[] {
-  if (!variants.length) return initialVariantOptions;
+  if (!variants.length) return [];
   const grouped = new Map<string, Set<string>>();
   variants.forEach(variant => {
     if (!variant.optionValues || !Object.keys(variant.optionValues).length) {
@@ -345,10 +328,11 @@ export const TanjaMolAddProductPage = ({
     setDelivery(product.delivery || '');
     setBadge(product.badge);
     setGallery(product.gallery?.length ? product.gallery : [product.image || fallbackImage]);
-    setVariantsEnabled(Boolean(product.variants?.length));
+    const enabledVariants = product.variants?.filter(variant => variant.enabled) ?? [];
+    setVariantsEnabled(Boolean(product.variantOptions?.length && enabledVariants.length));
     const nextVariantOptions = product.variantOptions?.length ? product.variantOptions : inferVariantOptionsFromVariants(product.variants || []);
     setVariantOptions(nextVariantOptions);
-    setVariants(product.variants?.length ? generateVariantsFromOptions(nextVariantOptions, product.variants, product.priceLabel) : initialVariants);
+    setVariants(product.variants?.length ? generateVariantsFromOptions(nextVariantOptions, product.variants, product.priceLabel) : []);
     setDetails(product.details?.length ? product.details : initialDetails);
     detailHistoryRef.current = [];
     detailFutureRef.current = [];
@@ -392,7 +376,7 @@ export const TanjaMolAddProductPage = ({
     category,
     price: parsePrice(price),
     priceLabel: priceLabel(price),
-    oldPrice: oldPrice.trim() || priceLabel(price),
+    oldPrice: oldPrice.trim(),
     badge,
     image: cleanGallery[0] || fallbackImage,
     gallery: cleanGallery.length ? cleanGallery : [fallbackImage],

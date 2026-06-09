@@ -78,7 +78,7 @@ export const TanjaMolArabicCODProductPage = ({
   const productCategory = product?.category ?? 'الإلكترونيات';
   const productDescription = product?.description ?? 'تتبع النشاط والمكالمات والتنبيهات اليومية، مناسبة للاستعمال في الخدمة، الرياضة، والتنقل داخل المدينة.';
   const productPriceLabel = product?.priceLabel ?? '249 درهم';
-  const productOldPrice = product?.oldPrice ?? '360 درهم';
+  const productOldPrice = product?.oldPrice?.trim() ?? '360 درهم';
   const productBadge = product?.badge ?? 'متوفر الآن';
   const productGallery = (product?.gallery?.length ? product.gallery : gallery.map(image => image.src)).map((src, index) => ({
     src,
@@ -108,10 +108,10 @@ export const TanjaMolArabicCODProductPage = ({
     values: colors.map(color => ({ id: color.name, label: color.name, color: color.value })),
   }];
   const variantOptions = product?.variantOptions?.filter(option => option.label.trim() && option.values.some(value => value.label.trim())) ?? [];
-  const visibleVariantOptions = variantOptions.length ? variantOptions : fallbackVariantOptions;
-  const productVariants = (product?.variants?.filter(variant => variant.enabled) ?? []).length
-    ? product!.variants!.filter(variant => variant.enabled)
-    : fallbackVariants;
+  const enabledProductVariants = product?.variants?.filter(variant => variant.enabled) ?? [];
+  const hasRealVariants = Boolean(product && variantOptions.length && enabledProductVariants.length);
+  const visibleVariantOptions = hasRealVariants ? variantOptions : product ? [] : fallbackVariantOptions;
+  const productVariants = hasRealVariants ? enabledProductVariants : product ? [] : fallbackVariants;
   const activeVariantGroups = visibleVariantOptions.map(group => ({
     ...group,
     values: group.values.filter(value => value.label.trim()),
@@ -203,7 +203,9 @@ export const TanjaMolArabicCODProductPage = ({
   const resolvedImageVariant = resolvedCombinationVariant?.image ? resolvedCombinationVariant : resolvedValueVariants.find(variant => variant.image);
   const resolvedVariantPriceLabel = resolvedPriceVariant?.priceLabel || productPriceLabel;
   const resolvedVariantPrice = getPriceFromLabel(resolvedVariantPriceLabel, product?.price ?? 249);
-  const resolvedVariantStock = resolvedCombinationVariant?.stock ?? (resolvedValueVariants.length ? Math.min(...resolvedValueVariants.map(variant => variant.stock)) : product?.stock ?? 99);
+  const resolvedVariantStock = hasRealVariants
+    ? resolvedCombinationVariant?.stock ?? (resolvedValueVariants.length ? Math.min(...resolvedValueVariants.map(variant => variant.stock)) : product?.stock ?? 0)
+    : product?.stock ?? 99;
   const isResolvedSoldOut = resolvedVariantStock <= 0;
   const getResolvedValueColor = (
     group: typeof activeVariantGroups[number],
@@ -395,7 +397,7 @@ export const TanjaMolArabicCODProductPage = ({
               <div className="mt-4 flex items-center border-y border-[#dde6df] py-3">
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                   <p className="tm-num tm-price text-3xl text-[#b45309] sm:text-[2.15rem]">{resolvedVariantPriceLabel}</p>
-                  <p className="tm-num text-sm font-semibold text-[#939a95] line-through">{productOldPrice}</p>
+                  {productOldPrice ? <p className="tm-num text-sm font-semibold text-[#939a95] line-through">{productOldPrice}</p> : null}
                 </div>
                 {showReviews ? <div className="mr-auto text-left">
                   <p className="tm-num text-sm font-black text-[#17201b]">{productRating}/5</p>
@@ -478,7 +480,7 @@ export const TanjaMolArabicCODProductPage = ({
                 </form>
               ) : (
                 <div className="tm-body-copy tm-panel-white mt-3 px-3 py-2.5 text-sm leading-7 text-[var(--tm-ink-soft)]">
-                  اختر الخيارات المناسبة، ثم أرسل طلبك عبر واتساب.
+                  {hasRealVariants ? 'اختر الخيارات المناسبة، ثم أرسل طلبك عبر واتساب.' : 'أرسل طلبك عبر واتساب، وسنؤكد التفاصيل قبل التوصيل.'}
                 </div>
               )}
 
