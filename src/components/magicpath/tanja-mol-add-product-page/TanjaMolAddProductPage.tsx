@@ -460,6 +460,8 @@ export const TanjaMolAddProductPage = ({
     updateVariantOptionValue(groupId, valueId, { label, color: pickedColor?.color });
   };
 
+  const isCommonColorValue = (label: string) => commonColors.some(color => color.label === label);
+
   const removeVariantOptionValue = (groupId: string, valueId: string) => {
     syncVariantOptions(current => current.map(group => group.id === groupId ? { ...group, values: group.values.filter(value => value.id !== valueId) } : group));
   };
@@ -891,14 +893,31 @@ export const TanjaMolAddProductPage = ({
                                   ) : null}
                                   <td className="w-[170px] px-3 py-3">
                                     {supportsColor && row.value ? (
-                                      <select
-                                        value={row.value.label}
-                                        onChange={event => updateColorVariantValue(group.id, row.value!.id, event.target.value)}
-                                        className="w-full rounded-md bg-[#fbfaf6] px-3 py-2 text-sm font-black text-[#17201b] outline-none focus:ring-1 focus:ring-[#b45309]"
-                                      >
-                                        <option value="">اختر لونا</option>
-                                        {commonColors.map(color => <option key={color.label} value={color.label}>{color.label}</option>)}
-                                      </select>
+                                      <div className="grid gap-2">
+                                        <select
+                                          value={isCommonColorValue(row.value.label) ? row.value.label : 'other'}
+                                          onChange={event => {
+                                            if (event.target.value === 'other') {
+                                              updateVariantOptionValue(group.id, row.value!.id, { label: '', color: row.value!.color || '#17201b' });
+                                              return;
+                                            }
+                                            updateColorVariantValue(group.id, row.value!.id, event.target.value);
+                                          }}
+                                          className="w-full rounded-md bg-[#fbfaf6] px-3 py-2 text-sm font-black text-[#17201b] outline-none focus:ring-1 focus:ring-[#b45309]"
+                                        >
+                                          <option value="">اختر لونا</option>
+                                          {commonColors.map(color => <option key={color.label} value={color.label}>{color.label}</option>)}
+                                          <option value="other">أخرى</option>
+                                        </select>
+                                        {!isCommonColorValue(row.value.label) ? (
+                                          <input
+                                            value={row.value.label}
+                                            onChange={event => updateVariantOptionValue(group.id, row.value!.id, { label: event.target.value })}
+                                            placeholder="اكتب اللون"
+                                            className="w-full rounded-md bg-white px-3 py-2 text-sm font-black text-[#17201b] outline-none ring-1 ring-[#dfe5df] focus:ring-[#b45309]"
+                                          />
+                                        ) : null}
+                                      </div>
                                     ) : (
                                       <input
                                         value={row.value?.label ?? row.valueLabel}
@@ -915,9 +934,8 @@ export const TanjaMolAddProductPage = ({
                                     )}
                                   </td>
                                   {supportsColor ? (
-                                    <td className="w-[112px] px-3 py-3">
-                                      <div className="flex items-center gap-2">
-                                        <span className="h-8 w-8 rounded-md border border-[#cfd8d1]" style={{ backgroundColor: row.value?.color || '#ffffff' }} />
+                                    <td className="w-[82px] px-3 py-3">
+                                      <div className="flex items-center">
                                         <input
                                           type="color"
                                           value={row.value?.color || '#17201b'}
