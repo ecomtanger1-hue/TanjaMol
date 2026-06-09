@@ -1,7 +1,7 @@
 import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { Check } from 'lucide-react';
 import { categories, categoryRoute, parseOrderForm, type CartItem, type OrderDraft, type Product, type ProductVariant } from '../../storefrontRuntime';
-import { ProductDetailMedia, ProductDetailRichText, ProductDetailTitle } from './ProductDetailRichText';
+import { ProductDetailMedia, ProductDetailRichText } from './ProductDetailRichText';
 import { ProductCard } from '../storefront/ProductCard';
 import { SiteFooter, SiteHeader } from '../storefront/StorefrontPages';
 const gallery = [{
@@ -496,9 +496,9 @@ export const TanjaMolArabicCODProductPage = ({
 
         <section className="bg-[#f7f5ef] py-10 sm:py-14 lg:py-16">
           <div className="mx-auto grid w-full max-w-[1180px] gap-4 px-4 sm:px-6 lg:px-8">
-            <details className="tm-surface rounded-lg bg-white p-4 open:bg-[#fffdf8] sm:p-5 lg:p-7" open>
+            {productDetails.length ? <details className="tm-surface rounded-lg bg-white p-4 open:bg-[#fffdf8] sm:p-5 lg:p-7" open>
               <summary className="cursor-pointer font-heading text-xl font-black sm:text-2xl">تفاصيل المنتج</summary>
-              {productDetails.length ? <div className="mt-6 grid gap-4 lg:gap-6">
+              <div className="mt-6 grid gap-4 lg:gap-6">
                 {productDetails.map((detail, index) => {
                   const reverse = detail.reverse ?? index % 2 === 1;
                   const textPanelStyle = {
@@ -507,7 +507,6 @@ export const TanjaMolArabicCODProductPage = ({
                   };
                   return <article key={detail.id} dir="ltr" className="grid gap-4 lg:min-h-[320px] lg:grid-cols-2 lg:items-stretch lg:gap-6">
                     <div dir="rtl" style={textPanelStyle} className={`order-1 flex flex-col justify-center rounded-md p-5 shadow-[inset_0_0_0_1px_rgba(23,32,27,0.045)] lg:p-7 ${reverse ? 'lg:order-1' : 'lg:order-2'}`}>
-                      <ProductDetailTitle detail={detail} />
                       <ProductDetailRichText detail={detail} />
                     </div>
                     <figure className={`order-2 min-h-[220px] overflow-hidden rounded-md shadow-[inset_0_0_0_1px_rgba(23,32,27,0.055)] ${reverse ? 'lg:order-2' : 'lg:order-1'}`}>
@@ -515,82 +514,8 @@ export const TanjaMolArabicCODProductPage = ({
                     </figure>
                   </article>;
                 })}
-              </div> : null}
-              <div className={productDetails.length ? 'hidden' : 'lg:hidden'}>
-                <p className="tm-body-copy tm-text-muted mt-3 max-w-[860px] text-sm sm:text-base">
-                  {productDescription}
-                </p>
-                <div className="mt-6 grid gap-3 md:grid-cols-3">
-                  <figure className="tm-panel-white overflow-hidden rounded-lg bg-[#f8fafc]">
-                    <img src={(productGallery[1] ?? productGallery[0]).src} alt={(productGallery[1] ?? productGallery[0]).alt} className="tm-image h-[220px] w-full object-cover md:h-[260px]" loading="lazy" decoding="async" width="640" height="520" sizes="(max-width: 768px) 100vw, 33vw" />
-                    <figcaption className="tm-compact-label px-4 py-3 text-sm text-[#17201b]">صور تفصيلية للمنتج</figcaption>
-                  </figure>
-                  <figure className="tm-panel-white overflow-hidden rounded-lg bg-[#f8fafc]">
-                    <img src={(productGallery[2] ?? productGallery[0]).src} alt={(productGallery[2] ?? productGallery[0]).alt} className="tm-image h-[220px] w-full object-cover md:h-[260px]" loading="lazy" decoding="async" width="640" height="520" sizes="(max-width: 768px) 100vw, 33vw" />
-                    <figcaption className="tm-compact-label px-4 py-3 text-sm text-[#17201b]">الخامة والحزام من قرب</figcaption>
-                  </figure>
-                  <button type="button" className="tm-press relative min-h-[260px] overflow-hidden rounded-lg bg-[#131921] text-right text-white" aria-label="عرض فيديو طريقة استعمال المنتج">
-                    <img src={(productGallery[3] ?? productGallery[0]).src} alt="معاينة فيديو شرح المنتج" className="tm-image absolute inset-0 h-full w-full object-cover opacity-45" loading="lazy" decoding="async" width="640" height="520" sizes="(max-width: 768px) 100vw, 33vw" />
-                    <span className="absolute inset-0 bg-[#131921]/35" />
-                    <span className="relative z-10 flex h-full min-h-[260px] flex-col justify-end p-5">
-                      <span className="mb-4 grid h-14 w-14 place-items-center rounded-full bg-white text-[#131921]">
-                        <span className="mr-1 h-0 w-0 border-y-[9px] border-r-[15px] border-y-transparent border-r-[#131921]" />
-                      </span>
-                      <span className="tm-heading font-heading text-2xl font-black">فيديو طريقة الاستعمال</span>
-                      <span className="tm-copy mt-2 text-sm font-semibold leading-7 text-white/78">شاهد التشغيل، الحجم على اليد، والتنبيهات اليومية قبل تأكيد الطلب.</span>
-                    </span>
-                  </button>
-                </div>
               </div>
-
-              <div className={productDetails.length ? 'hidden' : 'mt-7 hidden gap-5 lg:grid'}>
-                <article dir="ltr" className="grid min-h-[320px] grid-cols-2 items-stretch gap-6">
-                  <figure className="tm-panel-white overflow-hidden rounded-lg bg-[#f8fafc]">
-                    <img src={(productGallery[1] ?? productGallery[0]).src} alt={(productGallery[1] ?? productGallery[0]).alt} className="tm-image h-full min-h-[320px] w-full object-cover" loading="lazy" decoding="async" width="900" height="640" sizes="50vw" />
-                  </figure>
-                  <div dir="rtl" className="flex flex-col justify-center rounded-lg bg-[#f8fafc] p-7">
-                    <p className="tm-kicker tm-price-text">استعمال يومي واضح</p>
-                    <h3 className="tm-heading mt-2 font-heading text-3xl font-black">شاشة وتنبيهات تساعدك طوال اليوم</h3>
-                    <p className="tm-body-copy tm-text-muted mt-3 text-base">
-                      شاشة واضحة، تنبيهات المكالمات والرسائل، وقياس سريع للخطوات والنشاط. مناسبة للاستعمال في الخدمة، الرياضة، والتنقل داخل المدينة بدون تعقيد.
-                    </p>
-                  </div>
-                </article>
-
-                <article dir="ltr" className="grid min-h-[320px] grid-cols-2 items-stretch gap-6">
-                  <div dir="rtl" className="flex flex-col justify-center rounded-lg bg-[#fff7e6] p-7">
-                    <p className="tm-kicker text-[#9a5a00]">راحة في اللبس</p>
-                    <h3 className="tm-heading mt-2 font-heading text-3xl font-black">حزام خفيف وخامة مناسبة للحركة</h3>
-                    <p className="tm-body-copy tm-text-muted mt-3 text-base">
-                      الحزام مريح للاستعمال الطويل، والخامة مناسبة للاستعمال اليومي. التفاصيل القريبة تساعد الزبون يرى الحجم، الملمس، وطريقة الثبات قبل تأكيد الطلب.
-                    </p>
-                  </div>
-                  <figure className="tm-panel-white overflow-hidden rounded-lg bg-[#f8fafc]">
-                    <img src={(productGallery[2] ?? productGallery[0]).src} alt={(productGallery[2] ?? productGallery[0]).alt} className="tm-image h-full min-h-[320px] w-full object-cover" loading="lazy" decoding="async" width="900" height="640" sizes="50vw" />
-                  </figure>
-                </article>
-
-                <article dir="ltr" className="grid min-h-[320px] grid-cols-2 items-stretch gap-6">
-                  <button dir="rtl" type="button" className="tm-press relative overflow-hidden rounded-lg bg-[#131921] text-right text-white" aria-label="عرض فيديو طريقة استعمال المنتج">
-                    <img src={(productGallery[3] ?? productGallery[0]).src} alt="معاينة فيديو شرح المنتج" className="tm-image absolute inset-0 h-full w-full object-cover opacity-45" loading="lazy" decoding="async" width="900" height="640" sizes="50vw" />
-                    <span className="absolute inset-0 bg-[#131921]/35" />
-                    <span className="relative z-10 flex h-full min-h-[320px] flex-col justify-end p-7">
-                      <span className="mb-4 grid h-14 w-14 place-items-center rounded-full bg-white text-[#131921]">
-                        <span className="mr-1 h-0 w-0 border-y-[9px] border-r-[15px] border-y-transparent border-r-[#131921]" />
-                      </span>
-                      <span className="tm-heading font-heading text-3xl font-black">فيديو طريقة الاستعمال</span>
-                    </span>
-                  </button>
-                  <div dir="rtl" className="flex flex-col justify-center rounded-lg bg-[#fff7ed] p-7">
-                    <p className="tm-kicker tm-price-text">قبل تأكيد الطلب</p>
-                    <h3 className="tm-heading mt-2 font-heading text-3xl font-black">مساحة جاهزة لفيديو أو شرح مصور</h3>
-                    <p className="tm-body-copy tm-text-muted mt-3 text-base">
-                      يمكن استعمال هذه المساحة لعرض فيديو قصير، خطوات التشغيل، أو صور تفصيلية إضافية. الهدف أن يحصل الزبون على كل المعلومات المهمة دون الابتعاد عن مسار الطلب.
-                    </p>
-                  </div>
-                </article>
-              </div>
-            </details>
+            </details> : null}
 
             <details className="tm-surface rounded-lg bg-white p-4 open:bg-[#fffdf8] sm:p-5 lg:p-6" open>
               <summary className="cursor-pointer font-heading text-xl font-black sm:text-2xl">المواصفات</summary>
