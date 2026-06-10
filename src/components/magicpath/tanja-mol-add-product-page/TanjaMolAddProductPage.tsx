@@ -1,25 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from 'react';
-import {
-  AlignCenter,
-  AlignLeft,
-  AlignRight,
-  Bold,
-  Eraser,
-  Heading2,
-  Heading3,
-  Image as ImageIcon,
-  Italic,
-  Link,
-  List,
-  ListOrdered,
-  Palette,
-  Redo2,
-  Table,
-  Underline,
-  Undo2,
-  Video,
-  type LucideIcon,
-} from 'lucide-react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from 'react';
 import { categories } from '../../../storefrontRuntime';
 import type { Product, ProductDetailBlock, ProductVariant, ProductVariantOption } from '../../../storefrontRuntime';
 import { AdminSidebar } from '../../admin/AdminLayout';
@@ -41,20 +20,7 @@ type SpecDraft = {
 };
 
 type DetailDraft = ProductDetailBlock;
-type EditorAction = 'undo' | 'redo' | 'bold' | 'italic' | 'underline' | 'paragraph' | 'heading' | 'heading3' | 'textLarge' | 'alignRight' | 'alignCenter' | 'alignLeft' | 'list' | 'orderedList' | 'table' | 'link' | 'clear' | 'image' | 'video';
 type VariantOptionDraft = ProductVariantOption;
-type EditorState = {
-  bold: boolean;
-  italic: boolean;
-  underline: boolean;
-  alignRight: boolean;
-  alignCenter: boolean;
-  alignLeft: boolean;
-  list: boolean;
-  orderedList: boolean;
-  block: string;
-  fontName: string;
-};
 
 const fallbackImage = 'https://images.unsplash.com/photo-1607083206968-13611e3d76db?auto=format&fit=crop&w=1200&q=85';
 
@@ -67,42 +33,7 @@ const navItems = [
 ] as const;
 
 const uploadInputId = 'tm-product-gallery-upload';
-const editorToolbar: Array<{ title: string; action: EditorAction; icon: LucideIcon }> = [
-  { title: 'تراجع', action: 'undo', icon: Undo2 },
-  { title: 'إعادة', action: 'redo', icon: Redo2 },
-  { title: 'غامق', action: 'bold', icon: Bold },
-  { title: 'مائل', action: 'italic', icon: Italic },
-  { title: 'تحته خط', action: 'underline', icon: Underline },
-  { title: 'محاذاة يمين', action: 'alignRight', icon: AlignRight },
-  { title: 'محاذاة وسط', action: 'alignCenter', icon: AlignCenter },
-  { title: 'محاذاة يسار', action: 'alignLeft', icon: AlignLeft },
-  { title: 'قائمة نقطية', action: 'list', icon: List },
-  { title: 'قائمة مرقمة', action: 'orderedList', icon: ListOrdered },
-  { title: 'جدول', action: 'table', icon: Table },
-  { title: 'رابط', action: 'link', icon: Link },
-  { title: 'مسح التنسيق', action: 'clear', icon: Eraser },
-  { title: 'صورة', action: 'image', icon: ImageIcon },
-  { title: 'فيديو', action: 'video', icon: Video },
-];
-const editorFormats = [
-  { label: 'نص عادي', action: 'paragraph' as const, icon: null },
-  { label: 'عنوان H2', action: 'heading' as const, icon: Heading2 },
-  { label: 'عنوان H3', action: 'heading3' as const, icon: Heading3 },
-];
-const editorFontSizes = [
-  { label: '12px', value: '2' },
-  { label: '14px', value: '3' },
-  { label: '18px', value: '4' },
-  { label: '24px', value: '5' },
-  { label: '32px', value: '6' },
-];
-const editorFonts = [
-  { label: 'Cairo', value: 'Cairo, Arial, sans-serif' },
-  { label: 'Tajawal', value: 'Tajawal, Arial, sans-serif' },
-  { label: 'Almarai', value: 'Almarai, Arial, sans-serif' },
-  { label: 'Arial', value: 'Arial, sans-serif' },
-  { label: 'Tahoma', value: 'Tahoma, Geneva, sans-serif' },
-];
+const JoditBlockEditor = lazy(() => import('./JoditBlockEditor').then(module => ({ default: module.JoditBlockEditor })));
 
 const commonColors = [
   { label: 'أسود', color: '#111827' },
@@ -273,10 +204,17 @@ function inferVariantOptionsFromVariants(variants: ProductVariant[]): VariantOpt
   }));
 }
 
-function readFiles(files: FileList | null): Promise<string[]> {
-  if (!files?.length) return Promise.resolve([]);
+type UploadFileSource = FileList | File[] | null;
 
-  return Promise.all(Array.from(files).map(file => new Promise<string>((resolve, reject) => {
+function normalizeUploadFiles(files: UploadFileSource) {
+  return files ? Array.from(files) : [];
+}
+
+function readFiles(files: UploadFileSource): Promise<string[]> {
+  const fileArray = normalizeUploadFiles(files);
+  if (!fileArray.length) return Promise.resolve([]);
+
+  return Promise.all(fileArray.map(file => new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result || ''));
     reader.onerror = () => reject(reader.error);
@@ -284,9 +222,9 @@ function readFiles(files: FileList | null): Promise<string[]> {
   })));
 }
 
-async function uploadOrReadFiles(files: FileList | null, folder: string) {
-  if (!files?.length) return [];
-  const fileArray = Array.from(files);
+async function uploadOrReadFiles(files: UploadFileSource, folder: string) {
+  const fileArray = normalizeUploadFiles(files);
+  if (!fileArray.length) return [];
 
   try {
     const { uploadProductImages } = await import('../../../lib/supabaseStorage');
@@ -296,7 +234,7 @@ async function uploadOrReadFiles(files: FileList | null, folder: string) {
     console.error('Failed to upload images to Supabase Storage', error);
   }
 
-  return readFiles(files);
+  return readFiles(fileArray);
 }
 
 export const TanjaMolAddProductPage = ({
@@ -308,8 +246,6 @@ export const TanjaMolAddProductPage = ({
   onCreateProduct,
 }: AddProductProps) => {
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
-  const editorRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const editorSelectionRefs = useRef<Record<string, Range>>({});
   const detailHistoryRef = useRef<DetailDraft[][]>([]);
   const detailFutureRef = useRef<DetailDraft[][]>([]);
   const originalSlug = product?.slug;
@@ -406,7 +342,7 @@ export const TanjaMolAddProductPage = ({
   ];
   const readiness = Math.round((readinessItems.filter(Boolean).length / readinessItems.length) * 100);
   const basicSummary = title.trim() ? `${title.trim()} · ${category}` : 'اسم المنتج والقسم والرابط';
-  const pricingSummary = `${priceLabel(price)} · مخزون ${Number(stock) || 0}`;
+  const coreSummary = title.trim() ? `${title.trim()} · ${category} · ${priceLabel(price)}` : basicSummary;
   const gallerySummary = cleanGallery.length ? `${cleanGallery.length} صورة مضافة` : 'أضف صورة واحدة على الأقل';
   const variantsSummary = variantsEnabled ? `${variantOptions.length} نوع · ${variants.length} قيمة` : 'المتغيرات غير مفعلة';
   const detailsSummary = details.length ? `${details.length} بلوك مصور` : 'أضف بلوكات الشرح المصور';
@@ -597,146 +533,13 @@ export const TanjaMolAddProductPage = ({
     if (uploadInputRef.current) uploadInputRef.current.value = '';
   };
 
-  const handleBlockImageUpload = async (detailId: string, files: FileList | null) => {
+  const handleBlockImageUpload = async (detailId: string, files: UploadFileSource) => {
     const nextImages = await uploadOrReadFiles(files, slug || makeSlug(title || 'product'));
     const selectedImage = nextImages[0];
     if (!selectedImage) return;
 
     setGallery(current => [...current.filter(Boolean), ...nextImages]);
     updateDetail(detailId, { mediaUrl: selectedImage, mediaType: 'image' });
-  };
-
-  const runEditorAction = (action: EditorAction) => {
-    const active = details[activeDetail];
-    if (!active) return;
-    if (action === 'undo') {
-      undoDetailChange();
-      return;
-    }
-    if (action === 'redo') {
-      redoDetailChange();
-      return;
-    }
-
-    const updates: Partial<DetailDraft> = {};
-    if (action === 'bold') updates.textBold = !active.textBold;
-    if (action === 'italic') updates.textItalic = !active.textItalic;
-    if (action === 'underline') updates.textUnderline = !active.textUnderline;
-    if (action === 'heading') updates.headingSize = active.headingSize === 'h2' ? 'h3' : 'h2';
-    if (action === 'textLarge') updates.textSize = active.textSize === 'lg' ? 'base' : 'lg';
-    if (action === 'alignRight') updates.textAlign = 'right';
-    if (action === 'alignCenter') updates.textAlign = 'center';
-    if (action === 'alignLeft') updates.textAlign = 'left';
-    if (action === 'image') {
-      updates.mediaType = 'image';
-      updates.mediaUrl = active.mediaUrl || cleanGallery[0] || fallbackImage;
-    }
-    if (action === 'video') updates.mediaType = 'video';
-
-    const suffix =
-      action === 'table' ? '\n\n| الميزة | التفاصيل |\n| --- | --- |\n| مثال | اكتب هنا |\n' :
-      action === 'list' ? '\n- نقطة مهمة\n- نقطة ثانية\n' :
-      action === 'link' ? ' [رابط](https://example.com)' :
-      '';
-
-    updateDetail(active.id, suffix ? { ...updates, text: `${active.text}${suffix}` } : updates);
-  };
-
-  const saveEditorSelection = (detailId: string) => {
-    const editor = editorRefs.current[detailId];
-    const selection = window.getSelection();
-    if (!editor || !selection?.rangeCount || !selection.anchorNode || !editor.contains(selection.anchorNode)) return;
-    editorSelectionRefs.current[detailId] = selection.getRangeAt(0).cloneRange();
-  };
-
-  const restoreEditorSelection = (detailId: string) => {
-    const editor = editorRefs.current[detailId];
-    const range = editorSelectionRefs.current[detailId];
-    const selection = window.getSelection();
-    if (!editor || !range || !selection) {
-      editor?.focus();
-      return;
-    }
-    editor.focus();
-    selection.removeAllRanges();
-    selection.addRange(range);
-  };
-
-  const runRichEditorAction = (action: EditorAction, detailId = details[activeDetail]?.id) => {
-    const active = details.find(detail => detail.id === detailId);
-    if (!active) return;
-    const editor = editorRefs.current[active.id];
-
-    if (action === 'undo' || action === 'redo') {
-      if (editor) {
-        editor.focus();
-        document.execCommand(action);
-        updateDetailRichText(active.id, editor.innerHTML, editor.innerText);
-      }
-      return;
-    }
-
-    if (editor && ['bold', 'italic', 'underline', 'paragraph', 'heading', 'heading3', 'alignRight', 'alignCenter', 'alignLeft', 'list', 'orderedList', 'table', 'link', 'clear'].includes(action)) {
-      restoreEditorSelection(active.id);
-      document.execCommand('styleWithCSS', false, 'true');
-      if (action === 'bold') document.execCommand('bold');
-      if (action === 'italic') document.execCommand('italic');
-      if (action === 'underline') document.execCommand('underline');
-      if (action === 'paragraph') document.execCommand('formatBlock', false, 'p');
-      if (action === 'heading') document.execCommand('formatBlock', false, 'h2');
-      if (action === 'heading3') document.execCommand('formatBlock', false, 'h3');
-      if (action === 'alignRight') document.execCommand('justifyRight');
-      if (action === 'alignCenter') document.execCommand('justifyCenter');
-      if (action === 'alignLeft') document.execCommand('justifyLeft');
-      if (action === 'list') document.execCommand('insertUnorderedList');
-      if (action === 'orderedList') document.execCommand('insertOrderedList');
-      if (action === 'table') document.execCommand('insertHTML', false, '<table><tbody><tr><th>الميزة</th><th>التفاصيل</th></tr><tr><td>مثال</td><td>اكتب هنا</td></tr></tbody></table>');
-      if (action === 'link') {
-        const href = window.prompt('رابط النص', 'https://example.com');
-        if (href) {
-          restoreEditorSelection(active.id);
-          document.execCommand('createLink', false, href);
-        }
-      }
-      if (action === 'clear') document.execCommand('removeFormat');
-      updateDetailRichText(active.id, editor.innerHTML, editor.innerText);
-      saveEditorSelection(active.id);
-      return;
-    }
-
-    if (action === 'image') updateDetail(active.id, { mediaType: 'image', mediaUrl: active.mediaUrl || cleanGallery[0] || fallbackImage });
-    if (action === 'video') updateDetail(active.id, { mediaType: 'video' });
-  };
-
-  const applyEditorColor = (detailId: string, color: string) => {
-    const active = details.find(detail => detail.id === detailId);
-    const editor = active ? editorRefs.current[active.id] : null;
-    if (!active || !editor) return;
-    restoreEditorSelection(active.id);
-    document.execCommand('styleWithCSS', false, 'true');
-    document.execCommand('foreColor', false, color);
-    updateDetailRichText(active.id, editor.innerHTML, editor.innerText);
-    saveEditorSelection(active.id);
-  };
-
-  const applyEditorFontSize = (detailId: string, size: string) => {
-    const active = details.find(detail => detail.id === detailId);
-    const editor = active ? editorRefs.current[active.id] : null;
-    if (!active || !editor) return;
-    restoreEditorSelection(active.id);
-    document.execCommand('fontSize', false, size);
-    updateDetailRichText(active.id, editor.innerHTML, editor.innerText);
-    saveEditorSelection(active.id);
-  };
-
-  const applyEditorFontFamily = (detailId: string, fontFamily: string) => {
-    const active = details.find(detail => detail.id === detailId);
-    const editor = active ? editorRefs.current[active.id] : null;
-    if (!active || !editor) return;
-    restoreEditorSelection(active.id);
-    document.execCommand('fontName', false, fontFamily);
-    updateDetailRichText(active.id, editor.innerHTML, editor.innerText);
-    saveEditorSelection(active.id);
   };
 
   const submitProduct = (event: FormEvent<HTMLFormElement>) => {
@@ -797,33 +600,33 @@ export const TanjaMolAddProductPage = ({
           </header>
 
           <div className="mx-auto grid max-w-[1600px] gap-3 px-4 py-4 sm:px-6 lg:px-8">
-            <AdminSection title="البيانات الأساسية" badge="مطلوب" summary={basicSummary} status={title.trim() && slug.trim() ? 'done' : 'missing'}>
-              <div className="grid gap-4 lg:grid-cols-2">
-                <TextField label="اسم المنتج" value={title} onChange={value => {
-                  setTitle(value);
-                  if (!slug) setSlug(makeSlug(value));
-                }} required />
-                <TextField label="الرابط المختصر" value={slug} onChange={value => setSlug(makeSlug(value))} required />
-                <label className="grid gap-1">
-                  <span className="text-xs font-black text-[#65716a]">القسم</span>
-                  <select value={category} onChange={event => setCategory(event.target.value)} className="min-h-[42px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-3 text-sm font-bold outline-none focus:border-[#b45309]">
-                    {categories.map(item => <option key={item.id} value={item.title}>{item.title}</option>)}
-                  </select>
-                </label>
-                <TextField label="شارة المنتج" value={badge} onChange={setBadge} />
-                <label className="grid gap-1 lg:col-span-2">
-                  <span className="text-xs font-black text-[#65716a]">وصف قصير بجانب السعر</span>
-                  <textarea value={shortDescription} onChange={event => setShortDescription(event.target.value)} className="min-h-[88px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-3 py-3 text-[14px] font-semibold leading-7 outline-none focus:border-[#b45309]" />
-                </label>
-              </div>
-            </AdminSection>
+            <AdminSection title="البيانات الأساسية والسعر" badge="مطلوب" summary={coreSummary} status={title.trim() && slug.trim() && parsePrice(price) > 0 ? 'done' : 'missing'}>
+              <div className="grid gap-5">
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <TextField label="اسم المنتج" value={title} onChange={value => {
+                    setTitle(value);
+                    if (!slug) setSlug(makeSlug(value));
+                  }} required />
+                  <TextField label="الرابط المختصر" value={slug} onChange={value => setSlug(makeSlug(value))} required />
+                  <label className="grid gap-1">
+                    <span className="text-xs font-black text-[#65716a]">القسم</span>
+                    <select value={category} onChange={event => setCategory(event.target.value)} className="min-h-[42px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-3 text-sm font-bold outline-none focus:border-[#b45309]">
+                      {categories.map(item => <option key={item.id} value={item.title}>{item.title}</option>)}
+                    </select>
+                  </label>
+                  <TextField label="شارة المنتج" value={badge} onChange={setBadge} />
+                  <label className="grid gap-1 lg:col-span-2">
+                    <span className="text-xs font-black text-[#65716a]">وصف قصير بجانب السعر</span>
+                    <textarea value={shortDescription} onChange={event => setShortDescription(event.target.value)} className="min-h-[88px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-3 py-3 text-[14px] font-semibold leading-7 outline-none focus:border-[#b45309]" />
+                  </label>
+                </div>
 
-            <AdminSection title="السعر والمخزون والتوصيل" summary={pricingSummary} status={parsePrice(price) > 0 ? 'done' : 'missing'} defaultOpen={false}>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <TextField label="السعر الحالي" value={price} onChange={setPrice} numeric />
-                <TextField label="السعر قبل التخفيض" value={oldPrice} onChange={setOldPrice} numeric />
-                <TextField label="المخزون" value={stock} onChange={setStock} numeric />
-                <TextField label="مدة التوصيل" value={delivery} onChange={setDelivery} numeric />
+                <div className="grid gap-4 border-t border-[#e3e6df] pt-4 sm:grid-cols-2 xl:grid-cols-4">
+                  <TextField label="السعر الحالي" value={price} onChange={setPrice} numeric />
+                  <TextField label="السعر قبل التخفيض" value={oldPrice} onChange={setOldPrice} numeric />
+                  <TextField label="المخزون" value={stock} onChange={setStock} numeric />
+                  <TextField label="مدة التوصيل" value={delivery} onChange={setDelivery} numeric />
+                </div>
               </div>
             </AdminSection>
 
@@ -1092,20 +895,13 @@ export const TanjaMolAddProductPage = ({
                             detail={detail}
                             onChange={next => updateDetail(detail.id, next)}
                           />
-                          <BlockEditorToolbar
-                            detailId={detail.id}
-                            onCommand={runRichEditorAction}
-                            onColor={applyEditorColor}
-                            onFontSize={applyEditorFontSize}
-                            onFontFamily={applyEditorFontFamily}
-                          />
-                          <RichTextEditor
-                            detail={detail}
-                            onFocus={() => setActiveDetail(index)}
-                            onRegister={element => { editorRefs.current[detail.id] = element; }}
-                            onSaveSelection={() => saveEditorSelection(detail.id)}
-                            onChange={(html, text) => updateDetailRichText(detail.id, html, text)}
-                          />
+                          <Suspense fallback={<div className="grid min-h-[280px] place-items-center rounded-md border border-[#dfe5df] bg-[#fbfaf6] text-sm font-black text-[#65716a]">جار تحميل محرر النص...</div>}>
+                            <JoditBlockEditor
+                              detail={detail}
+                              folder={slug || makeSlug(title || 'product')}
+                              onChange={(html, text) => updateDetailRichText(detail.id, html, text)}
+                            />
+                          </Suspense>
                         </div>
                       </div>
                     </article>
@@ -1290,220 +1086,6 @@ function DetailColorTemplatePicker({
   );
 }
 
-function BlockEditorToolbar({
-  detailId,
-  onCommand,
-  onColor,
-  onFontSize,
-  onFontFamily,
-}: {
-  detailId: string;
-  onCommand: (action: EditorAction, detailId?: string) => void;
-  onColor: (detailId: string, color: string) => void;
-  onFontSize: (detailId: string, size: string) => void;
-  onFontFamily: (detailId: string, fontFamily: string) => void;
-}) {
-  const [editorState, setEditorState] = useState<EditorState>({
-    bold: false,
-    italic: false,
-    underline: false,
-    alignRight: true,
-    alignCenter: false,
-    alignLeft: false,
-    list: false,
-    orderedList: false,
-    block: 'P',
-    fontName: '',
-  });
-
-  const refreshEditorState = () => {
-    const editor = document.querySelector(`[data-detail-editor="${detailId}"]`);
-    const selection = window.getSelection();
-    if (!editor || !selection?.anchorNode || !editor.contains(selection.anchorNode)) return;
-
-    setEditorState({
-      bold: document.queryCommandState('bold'),
-      italic: document.queryCommandState('italic'),
-      underline: document.queryCommandState('underline'),
-      alignRight: document.queryCommandState('justifyRight'),
-      alignCenter: document.queryCommandState('justifyCenter'),
-      alignLeft: document.queryCommandState('justifyLeft'),
-      list: document.queryCommandState('insertUnorderedList'),
-      orderedList: document.queryCommandState('insertOrderedList'),
-      block: String(document.queryCommandValue('formatBlock') || 'P').toUpperCase(),
-      fontName: String(document.queryCommandValue('fontName') || ''),
-    });
-  };
-
-  useEffect(() => {
-    document.addEventListener('selectionchange', refreshEditorState);
-    document.addEventListener('keyup', refreshEditorState);
-    document.addEventListener('mouseup', refreshEditorState);
-    return () => {
-      document.removeEventListener('selectionchange', refreshEditorState);
-      document.removeEventListener('keyup', refreshEditorState);
-      document.removeEventListener('mouseup', refreshEditorState);
-    };
-  }, [detailId]);
-
-  const isActive = (action: EditorAction) => {
-    if (action === 'bold') return editorState.bold;
-    if (action === 'italic') return editorState.italic;
-    if (action === 'underline') return editorState.underline;
-    if (action === 'alignRight') return editorState.alignRight;
-    if (action === 'alignCenter') return editorState.alignCenter;
-    if (action === 'alignLeft') return editorState.alignLeft;
-    if (action === 'list') return editorState.list;
-    if (action === 'orderedList') return editorState.orderedList;
-    return false;
-  };
-
-  const selectButtonClass = "min-h-[34px] rounded-md border border-[#cfd8d1] bg-white px-2 text-xs font-black text-[#17201b] outline-none focus:border-[#b45309]";
-  const buttonClass = (active: boolean) => `tm-admin-press grid h-9 w-9 place-items-center rounded-md shadow-[0_0_0_1px_rgba(19,25,33,0.08)] ${active ? 'bg-[#131921] text-white ring-2 ring-[#ff9900]/25' : 'bg-white text-[#4e5a52] hover:bg-[#131921] hover:text-white'}`;
-
-  return (
-    <div className="rounded-md border border-[#dfe5df] bg-[#f4f7f4] p-2">
-      <div className="flex flex-wrap items-center gap-1.5">
-        <select
-          aria-label="الخط"
-          onChange={event => {
-            onFontFamily(detailId, event.target.value);
-            window.setTimeout(refreshEditorState, 0);
-          }}
-          className={selectButtonClass}
-          defaultValue={editorFonts[0].value}
-        >
-          {editorFonts.map(font => (
-            <option key={font.value} value={font.value}>{font.label}</option>
-          ))}
-        </select>
-
-        <select
-          aria-label="نوع النص"
-          onChange={event => {
-            onCommand(event.target.value as EditorAction, detailId);
-            event.currentTarget.value = 'paragraph';
-            window.setTimeout(refreshEditorState, 0);
-          }}
-          className={selectButtonClass}
-          value={editorState.block === 'H2' ? 'heading' : editorState.block === 'H3' ? 'heading3' : 'paragraph'}
-        >
-          {editorFormats.map(format => (
-            <option key={format.action} value={format.action}>{format.label}</option>
-          ))}
-        </select>
-
-        <select
-          aria-label="حجم الخط"
-          onChange={event => {
-            onFontSize(detailId, event.target.value);
-            window.setTimeout(refreshEditorState, 0);
-          }}
-          className={selectButtonClass}
-          defaultValue="3"
-        >
-          {editorFontSizes.map(size => (
-            <option key={size.value} value={size.value}>{size.label}</option>
-          ))}
-        </select>
-
-        <span className="mx-1 h-7 w-px bg-[#dfe5df]" />
-
-        {editorToolbar.map(tool => {
-          const Icon = tool.icon;
-          return (
-            <button
-              key={tool.action}
-              type="button"
-              title={tool.title}
-              aria-label={tool.title}
-              aria-pressed={isActive(tool.action)}
-              onMouseDown={event => event.preventDefault()}
-              onClick={() => {
-                onCommand(tool.action, detailId);
-                window.setTimeout(refreshEditorState, 0);
-              }}
-              className={buttonClass(isActive(tool.action))}
-            >
-              <Icon className="h-4 w-4" aria-hidden="true" strokeWidth={2.35} />
-            </button>
-          );
-        })}
-
-        <label title="لون النص" className="tm-admin-press grid h-9 w-9 cursor-pointer place-items-center rounded-md bg-white text-[#4e5a52] shadow-[0_0_0_1px_rgba(19,25,33,0.08)] hover:bg-[#131921] hover:text-white">
-          <Palette className="h-4 w-4" aria-hidden="true" strokeWidth={2.35} />
-          <input
-            type="color"
-            aria-label="لون النص"
-            className="sr-only"
-            defaultValue="#17201b"
-            onChange={event => {
-              onColor(detailId, event.target.value);
-              window.setTimeout(refreshEditorState, 0);
-            }}
-          />
-        </label>
-      </div>
-    </div>
-  );
-}
-
-function plainTextToHtml(text: string) {
-  return text
-    .split('\n')
-    .map(line => line.trim() ? `<p>${line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>` : '<p><br></p>')
-    .join('');
-}
-
-function RichTextEditor({
-  detail,
-  onFocus,
-  onRegister,
-  onSaveSelection,
-  onChange,
-}: {
-  detail: DetailDraft;
-  onFocus: () => void;
-  onRegister: (element: HTMLDivElement | null) => void;
-  onSaveSelection: () => void;
-  onChange: (html: string, text: string) => void;
-}) {
-  const editorRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    const editor = editorRef.current;
-    if (!editor) return;
-    if (document.activeElement === editor) return;
-    editor.innerHTML = detail.richTextHtml || plainTextToHtml(detail.text);
-  }, [detail.id, detail.richTextHtml, detail.text]);
-
-  return (
-    <div
-      ref={element => {
-        editorRef.current = element;
-        onRegister(element);
-      }}
-      contentEditable
-      data-detail-editor={detail.id}
-      dir="rtl"
-      role="textbox"
-      aria-multiline="true"
-      suppressContentEditableWarning
-      onFocus={() => {
-        onFocus();
-        window.setTimeout(onSaveSelection, 0);
-      }}
-      onMouseUp={onSaveSelection}
-      onKeyUp={onSaveSelection}
-      onInput={event => {
-        onChange(event.currentTarget.innerHTML, event.currentTarget.innerText);
-        onSaveSelection();
-      }}
-      className="min-h-[230px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-4 py-3 text-[15px] font-semibold leading-8 outline-none focus:border-[#b45309] focus:ring-2 focus:ring-[#ff9900]/20 [&_a]:font-black [&_a]:text-[#b45309] [&_a]:underline [&_b]:font-black [&_font[size='2']]:text-xs [&_font[size='3']]:text-sm [&_font[size='4']]:text-lg [&_font[size='5']]:text-2xl [&_font[size='6']]:text-3xl [&_h2]:font-heading [&_h2]:text-3xl [&_h2]:font-black [&_h3]:font-heading [&_h3]:text-2xl [&_h3]:font-black [&_li]:my-1 [&_ol]:list-decimal [&_ol]:pr-5 [&_table]:my-3 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-[#cfd8d1] [&_td]:p-2 [&_th]:border [&_th]:border-[#cfd8d1] [&_th]:p-2 [&_th]:font-black [&_ul]:list-disc [&_ul]:pr-5"
-    />
-  );
-}
-
 function AdminSection({
   title,
   badge,
@@ -1606,7 +1188,7 @@ function BlockMediaPicker({
   onFocus: () => void;
   onSelect: (mediaUrl: string) => void;
   onUrlChange: (mediaUrl: string) => void;
-  onUpload: (files: FileList | null) => void;
+  onUpload: (files: File[]) => void;
 }) {
   const inputId = `tm-block-upload-${detailId}`;
   const imageOptions = gallery.map(item => item.trim()).filter(Boolean);
@@ -1667,8 +1249,9 @@ function BlockMediaPicker({
           رفع جديد
         </label>
         <input id={inputId} type="file" accept="image/*" className="sr-only" onChange={event => {
+          const files = Array.from(event.currentTarget.files || []);
           onFocus();
-          onUpload(event.target.files);
+          if (files.length) onUpload(files);
           event.currentTarget.value = '';
         }} />
       </div>

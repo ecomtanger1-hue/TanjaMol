@@ -1,0 +1,228 @@
+import { useMemo, useRef, useState } from 'react';
+import JoditEditor from 'jodit-react';
+import type { IJodit } from 'jodit/esm/types/jodit';
+import 'jodit/es2021/jodit.min.css';
+import type { ProductDetailBlock } from '../../../storefrontRuntime';
+
+const joditButtons = [
+  'undo', 'redo', '|',
+  'paragraph', 'font', 'fontsize', '|',
+  'bold', 'italic', 'underline', 'strikethrough', 'brush', 'eraser', '|',
+  'ul', 'ol', 'outdent', 'indent', 'align', '|',
+  'link', 'uploadInlineImage', 'image', 'video', 'table', 'hr', '|',
+  'source',
+];
+
+const headingOptions = {
+  p: 'Paragraph',
+  h1: 'Heading 1',
+  h2: 'Heading 2',
+  h3: 'Heading 3',
+  h4: 'Heading 4',
+  blockquote: 'Quote',
+} as const;
+
+const unorderedListOptions = {
+  disc: '•',
+  circle: '◦',
+  square: '▪',
+} as const;
+
+const orderedListOptions = {
+  decimal: '1 2 3',
+  'decimal-leading-zero': '01 02 03',
+  'lower-alpha': 'a b c',
+  'upper-alpha': 'A B C',
+  'lower-roman': 'i ii iii',
+  'upper-roman': 'I II III',
+} as const;
+
+function plainTextToHtml(text: string) {
+  return text
+    .split('\n')
+    .map(line => line.trim() ? `<p>${line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>` : '<p><br></p>')
+    .join('');
+}
+
+function htmlToPlainText(html: string) {
+  if (!html.trim()) return '';
+  const element = document.createElement('div');
+  element.innerHTML = html;
+  return element.innerText.trim();
+}
+
+function safeAttribute(value: string) {
+  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function getCurrentFontSize(editor: IJodit) {
+  const anyEditor = editor as any;
+  const current = editor.s.current();
+  const ownerWindow = anyEditor.ow || window;
+  let element = current?.nodeType === Node.ELEMENT_NODE
+    ? current as HTMLElement
+    : current?.parentElement;
+
+  while (element && element !== editor.editor && ownerWindow.getComputedStyle(element).fontSize === '') {
+    element = element.parentElement;
+  }
+
+  const rawSize = ownerWindow.getComputedStyle(element || editor.editor).fontSize || '16px';
+  const parsed = Number.parseFloat(rawSize);
+  return Number.isFinite(parsed) ? Math.round(parsed) : 16;
+}
+
+export function JoditBlockEditor({
+  detail,
+  folder,
+  onChange,
+}: {
+  detail: ProductDetailBlock;
+  folder: string;
+  onChange: (html: string, text: string) => void;
+}) {
+  const editorRef = useRef<IJodit | null>(null);
+  const uploadInputRef = useRef<HTMLInputElement | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const value = detail.richTextHtml || plainTextToHtml(detail.text);
+
+  const syncValue = (html: string) => {
+    onChange(html, htmlToPlainText(html));
+  };
+
+  const insertInlineImages = async (files: FileList | null) => {
+    if (!files?.length || !editorRef.current) return;
+    setIsUploading(true);
+    try {
+      const { uploadProductImages } = await import('../../../lib/supabaseStorage');
+      const urls = await uploadProductImages(Array.from(files), folder);
+      if (!urls.length) {
+        window.alert('تعذر رفع الصورة. تأكد من إعداد Supabase Storage ثم حاول مرة أخرى.');
+        return;
+      }
+
+      urls.forEach(url => {
+        editorRef.current?.s.insertHTML(`<p><img src="${safeAttribute(url)}" alt="" /></p>`);
+      });
+      syncValue(editorRef.current.value);
+    } catch (error) {
+      console.error('Failed to upload editor image', error);
+      window.alert('تعذر رفع الصورة. حاول مرة أخرى أو استخدم رابط صورة.');
+    } finally {
+      setIsUploading(false);
+      if (uploadInputRef.current) uploadInputRef.current.value = '';
+    }
+  };
+
+  const config = useMemo(() => ({
+    readonly: false,
+    direction: 'rtl',
+    language: 'en',
+    height: 340,
+    minHeight: 280,
+    toolbarSticky: false,
+    toolbarAdaptive: false,
+    textIcons: (name: string) => name === 'fontsize',
+    showTooltip: true,
+    useNativeTooltip: false,
+    showCharsCounter: false,
+    showWordsCounter: false,
+    showXPathInStatusbar: false,
+    askBeforePasteHTML: false,
+    askBeforePasteFromWord: false,
+    defaultActionOnPaste: 'insert_as_html',
+    enter: 'P',
+    spellcheck: true,
+    placeholder: 'اكتب تفاصيل المنتج هنا...',
+    toolbarButtonSize: 'large',
+    buttons: joditButtons,
+    buttonsMD: joditButtons,
+    buttonsSM: ['undo', 'redo', '|', 'paragraph', 'font', 'fontsize', '|', 'bold', 'italic', 'underline', 'brush', 'eraser', '|', 'ul', 'ol', 'align', '|', 'link', 'uploadInlineImage', 'table', 'source'],
+    buttonsXS: ['undo', 'redo', '|', 'bold', 'italic', 'underline', 'brush', '|', 'ul', 'ol', '|', 'link', 'uploadInlineImage', 'source'],
+    uploader: {
+      insertImageAsBase64URI: false,
+    },
+    style: {
+      fontFamily: 'Cairo, Arial, sans-serif',
+      fontSize: '16px',
+      lineHeight: '1.9',
+      textAlign: 'right',
+    },
+    controls: {
+      paragraph: {
+        list: headingOptions,
+        childTemplate: (_editor: IJodit, key: string, value: string) => {
+          const className = {
+            p: 'text-base font-semibold text-slate-700',
+            h1: 'text-3xl font-black text-slate-950',
+            h2: 'text-2xl font-black text-slate-950',
+            h3: 'text-xl font-extrabold text-slate-950',
+            h4: 'text-lg font-extrabold text-slate-900',
+            blockquote: 'border-s-4 border-amber-500 ps-3 text-lg font-bold text-slate-700',
+          }[key] || 'text-base font-semibold text-slate-700';
+          return `<div class="${className}" style="margin:0;padding:3px 0">${value}</div>`;
+        },
+      },
+      fontsize: {
+        text: '16px',
+        list: [12, 14, 16, 18, 20, 24, 28, 32, 36, 44, 52],
+        textTemplate: (_editor: IJodit, value: string) => `${value || 16}px`,
+        childTemplate: (_editor: IJodit, _key: string, value: string) => `<span style="font-size:${value}px;line-height:1.4">${value}px</span>`,
+        update: (editor: IJodit, button: any) => {
+          button.state.text = `${getCurrentFontSize(editor)}px`;
+          return false;
+        },
+      },
+      ul: {
+        list: unorderedListOptions,
+        childTemplate: (_editor: IJodit, _key: string, value: string) => `<span style="display:block;min-width:54px;text-align:center;font-size:24px;line-height:1">${value}</span>`,
+      },
+      ol: {
+        list: orderedListOptions,
+        childTemplate: (_editor: IJodit, _key: string, value: string) => `<span style="display:block;min-width:72px;text-align:center;font-weight:800">${value}</span>`,
+      },
+      uploadInlineImage: {
+        name: 'Upload image',
+        tooltip: 'Upload image',
+        icon: 'image',
+        exec: () => uploadInputRef.current?.click(),
+      },
+      video: {
+        popup: (_editor: IJodit, _current: unknown, close: () => void) => {
+          const url = window.prompt('Video URL');
+          if (url) {
+            editorRef.current?.s.insertHTML(`<p><video src="${safeAttribute(url)}" controls playsinline></video></p>`);
+            if (editorRef.current) syncValue(editorRef.current.value);
+          }
+          close?.();
+        },
+      },
+    },
+  } as any), [folder]);
+
+  return (
+    <div className="tm-jodit-editor relative rounded-md border border-[#dfe5df] bg-white shadow-[0_10px_30px_-26px_rgba(19,25,33,0.35)] [&_.jodit-container]:!border-0 [&_.jodit-container]:!rounded-md [&_.jodit-icon]:!h-[18px] [&_.jodit-icon]:!w-[18px] [&_.jodit-status-bar]:!hidden [&_.jodit-toolbar-editor-collection]:!flex-wrap [&_.jodit-toolbar__box]:!overflow-visible [&_.jodit-toolbar__box]:!border-[#dfe5df] [&_.jodit-toolbar__box]:!bg-[#fbfaf6] [&_.jodit-ui-button]:!min-h-[42px] [&_.jodit-ui-button]:!min-w-[42px] [&_.jodit-ui-button]:!px-2 [&_.jodit-ui-button__text]:!text-xs [&_.jodit-toolbar-button_fontsize_.jodit-ui-button__text]:!min-w-[34px] [&_.jodit-toolbar-button_fontsize_.jodit-ui-button__text]:!text-[13px] [&_.jodit-toolbar-button_fontsize_.jodit-ui-button__text]:!font-black [&_.jodit-wysiwyg]:!bg-[#fbfaf6] [&_.jodit-wysiwyg]:!px-4 [&_.jodit-wysiwyg]:!py-4 [&_.jodit-wysiwyg_h1]:!my-4 [&_.jodit-wysiwyg_h1]:!text-4xl [&_.jodit-wysiwyg_h1]:!font-black [&_.jodit-wysiwyg_h1]:!leading-tight [&_.jodit-wysiwyg_h2]:!my-3 [&_.jodit-wysiwyg_h2]:!text-3xl [&_.jodit-wysiwyg_h2]:!font-black [&_.jodit-wysiwyg_h2]:!leading-tight [&_.jodit-wysiwyg_h3]:!my-3 [&_.jodit-wysiwyg_h3]:!text-2xl [&_.jodit-wysiwyg_h3]:!font-extrabold [&_.jodit-wysiwyg_h4]:!my-2 [&_.jodit-wysiwyg_h4]:!text-xl [&_.jodit-wysiwyg_h4]:!font-extrabold [&_.jodit-wysiwyg_blockquote]:!border-r-4 [&_.jodit-wysiwyg_blockquote]:!border-[#b45309] [&_.jodit-wysiwyg_blockquote]:!bg-[#fff7e8] [&_.jodit-wysiwyg_blockquote]:!px-4 [&_.jodit-wysiwyg_blockquote]:!py-3 [&_.jodit-wysiwyg_blockquote]:!font-bold [&_.jodit-wysiwyg_img]:!max-w-full [&_.jodit-wysiwyg_li]:!my-1 [&_.jodit-wysiwyg_ol]:!list-decimal [&_.jodit-wysiwyg_ol]:!pr-6 [&_.jodit-wysiwyg_ul]:!list-disc [&_.jodit-wysiwyg_ul]:!pr-6">
+      <JoditEditor
+        ref={editorRef}
+        value={value}
+        config={config}
+        tabIndex={1}
+        onBlur={syncValue}
+        onChange={syncValue}
+      />
+      <input
+        ref={uploadInputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="sr-only"
+        onChange={event => void insertInlineImages(event.target.files)}
+      />
+      {isUploading ? (
+        <div className="absolute inset-x-3 top-3 z-10 rounded-md bg-[#131921] px-3 py-2 text-xs font-black text-white shadow-[0_16px_35px_-22px_rgba(19,25,33,0.65)]">
+          جار رفع الصورة...
+        </div>
+      ) : null}
+    </div>
+  );
+}
