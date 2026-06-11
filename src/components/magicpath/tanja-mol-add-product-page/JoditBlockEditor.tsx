@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
+import { Jodit } from 'jodit';
 import JoditEditor from 'jodit-react';
 import type { IJodit } from 'jodit/esm/types/jodit';
 import 'jodit/es2021/jodit.min.css';
@@ -10,17 +11,8 @@ const joditButtons = [
   'bold', 'italic', 'underline', 'strikethrough', 'brush', 'eraser', '|',
   'ul', 'ol', 'outdent', 'indent', 'align', '|',
   'link', 'uploadInlineImage', 'image', 'video', 'table', 'hr', '|',
-  'source',
+  'source', 'fullsize',
 ];
-
-const headingOptions = {
-  p: 'Paragraph',
-  h1: 'Heading 1',
-  h2: 'Heading 2',
-  h3: 'Heading 3',
-  h4: 'Heading 4',
-  blockquote: 'Quote',
-} as const;
 
 const unorderedListOptions = {
   disc: '•',
@@ -70,6 +62,18 @@ function getCurrentFontSize(editor: IJodit) {
   const rawSize = ownerWindow.getComputedStyle(element || editor.editor).fontSize || '16px';
   const parsed = Number.parseFloat(rawSize);
   return Number.isFinite(parsed) ? Math.round(parsed) : 16;
+}
+
+function applyListStyle(editor: IJodit, element: 'ul' | 'ol', listStyleType: string) {
+  (editor.s as any).commitStyle({
+    element,
+    attributes: {
+      style: {
+        listStyleType: listStyleType === 'default' ? null : listStyleType,
+      },
+    },
+  });
+  editor.synchronizeValues();
 }
 
 export function JoditBlockEditor({
@@ -122,7 +126,7 @@ export function JoditBlockEditor({
     minHeight: 280,
     toolbarSticky: false,
     toolbarAdaptive: false,
-    textIcons: (name: string) => name === 'fontsize',
+    textIcons: false,
     showTooltip: true,
     useNativeTooltip: false,
     showCharsCounter: false,
@@ -149,21 +153,8 @@ export function JoditBlockEditor({
       textAlign: 'right',
     },
     controls: {
-      paragraph: {
-        list: headingOptions,
-        childTemplate: (_editor: IJodit, key: string, value: string) => {
-          const className = {
-            p: 'text-base font-semibold text-slate-700',
-            h1: 'text-3xl font-black text-slate-950',
-            h2: 'text-2xl font-black text-slate-950',
-            h3: 'text-xl font-extrabold text-slate-950',
-            h4: 'text-lg font-extrabold text-slate-900',
-            blockquote: 'border-s-4 border-amber-500 ps-3 text-lg font-bold text-slate-700',
-          }[key] || 'text-base font-semibold text-slate-700';
-          return `<div class="${className}" style="margin:0;padding:3px 0">${value}</div>`;
-        },
-      },
       fontsize: {
+        icon: 'tm-fontsize-text',
         text: '16px',
         list: [12, 14, 16, 18, 20, 24, 28, 32, 36, 44, 52],
         textTemplate: (_editor: IJodit, value: string) => `${value || 16}px`,
@@ -174,12 +165,16 @@ export function JoditBlockEditor({
         },
       },
       ul: {
-        list: unorderedListOptions,
+        list: Jodit.atom(unorderedListOptions),
         childTemplate: (_editor: IJodit, _key: string, value: string) => `<span style="display:block;min-width:54px;text-align:center;font-size:24px;line-height:1">${value}</span>`,
+        exec: (editor: IJodit) => applyListStyle(editor, 'ul', 'disc'),
+        childExec: (editor: IJodit, _current: unknown, options: any) => applyListStyle(editor, 'ul', String(options.control?.args?.[0] || 'disc')),
       },
       ol: {
-        list: orderedListOptions,
+        list: Jodit.atom(orderedListOptions),
         childTemplate: (_editor: IJodit, _key: string, value: string) => `<span style="display:block;min-width:72px;text-align:center;font-weight:800">${value}</span>`,
+        exec: (editor: IJodit) => applyListStyle(editor, 'ol', 'decimal'),
+        childExec: (editor: IJodit, _current: unknown, options: any) => applyListStyle(editor, 'ol', String(options.control?.args?.[0] || 'decimal')),
       },
       uploadInlineImage: {
         name: 'Upload image',
@@ -201,7 +196,7 @@ export function JoditBlockEditor({
   } as any), [folder]);
 
   return (
-    <div className="tm-jodit-editor relative rounded-md border border-[#dfe5df] bg-white shadow-[0_10px_30px_-26px_rgba(19,25,33,0.35)] [&_.jodit-container]:!border-0 [&_.jodit-container]:!rounded-md [&_.jodit-icon]:!h-[18px] [&_.jodit-icon]:!w-[18px] [&_.jodit-status-bar]:!hidden [&_.jodit-toolbar-editor-collection]:!flex-wrap [&_.jodit-toolbar__box]:!overflow-visible [&_.jodit-toolbar__box]:!border-[#dfe5df] [&_.jodit-toolbar__box]:!bg-[#fbfaf6] [&_.jodit-ui-button]:!min-h-[42px] [&_.jodit-ui-button]:!min-w-[42px] [&_.jodit-ui-button]:!px-2 [&_.jodit-ui-button__text]:!text-xs [&_.jodit-toolbar-button_fontsize_.jodit-ui-button__text]:!min-w-[34px] [&_.jodit-toolbar-button_fontsize_.jodit-ui-button__text]:!text-[13px] [&_.jodit-toolbar-button_fontsize_.jodit-ui-button__text]:!font-black [&_.jodit-wysiwyg]:!bg-[#fbfaf6] [&_.jodit-wysiwyg]:!px-4 [&_.jodit-wysiwyg]:!py-4 [&_.jodit-wysiwyg_h1]:!my-4 [&_.jodit-wysiwyg_h1]:!text-4xl [&_.jodit-wysiwyg_h1]:!font-black [&_.jodit-wysiwyg_h1]:!leading-tight [&_.jodit-wysiwyg_h2]:!my-3 [&_.jodit-wysiwyg_h2]:!text-3xl [&_.jodit-wysiwyg_h2]:!font-black [&_.jodit-wysiwyg_h2]:!leading-tight [&_.jodit-wysiwyg_h3]:!my-3 [&_.jodit-wysiwyg_h3]:!text-2xl [&_.jodit-wysiwyg_h3]:!font-extrabold [&_.jodit-wysiwyg_h4]:!my-2 [&_.jodit-wysiwyg_h4]:!text-xl [&_.jodit-wysiwyg_h4]:!font-extrabold [&_.jodit-wysiwyg_blockquote]:!border-r-4 [&_.jodit-wysiwyg_blockquote]:!border-[#b45309] [&_.jodit-wysiwyg_blockquote]:!bg-[#fff7e8] [&_.jodit-wysiwyg_blockquote]:!px-4 [&_.jodit-wysiwyg_blockquote]:!py-3 [&_.jodit-wysiwyg_blockquote]:!font-bold [&_.jodit-wysiwyg_img]:!max-w-full [&_.jodit-wysiwyg_li]:!my-1 [&_.jodit-wysiwyg_ol]:!list-decimal [&_.jodit-wysiwyg_ol]:!pr-6 [&_.jodit-wysiwyg_ul]:!list-disc [&_.jodit-wysiwyg_ul]:!pr-6">
+    <div className="tm-jodit-editor relative rounded-md border border-[#dfe5df] bg-white shadow-[0_10px_30px_-26px_rgba(19,25,33,0.35)] [&_.jodit-container]:!border-0 [&_.jodit-container]:!rounded-md [&_.jodit-icon]:!h-[18px] [&_.jodit-icon]:!w-[18px] [&_.jodit-status-bar]:!hidden [&_.jodit-toolbar-editor-collection]:!flex-wrap [&_.jodit-toolbar__box]:!overflow-visible [&_.jodit-toolbar__box]:!border-[#dfe5df] [&_.jodit-toolbar__box]:!bg-[#fbfaf6] [&_.jodit-ui-button]:!min-h-[42px] [&_.jodit-ui-button]:!min-w-[42px] [&_.jodit-ui-button]:!px-2 [&_.jodit-ui-button__text]:!hidden [&_.jodit-toolbar-button_fontsize_.jodit-ui-button__text]:!inline-flex [&_.jodit-toolbar-button_fontsize_.jodit-ui-button__text]:!min-w-[34px] [&_.jodit-toolbar-button_fontsize_.jodit-ui-button__text]:!text-[13px] [&_.jodit-toolbar-button_fontsize_.jodit-ui-button__text]:!font-black [&_.jodit-wysiwyg]:!bg-[#fbfaf6] [&_.jodit-wysiwyg]:!px-4 [&_.jodit-wysiwyg]:!py-4 [&_.jodit-wysiwyg_h1]:!my-4 [&_.jodit-wysiwyg_h1]:!text-4xl [&_.jodit-wysiwyg_h1]:!font-black [&_.jodit-wysiwyg_h1]:!leading-tight [&_.jodit-wysiwyg_h2]:!my-3 [&_.jodit-wysiwyg_h2]:!text-3xl [&_.jodit-wysiwyg_h2]:!font-black [&_.jodit-wysiwyg_h2]:!leading-tight [&_.jodit-wysiwyg_h3]:!my-3 [&_.jodit-wysiwyg_h3]:!text-2xl [&_.jodit-wysiwyg_h3]:!font-extrabold [&_.jodit-wysiwyg_h4]:!my-2 [&_.jodit-wysiwyg_h4]:!text-xl [&_.jodit-wysiwyg_h4]:!font-extrabold [&_.jodit-wysiwyg_blockquote]:!border-r-4 [&_.jodit-wysiwyg_blockquote]:!border-[#b45309] [&_.jodit-wysiwyg_blockquote]:!bg-[#fff7e8] [&_.jodit-wysiwyg_blockquote]:!px-4 [&_.jodit-wysiwyg_blockquote]:!py-3 [&_.jodit-wysiwyg_blockquote]:!font-bold [&_.jodit-wysiwyg_img]:!max-w-full [&_.jodit-wysiwyg_li]:!my-1 [&_.jodit-wysiwyg_ol]:!pr-6 [&_.jodit-wysiwyg_ul]:!pr-6">
       <JoditEditor
         ref={editorRef}
         value={value}
