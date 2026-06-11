@@ -113,6 +113,11 @@ function productPayload(product: Product, isVisible = product.isVisible ?? true)
   };
 }
 
+function missingColumnError(error: { code?: string; message?: string }, column: string) {
+  const message = error.message || '';
+  return error.code === 'PGRST204' || (message.includes(column) && message.toLowerCase().includes('column'));
+}
+
 export async function fetchProductsFromSupabase(includeHidden = false) {
   if (!supabase) return [];
 
@@ -134,7 +139,14 @@ export async function upsertProductToSupabase(product: Product, previousSlug?: s
   if (!supabase) return;
 
   const payload = productPayload(product, isVisible);
-  const { error } = await supabase.from('products').upsert(payload, { onConflict: 'slug' });
+  let { error } = await supabase.from('products').upsert(payload, { onConflict: 'slug' });
+
+  if (error && missingColumnError(error, 'variants_enabled')) {
+    const { variants_enabled, ...compatiblePayload } = payload;
+    const retry = await supabase.from('products').upsert(compatiblePayload, { onConflict: 'slug' });
+    error = retry.error;
+  }
+
   if (error) throw error;
 
   if (previousSlug && previousSlug !== product.slug) {
