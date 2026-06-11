@@ -314,7 +314,7 @@ export const TanjaMolAddProductPage = ({
     setBadge(product.badge);
     setGallery(product.gallery?.length ? product.gallery : [product.image || fallbackImage]);
     const enabledVariants = product.variants?.filter(variant => variant.enabled) ?? [];
-    setVariantsEnabled(Boolean(product.variantOptions?.length && enabledVariants.length));
+    setVariantsEnabled(product.variantsEnabled ?? Boolean(product.variantOptions?.length && enabledVariants.length));
     const nextVariantOptions = product.variantOptions?.length ? product.variantOptions : inferVariantOptionsFromVariants(product.variants || []);
     setVariantOptions(nextVariantOptions);
     setVariants(product.variants?.length ? generateVariantsFromOptions(nextVariantOptions, product.variants, product.priceLabel) : []);
@@ -376,6 +376,7 @@ export const TanjaMolAddProductPage = ({
     showPolicies,
     details: details.map((detail, index) => ({ ...detail, reverse: detail.reverse ?? index % 2 === 1 })),
     specs: specs.filter(spec => spec.label.trim() && spec.value.trim()).map(spec => [spec.label, spec.value] as [string, string]),
+    variantsEnabled,
     variantOptions: variantsEnabled ? variantOptions.filter(group => group.label.trim() && group.values.some(value => value.label.trim())) : [],
     variants: variantsEnabled ? variants : [],
   }), [badge, category, cleanGallery, delivery, details, manualReviewsEnabled, oldPrice, price, rating, reviewCount, reviewsEnabled, shortDescription, showPolicies, showRelated, slug, specs, stock, title, variantOptions, variants, variantsEnabled]);

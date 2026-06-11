@@ -25,6 +25,7 @@ type ProductRow = {
   show_policies: boolean | null;
   details: JsonValue | null;
   specs: JsonValue | null;
+  variants_enabled: boolean | null;
   variant_options: JsonValue | null;
   variants: JsonValue | null;
   is_visible: boolean | null;
@@ -44,6 +45,9 @@ function jsonArray<T>(value: JsonValue | null, fallback: T[]): T[] {
 function mapProduct(row: ProductRow): Product {
   const gallery = jsonArray<string>(row.gallery, []).filter(Boolean);
   const image = row.image || gallery[0] || '';
+  const variantOptions = jsonArray<ProductVariantOption>(row.variant_options, []);
+  const variants = jsonArray<ProductVariant>(row.variants, []);
+  const inferredVariantsEnabled = Boolean(variantOptions.length || variants.some(variant => variant.enabled));
 
   return {
     id: row.id || row.slug,
@@ -67,8 +71,9 @@ function mapProduct(row: ProductRow): Product {
     showPolicies: row.show_policies ?? true,
     details: jsonArray<ProductDetailBlock>(row.details, []),
     specs: jsonArray<Array<string>>(row.specs, []).flatMap(item => item.length >= 2 ? [[String(item[0]), String(item[1])] as [string, string]] : []),
-    variantOptions: jsonArray<ProductVariantOption>(row.variant_options, []),
-    variants: jsonArray<ProductVariant>(row.variants, []),
+    variantsEnabled: row.variants_enabled ?? inferredVariantsEnabled,
+    variantOptions,
+    variants,
     isVisible: row.is_visible ?? true,
     sortOrder: row.sort_order ?? 0,
     createdAt: row.created_at || undefined,
@@ -99,6 +104,7 @@ function productPayload(product: Product, isVisible = product.isVisible ?? true)
     show_policies: product.showPolicies ?? true,
     details: product.details || [],
     specs: product.specs || [],
+    variants_enabled: product.variantsEnabled ?? Boolean(product.variantOptions?.length || product.variants?.length),
     variant_options: product.variantOptions || [],
     variants: product.variants || [],
     is_visible: isVisible,

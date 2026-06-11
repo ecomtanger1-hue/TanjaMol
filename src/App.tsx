@@ -260,11 +260,12 @@ export function App() {
     ])
       .then(([productsFromSupabase, settingsFromSupabase]) => {
         if (!active) return;
-        setRemoteProducts(current => productsFromSupabase.length || current ? productsFromSupabase : null);
+        setRemoteProducts(productsFromSupabase);
         if (settingsFromSupabase) setSettings(current => ({ ...current, ...settingsFromSupabase }));
       })
       .catch(error => {
         console.error('Failed to load Supabase storefront data', error);
+        if (active) setRemoteProducts([]);
       });
 
     return () => {
@@ -300,7 +301,7 @@ export function App() {
           setOrders(nextOrders);
           const nextProducts = await fetchProductsFromSupabase(true);
           if (!active) return;
-          setRemoteProducts(current => nextProducts.length || current ? nextProducts : null);
+          setRemoteProducts(nextProducts);
         }
       })
       .catch(() => undefined)
@@ -322,7 +323,7 @@ export function App() {
     ])
       .then(([nextOrders, nextProducts]) => {
         setOrders(nextOrders);
-        setRemoteProducts(current => nextProducts.length || current ? nextProducts : null);
+        setRemoteProducts(nextProducts);
       })
       .catch(error => {
         console.error('Failed to load admin data', error);
@@ -349,9 +350,9 @@ export function App() {
       ...seedProducts.filter(product => !deleted.has(product.slug) && !customSlugs.has(product.slug)),
     ];
   }, [customProducts, deletedProductSlugs]);
-  const adminProducts = remoteProducts ?? localAdminProducts;
+  const adminProducts = remoteProducts ?? [];
   const effectiveHiddenProductSlugs = useMemo(() => (
-    remoteProducts
+    remoteProducts !== null
       ? remoteProducts.filter(product => product.isVisible === false).map(product => product.slug)
       : hiddenProductSlugs
   ), [hiddenProductSlugs, remoteProducts]);
@@ -514,7 +515,7 @@ export function App() {
       localStorage.setItem(ADMIN_PRODUCTS_KEY, JSON.stringify(next));
       return next;
     });
-    setRemoteProducts(current => current ? [nextProduct, ...current.filter(item => item.slug !== product.slug && item.slug !== previousSlug)] : current);
+    setRemoteProducts(current => [nextProduct, ...(current ?? []).filter(item => item.slug !== product.slug && item.slug !== previousSlug)]);
     setDeletedProductSlugs(current => {
       const next = current.filter(slug => slug !== product.slug && slug !== previousSlug);
       localStorage.setItem(ADMIN_DELETED_PRODUCTS_KEY, JSON.stringify(next));
@@ -554,7 +555,7 @@ export function App() {
       localStorage.setItem(ADMIN_HIDDEN_PRODUCTS_KEY, JSON.stringify(next));
       return next;
     });
-    setRemoteProducts(current => current ? current.filter(item => item.slug !== product.slug) : current);
+    setRemoteProducts(current => (current ?? []).filter(item => item.slug !== product.slug));
     setNotice('تم حذف المنتج');
 
     void import('./lib/supabaseProducts')
@@ -584,7 +585,7 @@ export function App() {
       localStorage.setItem(ADMIN_HIDDEN_PRODUCTS_KEY, JSON.stringify(next));
       return next;
     });
-    setRemoteProducts(current => current ? current.filter(product => !slugs.includes(product.slug)) : current);
+    setRemoteProducts(current => (current ?? []).filter(product => !slugs.includes(product.slug)));
     setNotice('تم حذف المنتجات المحددة');
 
     void Promise.all(slugs.map(slug => import('./lib/supabaseProducts').then(({ deleteProductFromSupabase }) => deleteProductFromSupabase(slug))))
@@ -602,7 +603,7 @@ export function App() {
       setNotice(isCurrentlyHidden ? 'تم إظهار المنتج' : 'تم إخفاء المنتج');
       return next;
     });
-    setRemoteProducts(current => current ? current.map(product => product.slug === slug ? { ...product, isVisible: isCurrentlyHidden } : product) : current);
+    setRemoteProducts(current => (current ?? []).map(product => product.slug === slug ? { ...product, isVisible: isCurrentlyHidden } : product));
 
     void import('./lib/supabaseProducts')
       .then(({ setProductVisibilityInSupabase }) => setProductVisibilityInSupabase(slug, isCurrentlyHidden))
@@ -619,7 +620,7 @@ export function App() {
       setNotice('تم إخفاء المنتجات المحددة');
       return next;
     });
-    setRemoteProducts(current => current ? current.map(product => slugs.includes(product.slug) ? { ...product, isVisible: false } : product) : current);
+    setRemoteProducts(current => (current ?? []).map(product => slugs.includes(product.slug) ? { ...product, isVisible: false } : product));
     void import('./lib/supabaseProducts')
       .then(({ setProductsVisibilityInSupabase }) => setProductsVisibilityInSupabase(slugs, false))
       .catch(error => {
@@ -636,7 +637,7 @@ export function App() {
       setNotice('تم إظهار المنتجات المحددة');
       return next;
     });
-    setRemoteProducts(current => current ? current.map(product => slugs.includes(product.slug) ? { ...product, isVisible: true } : product) : current);
+    setRemoteProducts(current => (current ?? []).map(product => slugs.includes(product.slug) ? { ...product, isVisible: true } : product));
     void import('./lib/supabaseProducts')
       .then(({ setProductsVisibilityInSupabase }) => setProductsVisibilityInSupabase(slugs, true))
       .catch(error => {
@@ -649,9 +650,15 @@ export function App() {
     try {
       const { fetchProductsFromSupabase, upsertProductToSupabase } = await import('./lib/supabaseProducts');
       const productsToSync = adminProducts.length ? adminProducts : localAdminProducts;
+      const hiddenDuringSync = adminProducts.length ? effectiveHiddenProductSlugs : hiddenProductSlugs;
+
+      if (!productsToSync.length) {
+        setNotice('No products to sync');
+        return;
+      }
 
       for (const [index, product] of productsToSync.entries()) {
-        const isVisible = product.isVisible ?? !effectiveHiddenProductSlugs.includes(product.slug);
+        const isVisible = product.isVisible ?? !hiddenDuringSync.includes(product.slug);
         await upsertProductToSupabase({ ...product, sortOrder: product.sortOrder ?? index, isVisible }, undefined, isVisible);
       }
 

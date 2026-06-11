@@ -22,6 +22,7 @@ export type Product = {
   showPolicies?: boolean;
   details?: ProductDetailBlock[];
   specs?: Array<[string, string]>;
+  variantsEnabled?: boolean;
   variantOptions?: ProductVariantOption[];
   variants?: ProductVariant[];
   isVisible?: boolean;
@@ -67,6 +68,11 @@ export type ProductVariantOption = {
     id: string;
     label: string;
     color?: string;
+    enabled?: boolean;
+    priceDelta?: number;
+    stock?: number;
+    sku?: string;
+    image?: string;
   }>;
 };
 
