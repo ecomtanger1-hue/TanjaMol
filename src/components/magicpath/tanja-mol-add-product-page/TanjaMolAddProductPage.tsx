@@ -10,7 +10,7 @@ type AddProductProps = {
   onBack: () => void;
   onOpenDashboard: () => void;
   onOpenProduct: (slug: string) => void;
-  onCreateProduct: (product: Product, previousSlug?: string, options?: { isDraft?: boolean }) => void;
+  onCreateProduct: (product: Product, previousSlug?: string, options?: { isDraft?: boolean }) => void | Promise<void>;
 };
 
 type SpecDraft = {
@@ -234,7 +234,12 @@ async function uploadProductFiles(files: UploadFileSource, folder: string) {
 }
 
 function readableUploadError(error: unknown) {
-  const message = error instanceof Error ? error.message : String(error || '');
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === 'object' && error && 'message' in error
+        ? String((error as { message?: unknown }).message || '')
+        : String(error || '');
   return message || 'Unknown upload error';
 }
 
@@ -639,11 +644,11 @@ export const TanjaMolAddProductPage = ({
       setDetails(productToPublish.details || []);
       setVariants(productToPublish.variants || []);
       setVariantOptions(productToPublish.variantOptions || []);
-      onCreateProduct(productToPublish, originalSlug);
+      await onCreateProduct(productToPublish, originalSlug);
       setPublishedProduct(productToPublish);
     } catch (error) {
-      console.error('Failed to prepare product images for publish', error);
-      setUploadError(`تعذر تجهيز صور المنتج للنشر: ${readableUploadError(error)}`);
+      console.error('Failed to publish product', error);
+      setUploadError(`تعذر نشر المنتج: ${readableUploadError(error)}`);
     } finally {
       setPublishing(false);
     }
@@ -670,7 +675,7 @@ export const TanjaMolAddProductPage = ({
       setDetails(productToSave.details || []);
       setVariants(productToSave.variants || []);
       setVariantOptions(productToSave.variantOptions || []);
-      onCreateProduct(productToSave, originalSlug, { isDraft: true });
+      await onCreateProduct(productToSave, originalSlug, { isDraft: true });
       setDraftSaved(true);
     } catch (error) {
       console.error('Failed to save draft', error);

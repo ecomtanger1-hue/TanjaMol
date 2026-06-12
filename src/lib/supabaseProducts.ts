@@ -39,6 +39,24 @@ type ProductPayload = Omit<ProductRow, 'created_at' | 'updated_at'> & {
   updated_at: string;
 };
 
+type SupabaseMutationError = {
+  code?: string;
+  message?: string;
+};
+
+type ProductMutationResult<TData = unknown> = {
+  data?: TData;
+  error: SupabaseMutationError | null;
+};
+
+const PRODUCT_OPTIONAL_COMPATIBILITY_COLUMNS = [
+  'variants_enabled',
+  'variant_options',
+  'variants',
+  'is_draft',
+  'sort_order',
+] as const;
+
 const PRODUCT_SUMMARY_COLUMNS = [
   'id',
   'slug',
@@ -135,7 +153,32 @@ function productPayload(product: Product, isVisible = product.isVisible ?? true)
 
 function missingColumnError(error: { code?: string; message?: string }, column: string) {
   const message = error.message || '';
-  return error.code === 'PGRST204' || (message.includes(column) && message.toLowerCase().includes('column'));
+  return message.includes(column) && (error.code === 'PGRST204' || message.toLowerCase().includes('column'));
+}
+
+function omitPayloadColumns(payload: ProductPayload, omittedColumns: Set<string>) {
+  return Object.fromEntries(
+    Object.entries(payload).filter(([key]) => !omittedColumns.has(key))
+  ) as Record<string, unknown>;
+}
+
+async function runProductMutationWithCompatibility<TData>(
+  payload: ProductPayload,
+  mutation: (payload: Record<string, unknown>) => Promise<ProductMutationResult<TData>>
+) {
+  const omittedColumns = new Set<string>();
+
+  while (true) {
+    const result = await mutation(omitPayloadColumns(payload, omittedColumns));
+    if (!result.error) return result;
+
+    const missingColumn = PRODUCT_OPTIONAL_COMPATIBILITY_COLUMNS.find(column =>
+      !omittedColumns.has(column) && missingColumnError(result.error as SupabaseMutationError, column)
+    );
+
+    if (!missingColumn) throw result.error;
+    omittedColumns.add(missingColumn);
+  }
 }
 
 export async function fetchProductsFromSupabase(includeHidden = false) {
@@ -190,29 +233,27 @@ export async function fetchProductBySlugFromSupabase(slug: string, includeHidden
 }
 
 export async function upsertProductToSupabase(product: Product, previousSlug?: string, isVisible = product.isVisible ?? true) {
-  if (!supabase) return;
+  if (!supabase) throw new Error('Supabase is not configured for product saves.');
+  const client = supabase;
 
   const payload = productPayload(product, isVisible);
-  let { error } = await supabase.from('products').upsert(payload, { onConflict: 'slug' });
-
-  if (error && missingColumnError(error, 'variants_enabled')) {
-    const { variants_enabled, ...compatiblePayload } = payload;
-    const retry = await supabase.from('products').upsert(compatiblePayload, { onConflict: 'slug' });
-    error = retry.error;
-  }
-
-  if (error && missingColumnError(error, 'is_draft')) {
-    const { is_draft, ...compatiblePayload } = payload;
-    const retry = await supabase.from('products').upsert(compatiblePayload, { onConflict: 'slug' });
-    error = retry.error;
-  }
-
-  if (error) throw error;
 
   if (previousSlug && previousSlug !== product.slug) {
-    const { error: deleteError } = await supabase.from('products').delete().eq('slug', previousSlug);
-    if (deleteError) throw deleteError;
+    const result = await runProductMutationWithCompatibility<{ slug: string } | null>(payload, async compatiblePayload =>
+      await client
+        .from('products')
+        .update(compatiblePayload)
+        .eq('slug', previousSlug)
+        .select('slug')
+        .maybeSingle()
+    );
+
+    if (result.data) return;
   }
+
+  await runProductMutationWithCompatibility(payload, async compatiblePayload =>
+    await client.from('products').upsert(compatiblePayload, { onConflict: 'slug' })
+  );
 }
 
 export async function deleteProductFromSupabase(slug: string) {

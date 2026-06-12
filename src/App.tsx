@@ -589,7 +589,7 @@ export function App() {
       });
   };
 
-  const saveProduct = (product: Product, previousSlug = product.slug, options?: { isDraft?: boolean }) => {
+  const saveProduct = async (product: Product, previousSlug = product.slug, options?: { isDraft?: boolean }) => {
     const previousProduct = adminProducts.find(item => item.slug === previousSlug || item.slug === product.slug);
     const isDraft = options?.isDraft ?? false;
     const isVisible = isDraft
@@ -598,6 +598,15 @@ export function App() {
         ? true
         : previousProduct?.isVisible ?? !effectiveHiddenProductSlugs.includes(previousSlug);
     const nextProduct = { ...product, isDraft, isVisible };
+
+    try {
+      const { upsertProductToSupabase } = await import('./lib/supabaseProducts');
+      await upsertProductToSupabase(nextProduct, previousSlug, isVisible);
+    } catch (error) {
+      console.error('Failed to save product to Supabase', error);
+      setNotice(isDraft ? 'تعذر حفظ المسودة في قاعدة البيانات' : 'تعذر حفظ المنتج في قاعدة البيانات');
+      throw error;
+    }
 
     setCustomProducts(current => {
       const next = [nextProduct, ...current.filter(item => item.slug !== product.slug && item.slug !== previousSlug)];
@@ -622,13 +631,6 @@ export function App() {
       return next;
     });
     setNotice(isDraft ? 'تم حفظ المسودة' : 'تم نشر المنتج');
-
-    void import('./lib/supabaseProducts')
-      .then(({ upsertProductToSupabase }) => upsertProductToSupabase(nextProduct, previousSlug, isVisible))
-      .catch(error => {
-        console.error('Failed to save product to Supabase', error);
-        setNotice(isDraft ? 'تم حفظ المسودة محليا فقط' : 'تم حفظ المنتج محليا فقط');
-      });
   };
 
   const deleteProduct = (product: Product) => {
