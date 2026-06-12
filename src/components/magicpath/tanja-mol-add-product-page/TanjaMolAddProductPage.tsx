@@ -134,41 +134,34 @@ function makeVariantSku(name: string, index: number) {
 }
 
 function generateVariantsFromOptions(groups: VariantOptionDraft[], current: ProductVariant[], defaultPrice: string) {
-  const activeGroups = groups
-    .map(group => ({
-      ...group,
-      label: group.label.trim(),
-      values: group.values.filter(value => value.label.trim()),
-    }))
-    .filter(group => group.label && group.values.length);
+  const rows = groups.flatMap(group => {
+    const groupLabel = group.label.trim();
+    if (!groupLabel) return [];
 
-  if (!activeGroups.length) return [];
+    return group.values
+      .map(value => ({ groupId: group.id, valueId: value.id, groupLabel, valueLabel: value.label.trim() }))
+      .filter(row => row.valueLabel);
+  });
 
-  const combinations = activeGroups.reduce<Array<Array<{ groupId: string; valueId: string; groupLabel: string; valueLabel: string }>>>((sets, group) => {
-    const values = group.values.map(value => ({
-      groupId: group.id,
-      valueId: value.id,
-      groupLabel: group.label,
-      valueLabel: value.label.trim(),
-    }));
-    if (!sets.length) return values.map(value => [value]);
-    return sets.flatMap(set => values.map(value => [...set, value]));
-  }, []);
+  if (!rows.length) return [];
 
-  return combinations.map((combination, index) => {
-    const stableId = `variant-${combination.map(row => `${row.groupId}-${row.valueId}`).join('-')}`;
-    const optionValues = Object.fromEntries(combination.map(row => [row.groupLabel, row.valueLabel]));
-    const name = combination.map(row => row.valueLabel).join(' / ');
-    const existing = current.find(variant => {
-      if (variant.id === stableId) return true;
-      if (!variant.optionValues) return variant.name === name;
-      return combination.every(row => variant.optionValues?.[row.groupLabel] === row.valueLabel);
-    });
+  const usedExistingIds = new Set<string>();
+
+  return rows.map((row, index) => {
+    const stableId = `variant-${row.groupId}-${row.valueId}`;
+    const optionValues = { [row.groupLabel]: row.valueLabel };
+    const findUnused = (matcher: (variant: ProductVariant) => boolean) =>
+      current.find(variant => !usedExistingIds.has(variant.id) && matcher(variant));
+    const existing = findUnused(variant => variant.id === stableId)
+      ?? findUnused(variant => variant.optionValues?.[row.groupLabel] === row.valueLabel && Object.keys(variant.optionValues || {}).length === 1)
+      ?? findUnused(variant => !variant.optionValues && variant.name === row.valueLabel)
+      ?? findUnused(variant => variant.optionValues?.[row.groupLabel] === row.valueLabel);
+    if (existing) usedExistingIds.add(existing.id);
 
     return {
       id: existing?.id || stableId,
-      name,
-      sku: existing?.sku || makeVariantSku(name, index),
+      name: row.valueLabel,
+      sku: existing?.sku || makeVariantSku(row.valueLabel, index),
       priceLabel: existing?.priceLabel || priceLabel(defaultPrice),
       stock: existing?.stock ?? 10,
       enabled: existing?.enabled ?? true,
