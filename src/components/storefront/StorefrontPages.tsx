@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState, type FormEvent, type MouseEvent, type ReactNode } from 'react';
-import { CheckCircle2, Copy, Grid3X3, Home, MapPin, Menu, MessageCircle, PackageCheck, Phone, Search, ShoppingCart, UserRound, X } from 'lucide-react';
+import { Copy, Grid3X3, Home, MapPin, Menu, MessageCircle, Phone, Search, ShoppingCart, UserRound, X } from 'lucide-react';
 import {
   categories,
   categoryRoute,
   collectionTitle,
-  buildWhatsAppOrderUrl,
   defaultSettings,
   orderTotal,
   parseOrderForm,
@@ -691,21 +690,33 @@ type OrderActionProps = {
   onUpdateOrderStatus: (orderId: string, status: OrderStatus) => void;
 };
 
-const orderStatusMeta: Record<OrderStatus, { label: string; tone: string; next?: OrderStatus; nextLabel?: string }> = {
-  new: { label: 'جديد', tone: 'bg-[#e9f6ef] text-[#17623a]', next: 'whatsapp', nextLabel: 'فتح واتساب' },
-  whatsapp: { label: 'بانتظار التأكيد', tone: 'bg-[#fff3df] text-[#9a5a00]', next: 'confirmed', nextLabel: 'تأكيد الطلب' },
-  confirmed: { label: 'مؤكد', tone: 'bg-[#e9f6ef] text-[#17623a]', next: 'delivery', nextLabel: 'إرسال للتوصيل' },
-  delivery: { label: 'في التوصيل', tone: 'bg-[#eaf1ff] text-[#22559c]', next: 'done', nextLabel: 'تم التسليم' },
+const orderStatusMeta: Record<OrderStatus, { label: string; tone: string }> = {
+  new: { label: 'جديد', tone: 'bg-[#e9f6ef] text-[#17623a]' },
+  whatsapp: { label: 'بانتظار التأكيد', tone: 'bg-[#fff3df] text-[#9a5a00]' },
+  confirmed: { label: 'مؤكد', tone: 'bg-[#e9f6ef] text-[#17623a]' },
+  delivery: { label: 'في التوصيل', tone: 'bg-[#eaf1ff] text-[#22559c]' },
   done: { label: 'مكتمل', tone: 'bg-[#eef3ef] text-[#65716a]' },
 };
 
+const orderStatusOptions: Array<{ value: OrderStatus; label: string }> = [
+  { value: 'new', label: 'جديد' },
+  { value: 'whatsapp', label: 'بانتظار التأكيد' },
+  { value: 'confirmed', label: 'مؤكد' },
+  { value: 'delivery', label: 'في التوصيل' },
+  { value: 'done', label: 'مكتمل' },
+];
+
 const orderFilters: Array<{ value: OrderFilter; label: string }> = [
   { value: 'all', label: 'كل الطلبات' },
+  { value: 'new', label: 'جديدة' },
   { value: 'whatsapp', label: 'بانتظار التأكيد' },
   { value: 'confirmed', label: 'مؤكدة' },
   { value: 'delivery', label: 'في التوصيل' },
   { value: 'done', label: 'مكتملة' },
 ];
+
+const orderWhatsappSentKey = 'tanjamall.admin.orderWhatsappStatusSent.v1';
+const orderWhatsappSentEvent = 'tanjamall-admin-order-whatsapp-sent';
 
 function orderDate(order: StoredOrder) {
   return new Intl.DateTimeFormat('ar-MA', {
@@ -734,6 +745,90 @@ function normalizeOrderText(value: string) {
   return value.trim().toLowerCase();
 }
 
+function normalizeWhatsappPhone(phone: string) {
+  const digits = phone.replace(/[^\d]/g, '');
+  if (!digits) return '';
+  if (digits.startsWith('00')) return digits.slice(2);
+  if (digits.startsWith('0')) return `212${digits.slice(1)}`;
+  if (digits.startsWith('212')) return digits;
+  if (digits.length === 9) return `212${digits}`;
+  return digits;
+}
+
+function orderProductsMessage(order: StoredOrder) {
+  return order.items.map((item, index) => {
+    const variant = item.variant ? ` - ${item.variant}` : '';
+    return `${index + 1}. ${item.title}${variant} x ${item.quantity}`;
+  }).join('\n');
+}
+
+function customerWhatsappMessage(order: StoredOrder, settings: StoreSettings) {
+  const storeName = settings.storeName || defaultSettings.storeName;
+  const greeting = `مرحبا ${order.name}، معك فريق ${storeName}.`;
+  const statusCopy: Record<OrderStatus, string> = {
+    new: `توصلنا بطلبك رقم ${order.id}. المرجو تأكيد العنوان والمنتجات لكي نكمل التحضير.`,
+    whatsapp: `توصلنا بطلبك رقم ${order.id}. هل تؤكد لنا الطلب والعنوان من فضلك؟`,
+    confirmed: `تم تأكيد طلبك رقم ${order.id}. سنحضره للتوصيل ونتواصل معك إذا احتجنا أي توضيح.`,
+    delivery: `طلبك رقم ${order.id} في طريقه للتوصيل. المرجو إبقاء الهاتف قريبا منك.`,
+    done: `نتمنى أن يكون طلبك رقم ${order.id} وصل بخير. شكرا لثقتك في ${storeName}.`,
+  };
+  const details = [
+    greeting,
+    statusCopy[order.status],
+    '',
+    'ملخص الطلب:',
+    orderProductsMessage(order),
+    '',
+    `المجموع: ${order.total.toLocaleString('fr-MA')} درهم`,
+    `العنوان: ${order.address}`,
+  ];
+
+  return details.filter(Boolean).join('\n');
+}
+
+function buildCustomerWhatsappUrl(order: StoredOrder, settings: StoreSettings) {
+  const phone = normalizeWhatsappPhone(order.phone);
+  return `https://wa.me/${phone}?text=${encodeURIComponent(customerWhatsappMessage(order, settings))}`;
+}
+
+function readOrderWhatsappSentMap() {
+  try {
+    return JSON.parse(localStorage.getItem(orderWhatsappSentKey) || '{}') as Record<string, OrderStatus>;
+  } catch {
+    return {};
+  }
+}
+
+function writeOrderWhatsappSentStatus(orderId: string, status: OrderStatus) {
+  const next = { ...readOrderWhatsappSentMap(), [orderId]: status };
+  localStorage.setItem(orderWhatsappSentKey, JSON.stringify(next));
+  window.dispatchEvent(new CustomEvent(orderWhatsappSentEvent, { detail: { orderId, status } }));
+}
+
+function useOrderWhatsappSent(order: StoredOrder) {
+  const [sentStatus, setSentStatus] = useState<OrderStatus | undefined>(() => readOrderWhatsappSentMap()[order.id]);
+
+  useEffect(() => {
+    setSentStatus(readOrderWhatsappSentMap()[order.id]);
+
+    const onSent = (event: Event) => {
+      const detail = (event as CustomEvent<{ orderId: string; status: OrderStatus }>).detail;
+      if (detail?.orderId === order.id) setSentStatus(detail.status);
+    };
+
+    window.addEventListener(orderWhatsappSentEvent, onSent);
+    return () => window.removeEventListener(orderWhatsappSentEvent, onSent);
+  }, [order.id, order.status]);
+
+  return {
+    isSentForCurrentStatus: sentStatus === order.status,
+    markSent: () => {
+      writeOrderWhatsappSentStatus(order.id, order.status);
+      setSentStatus(order.status);
+    },
+  };
+}
+
 function stopAction(event: MouseEvent<HTMLElement>) {
   event.stopPropagation();
 }
@@ -743,39 +838,53 @@ function OrderStatusBadge({ status }: { status: OrderStatus }) {
   return <span className={`inline-flex min-h-[30px] items-center rounded-md px-2.5 text-xs font-black ${meta.tone}`}>{meta.label}</span>;
 }
 
+function OrderStatusSelect({ order, onUpdateOrderStatus, compact = false }: {
+  order: StoredOrder;
+  compact?: boolean;
+  onUpdateOrderStatus: (orderId: string, status: OrderStatus) => void;
+}) {
+  return (
+    <label className={compact ? 'min-w-0' : 'min-w-[154px]'}>
+      <span className="sr-only">حالة الطلب</span>
+      <select
+        value={order.status}
+        onClick={stopAction}
+        onChange={event => onUpdateOrderStatus(order.id, event.target.value as OrderStatus)}
+        aria-label={`تغيير حالة الطلب ${order.id}`}
+        className={`min-h-[42px] w-full rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-2 text-xs font-black text-[#17201b] outline-none focus:border-[#b45309] ${compact ? 'text-center' : ''}`}
+      >
+        {orderStatusOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+      </select>
+    </label>
+  );
+}
+
 function OrderQuickActions({ order, settings, onNavigate, onUpdateOrderStatus, compact = false }: {
   order: StoredOrder;
   settings: StoreSettings;
   compact?: boolean;
 } & OrderActionProps) {
-  const meta = orderStatusMeta[order.status];
-  const nextStatus = meta.next;
+  const { isSentForCurrentStatus, markSent } = useOrderWhatsappSent(order);
   const buttonBase = compact
     ? 'tm-admin-press grid min-h-[42px] place-items-center rounded-md px-3 text-xs font-black'
     : 'tm-admin-press inline-flex min-h-[40px] items-center justify-center gap-2 rounded-md px-3 text-xs font-black';
-  const whatsappUrl = buildWhatsAppOrderUrl(order, settings);
+  const whatsappUrl = buildCustomerWhatsappUrl(order, settings);
+  const whatsappStateClass = isSentForCurrentStatus
+    ? 'border-[#a8d7bd] bg-[#e9f6ef] text-[#17623a]'
+    : 'border-[#ff9900] bg-[#fff3df] text-[#9a5a00] shadow-[0_14px_30px_-24px_rgba(255,153,0,0.95)]';
+  const whatsappLabel = isSentForCurrentStatus ? 'واتساب مرسل' : 'إرسال واتساب';
 
   return (
-    <div className={`grid gap-2 ${compact ? 'grid-cols-3' : 'grid-cols-[repeat(3,max-content)]'}`} onClick={stopAction}>
+    <div className={`grid gap-2 ${compact ? 'grid-cols-[1fr_1fr_minmax(126px,1.2fr)]' : 'grid-cols-[repeat(2,max-content)_minmax(154px,1fr)]'}`} onClick={stopAction}>
       <a href={`tel:${order.phone}`} className={`${buttonBase} border border-[#cfd8d1] bg-white text-[#17201b]`} aria-label={`اتصال ب ${order.name}`}>
         <Phone className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
         {!compact ? 'اتصال' : null}
       </a>
-      <a href={whatsappUrl} target="_blank" rel="noreferrer" className={`${buttonBase} border border-[#cfd8d1] bg-white text-[#17201b]`} aria-label={`واتساب ${order.name}`}>
+      <a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={markSent} className={`${buttonBase} border ${whatsappStateClass}`} aria-label={`${whatsappLabel} إلى ${order.name}`} title={whatsappLabel}>
         <MessageCircle className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
-        {!compact ? 'واتساب' : null}
+        {!compact ? whatsappLabel : null}
       </a>
-      {nextStatus ? (
-        <button type="button" onClick={() => onUpdateOrderStatus(order.id, nextStatus)} className={`${buttonBase} bg-[#ff9900] text-[#131921] shadow-[0_14px_30px_-22px_rgba(255,153,0,0.9)]`} aria-label={meta.nextLabel}>
-          <CheckCircle2 className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
-          {!compact ? meta.nextLabel : null}
-        </button>
-      ) : (
-        <button type="button" onClick={() => onNavigate(`#/admin/orders/${order.id}`)} className={`${buttonBase} bg-[#eef3ef] text-[#65716a]`} aria-label="عرض التفاصيل">
-          <PackageCheck className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
-          {!compact ? 'التفاصيل' : null}
-        </button>
-      )}
+      <OrderStatusSelect order={order} onUpdateOrderStatus={onUpdateOrderStatus} compact={compact} />
     </div>
   );
 }
@@ -956,7 +1065,6 @@ export function AdminOrderDetailPage({
   settings: StoreSettings;
 } & OrderActionProps) {
   if (!order) return <AdminShell title="الطلب" onNavigate={onNavigate}><EmptyAdmin title="الطلب غير موجود" copy="ربما تم تحديث القائمة أو حذف الطلب من قاعدة البيانات." /></AdminShell>;
-  const whatsappUrl = buildWhatsAppOrderUrl(order, settings);
 
   return (
     <AdminShell
@@ -1025,15 +1133,8 @@ export function AdminOrderDetailPage({
               </div>
             ) : null}
           </div>
-          <div className="mt-5 grid grid-cols-2 gap-2 border-t border-[#dfe5df] pt-4">
-            <a href={`tel:${order.phone}`} className="tm-admin-press inline-flex min-h-[48px] items-center justify-center gap-2 rounded-md bg-[#131921] px-3 text-sm font-black text-white">
-              <Phone className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
-              اتصال
-            </a>
-            <a href={whatsappUrl} target="_blank" rel="noreferrer" className="tm-admin-press inline-flex min-h-[48px] items-center justify-center gap-2 rounded-md bg-[#ff9900] px-3 text-sm font-black text-[#131921]">
-              <MessageCircle className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
-              واتساب
-            </a>
+          <div className="mt-5 border-t border-[#dfe5df] pt-4">
+            <OrderQuickActions order={order} settings={settings} onNavigate={onNavigate} onUpdateOrderStatus={onUpdateOrderStatus} />
           </div>
         </aside>
       </section>
