@@ -47,6 +47,11 @@ function safeAttribute(value: string) {
   return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+function readableUploadError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error || '');
+  return message || 'Unknown upload error';
+}
+
 function getCurrentFontSize(editor: IJodit) {
   const anyEditor = editor as any;
   const current = editor.s.current();
@@ -101,7 +106,7 @@ export function JoditBlockEditor({
       const { uploadProductImages } = await import('../../../lib/supabaseStorage');
       const urls = await uploadProductImages(Array.from(files), folder);
       if (!urls.length) {
-        window.alert('تعذر رفع الصورة. تأكد من إعداد Supabase Storage ثم حاول مرة أخرى.');
+        window.alert('تعذر رفع الصورة: لم يرجع Supabase رابطا للصورة.');
         return;
       }
 
@@ -111,7 +116,7 @@ export function JoditBlockEditor({
       syncValue(editorRef.current.value);
     } catch (error) {
       console.error('Failed to upload editor image', error);
-      window.alert('تعذر رفع الصورة. حاول مرة أخرى أو استخدم رابط صورة.');
+      window.alert(`تعذر رفع الصورة: ${readableUploadError(error)}`);
     } finally {
       setIsUploading(false);
       if (uploadInputRef.current) uploadInputRef.current.value = '';

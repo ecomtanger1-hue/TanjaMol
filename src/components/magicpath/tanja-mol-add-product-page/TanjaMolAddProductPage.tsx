@@ -233,6 +233,11 @@ async function uploadProductFiles(files: UploadFileSource, folder: string) {
   return uploadedImages;
 }
 
+function readableUploadError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error || '');
+  return message || 'Unknown upload error';
+}
+
 async function replaceInlineImages(product: Product, folder: string) {
   const inlineImages = [
     ...product.gallery,
@@ -581,7 +586,7 @@ export const TanjaMolAddProductPage = ({
       if (uploadInputRef.current) uploadInputRef.current.value = '';
     } catch (error) {
       console.error('Failed to upload images to Supabase Storage', error);
-      setUploadError('تعذر رفع الصور. تأكد من إعداد Supabase Storage ثم حاول مرة أخرى.');
+      setUploadError(`تعذر رفع الصور: ${readableUploadError(error)}`);
     } finally {
       setUploadingImages(false);
     }
@@ -602,7 +607,7 @@ export const TanjaMolAddProductPage = ({
       updateDetail(detailId, { mediaUrl: selectedImage, mediaType: 'image' });
     } catch (error) {
       console.error('Failed to upload detail image to Supabase Storage', error);
-      setUploadError('تعذر رفع صورة التفاصيل. تأكد من إعداد Supabase Storage ثم حاول مرة أخرى.');
+      setUploadError(`تعذر رفع صورة التفاصيل: ${readableUploadError(error)}`);
     } finally {
       setUploadingImages(false);
     }
@@ -627,7 +632,7 @@ export const TanjaMolAddProductPage = ({
       setPublishedProduct(productToPublish);
     } catch (error) {
       console.error('Failed to prepare product images for publish', error);
-      setUploadError('تعذر تجهيز صور المنتج للنشر. أعد رفع الصور أو تحقق من Supabase Storage.');
+      setUploadError(`تعذر تجهيز صور المنتج للنشر: ${readableUploadError(error)}`);
     } finally {
       setPublishing(false);
     }

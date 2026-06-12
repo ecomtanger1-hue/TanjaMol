@@ -2,23 +2,32 @@ import { supabase } from './supabase';
 
 const PRODUCT_IMAGES_BUCKET = 'product-images';
 
+function uploadError(message: string, cause?: unknown) {
+  return new Error(`Supabase Storage upload failed: ${message}`, { cause });
+}
+
 function safeSegment(value: string) {
   return value
     .trim()
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-z0-9\u0600-\u06ff]+/g, '-')
+    .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '') || 'product';
 }
 
 function safeFileName(file: File, index: number) {
-  const extension = file.name.includes('.') ? file.name.split('.').pop() : 'jpg';
+  const extension = (file.name.includes('.') ? file.name.split('.').pop() : 'jpg')?.replace(/[^a-z0-9]/gi, '') || 'jpg';
   return `${Date.now()}-${index + 1}.${extension}`;
 }
 
 export async function uploadProductImages(files: File[], folder = 'product') {
-  if (!supabase || !files.length) return [];
+  if (!files.length) return [];
+  if (!supabase) throw uploadError('Supabase is not configured.');
+
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError) throw uploadError(sessionError.message, sessionError);
+  if (!sessionData.session) throw uploadError('No active admin session. Sign in again and retry.');
 
   const productFolder = safeSegment(folder);
   const urls: string[] = [];
@@ -32,7 +41,7 @@ export async function uploadProductImages(files: File[], folder = 'product') {
         upsert: false,
       });
 
-    if (error) throw error;
+    if (error) throw uploadError(error.message, error);
 
     const { data } = supabase.storage.from(PRODUCT_IMAGES_BUCKET).getPublicUrl(path);
     if (data.publicUrl) urls.push(data.publicUrl);
