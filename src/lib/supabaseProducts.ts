@@ -29,6 +29,7 @@ type ProductRow = {
   variant_options?: JsonValue | null;
   variants?: JsonValue | null;
   is_visible?: boolean | null;
+  is_draft?: boolean | null;
   sort_order?: number | null;
   created_at?: string | null;
   updated_at?: string | null;
@@ -92,6 +93,7 @@ function mapProduct(row: ProductRow): Product {
     variantOptions,
     variants,
     isVisible: row.is_visible ?? true,
+    isDraft: row.is_draft ?? false,
     sortOrder: row.sort_order ?? 0,
     createdAt: row.created_at || undefined,
     updatedAt: row.updated_at || undefined,
@@ -125,6 +127,7 @@ function productPayload(product: Product, isVisible = product.isVisible ?? true)
     variant_options: product.variantOptions || [],
     variants: product.variants || [],
     is_visible: isVisible,
+    is_draft: product.isDraft ?? false,
     sort_order: product.sortOrder ?? 0,
     updated_at: new Date().toISOString(),
   };
@@ -194,6 +197,12 @@ export async function upsertProductToSupabase(product: Product, previousSlug?: s
 
   if (error && missingColumnError(error, 'variants_enabled')) {
     const { variants_enabled, ...compatiblePayload } = payload;
+    const retry = await supabase.from('products').upsert(compatiblePayload, { onConflict: 'slug' });
+    error = retry.error;
+  }
+
+  if (error && missingColumnError(error, 'is_draft')) {
+    const { is_draft, ...compatiblePayload } = payload;
     const retry = await supabase.from('products').upsert(compatiblePayload, { onConflict: 'slug' });
     error = retry.error;
   }

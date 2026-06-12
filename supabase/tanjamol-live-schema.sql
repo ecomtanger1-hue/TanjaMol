@@ -34,6 +34,7 @@ create table if not exists public.products (
   variant_options jsonb not null default '[]'::jsonb,
   variants jsonb not null default '[]'::jsonb,
   is_visible boolean not null default true,
+  is_draft boolean not null default false,
   sort_order integer not null default 0,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -66,6 +67,7 @@ alter table public.products add column if not exists variants_enabled boolean;
 alter table public.products add column if not exists variant_options jsonb default '[]'::jsonb;
 alter table public.products add column if not exists variants jsonb default '[]'::jsonb;
 alter table public.products add column if not exists is_visible boolean default true;
+alter table public.products add column if not exists is_draft boolean default false;
 alter table public.products add column if not exists sort_order integer default 0;
 alter table public.products add column if not exists created_at timestamptz default now();
 alter table public.products add column if not exists updated_at timestamptz default now();
@@ -192,7 +194,7 @@ drop policy if exists "products_public_visible_read" on public.products;
 create policy "products_public_visible_read"
 on public.products for select
 using (
-  is_visible = true
+  (is_visible = true and coalesce(is_draft, false) = false)
   or exists (select 1 from public.admin_users where admin_users.user_id = auth.uid())
 );
 
@@ -239,35 +241,56 @@ insert into storage.buckets (id, name, public)
 values ('product-images', 'product-images', true)
 on conflict (id) do update set public = true;
 
+create or replace function public.tanjamol_is_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1
+    from public.admin_users
+    where admin_users.user_id = auth.uid()
+  );
+$$;
+
+revoke all on function public.tanjamol_is_admin() from public;
+grant execute on function public.tanjamol_is_admin() to anon, authenticated;
+
 drop policy if exists "product_images_public_read" on storage.objects;
 create policy "product_images_public_read"
 on storage.objects for select
+to anon, authenticated
 using (bucket_id = 'product-images');
 
 drop policy if exists "product_images_admin_insert" on storage.objects;
 create policy "product_images_admin_insert"
 on storage.objects for insert
+to authenticated
 with check (
   bucket_id = 'product-images'
-  and exists (select 1 from public.admin_users where admin_users.user_id = auth.uid())
+  and public.tanjamol_is_admin()
 );
 
 drop policy if exists "product_images_admin_update" on storage.objects;
 create policy "product_images_admin_update"
 on storage.objects for update
+to authenticated
 using (
   bucket_id = 'product-images'
-  and exists (select 1 from public.admin_users where admin_users.user_id = auth.uid())
+  and public.tanjamol_is_admin()
 )
 with check (
   bucket_id = 'product-images'
-  and exists (select 1 from public.admin_users where admin_users.user_id = auth.uid())
+  and public.tanjamol_is_admin()
 );
 
 drop policy if exists "product_images_admin_delete" on storage.objects;
 create policy "product_images_admin_delete"
 on storage.objects for delete
+to authenticated
 using (
   bucket_id = 'product-images'
-  and exists (select 1 from public.admin_users where admin_users.user_id = auth.uid())
+  and public.tanjamol_is_admin()
 );

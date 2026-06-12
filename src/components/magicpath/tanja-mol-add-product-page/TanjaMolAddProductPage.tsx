@@ -10,7 +10,7 @@ type AddProductProps = {
   onBack: () => void;
   onOpenDashboard: () => void;
   onOpenProduct: (slug: string) => void;
-  onCreateProduct: (product: Product, previousSlug?: string) => void;
+  onCreateProduct: (product: Product, previousSlug?: string, options?: { isDraft?: boolean }) => void;
 };
 
 type SpecDraft = {
@@ -574,6 +574,18 @@ export const TanjaMolAddProductPage = ({
     setSpecs(current => current.length > 1 ? current.filter(spec => spec.id !== id) : current);
   };
 
+  const setPrimaryImage = (index: number) => {
+    setGallery(current => {
+      const image = current[index];
+      if (!image) return current;
+      return [image, ...current.filter((_, imageIndex) => imageIndex !== index)];
+    });
+  };
+
+  const removeGalleryImage = (index: number) => {
+    setGallery(current => current.filter((_, imageIndex) => imageIndex !== index));
+  };
+
   const handleImageUpload = async (files: FileList | null) => {
     const fileArray = normalizeUploadFiles(files);
     if (!fileArray.length) return;
@@ -603,7 +615,6 @@ export const TanjaMolAddProductPage = ({
       const selectedImage = nextImages[0];
       if (!selectedImage) return;
 
-      setGallery(current => [...current.filter(Boolean), ...nextImages]);
       updateDetail(detailId, { mediaUrl: selectedImage, mediaType: 'image' });
     } catch (error) {
       console.error('Failed to upload detail image to Supabase Storage', error);
@@ -638,6 +649,37 @@ export const TanjaMolAddProductPage = ({
     }
   };
 
+  const saveDraft = async () => {
+    const draftTitle = title.trim() || 'مسودة منتج';
+    const draftSlug = slug.trim() || makeSlug(`${draftTitle}-${Date.now().toString().slice(-6)}`);
+    const draftProduct: Product = {
+      ...previewProduct,
+      id: draftSlug,
+      slug: draftSlug,
+      title: draftTitle,
+      isDraft: true,
+      isVisible: false,
+    };
+
+    setUploadError('');
+    setPublishing(true);
+    try {
+      const productToSave = await replaceInlineImages(draftProduct, draftSlug);
+      setSlug(draftSlug);
+      setGallery(productToSave.gallery);
+      setDetails(productToSave.details || []);
+      setVariants(productToSave.variants || []);
+      setVariantOptions(productToSave.variantOptions || []);
+      onCreateProduct(productToSave, originalSlug, { isDraft: true });
+      setDraftSaved(true);
+    } catch (error) {
+      console.error('Failed to save draft', error);
+      setUploadError(`تعذر حفظ المسودة: ${readableUploadError(error)}`);
+    } finally {
+      setPublishing(false);
+    }
+  };
+
   const handleFormKeyDown = (event: KeyboardEvent<HTMLFormElement>) => {
     if (event.key !== 'Enter') return;
     const target = event.target as HTMLElement;
@@ -666,7 +708,7 @@ export const TanjaMolAddProductPage = ({
                 <button type="button" onClick={onBack} className="tm-admin-press min-h-[38px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">
                   رجوع
                 </button>
-                <button type="button" onClick={() => setDraftSaved(true)} className="tm-admin-press min-h-[38px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">
+                <button type="button" onClick={() => void saveDraft()} disabled={publishing || uploadingImages} className="tm-admin-press min-h-[38px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black disabled:cursor-not-allowed disabled:opacity-60">
                   حفظ مسودة
                 </button>
                 <button type="submit" disabled={publishing || uploadingImages} className="tm-admin-press min-h-[38px] rounded-md bg-[#ff9900] px-3 text-xs font-black text-[#131921] shadow-[0_14px_30px_-22px_rgba(255,153,0,0.9)] disabled:cursor-not-allowed disabled:opacity-60">
@@ -737,10 +779,17 @@ export const TanjaMolAddProductPage = ({
                     </div>
                     <div className="mt-3 flex items-center justify-between gap-2">
                       <p className="text-sm font-black">{index === 0 ? 'الصورة الرئيسية' : `صورة ${index + 1}`}</p>
-                      <button type="button" onClick={() => setGallery(current => current.length > 1 ? current.filter((_, imageIndex) => imageIndex !== index) : current)} className="tm-admin-press min-h-[30px] rounded-md bg-[#fff1d5] px-2 text-xs font-black text-[#9a5a00]">
+                      <button type="button" onClick={() => removeGalleryImage(index)} className="tm-admin-press min-h-[30px] rounded-md bg-[#fff1d5] px-2 text-xs font-black text-[#9a5a00]">
                         حذف
                       </button>
                     </div>
+                    {index > 0 ? (
+                      <button type="button" onClick={() => setPrimaryImage(index)} className="tm-admin-press mt-2 min-h-[32px] w-full rounded-md border border-[#cfd8d1] bg-white px-2 text-xs font-black text-[#17201b]">
+                        اجعلها الرئيسية
+                      </button>
+                    ) : (
+                      <span className="mt-2 grid min-h-[32px] place-items-center rounded-md bg-[#fff3df] px-2 text-xs font-black text-[#b45309]">الرئيسية حاليا</span>
+                    )}
                   </div>
                 ))}
                 <label htmlFor={uploadInputId} aria-disabled={uploadingImages || publishing} className={`tm-admin-press grid min-h-[180px] place-items-center rounded-md border border-dashed border-[#bfcac1] bg-[#fbfaf6] p-3 text-sm font-black text-[#65716a] ${uploadingImages || publishing ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>

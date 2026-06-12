@@ -378,15 +378,15 @@ export function App() {
   const adminProducts = remoteProducts ?? [];
   const effectiveHiddenProductSlugs = useMemo(() => (
     remoteProducts !== null
-      ? remoteProducts.filter(product => product.isVisible === false).map(product => product.slug)
+      ? remoteProducts.filter(product => product.isVisible === false && !product.isDraft).map(product => product.slug)
       : hiddenProductSlugs
   ), [hiddenProductSlugs, remoteProducts]);
   const storefrontProducts = useMemo(() => {
     const hidden = new Set(effectiveHiddenProductSlugs);
-    return adminProducts.filter(product => !hidden.has(product.slug) && product.isVisible !== false);
+    return adminProducts.filter(product => !product.isDraft && !hidden.has(product.slug) && product.isVisible !== false);
   }, [adminProducts, effectiveHiddenProductSlugs]);
   const activeProduct = productSlug
-    ? cachedProductDetail && cachedProductDetail.isVisible !== false && !effectiveHiddenProductSlugs.includes(cachedProductDetail.slug)
+    ? cachedProductDetail && !cachedProductDetail.isDraft && cachedProductDetail.isVisible !== false && !effectiveHiddenProductSlugs.includes(cachedProductDetail.slug)
       ? cachedProductDetail
       : storefrontProducts.find(product => product.slug === productSlug)
     : undefined;
@@ -572,10 +572,15 @@ export function App() {
       });
   };
 
-  const saveProduct = (product: Product, previousSlug = product.slug) => {
+  const saveProduct = (product: Product, previousSlug = product.slug, options?: { isDraft?: boolean }) => {
     const previousProduct = adminProducts.find(item => item.slug === previousSlug || item.slug === product.slug);
-    const isVisible = previousProduct?.isVisible ?? !effectiveHiddenProductSlugs.includes(previousSlug);
-    const nextProduct = { ...product, isVisible };
+    const isDraft = options?.isDraft ?? false;
+    const isVisible = isDraft
+      ? false
+      : previousProduct?.isDraft
+        ? true
+        : previousProduct?.isVisible ?? !effectiveHiddenProductSlugs.includes(previousSlug);
+    const nextProduct = { ...product, isDraft, isVisible };
 
     setCustomProducts(current => {
       const next = [nextProduct, ...current.filter(item => item.slug !== product.slug && item.slug !== previousSlug)];
@@ -599,13 +604,13 @@ export function App() {
       localStorage.setItem(ADMIN_HIDDEN_PRODUCTS_KEY, JSON.stringify(next));
       return next;
     });
-    setNotice('تم نشر المنتج');
+    setNotice(isDraft ? 'تم حفظ المسودة' : 'تم نشر المنتج');
 
     void import('./lib/supabaseProducts')
       .then(({ upsertProductToSupabase }) => upsertProductToSupabase(nextProduct, previousSlug, isVisible))
       .catch(error => {
         console.error('Failed to save product to Supabase', error);
-        setNotice('تم حفظ المنتج محليا فقط');
+        setNotice(isDraft ? 'تم حفظ المسودة محليا فقط' : 'تم حفظ المنتج محليا فقط');
       });
   };
 

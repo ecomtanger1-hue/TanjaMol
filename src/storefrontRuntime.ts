@@ -26,6 +26,7 @@ export type Product = {
   variantOptions?: ProductVariantOption[];
   variants?: ProductVariant[];
   isVisible?: boolean;
+  isDraft?: boolean;
   sortOrder?: number;
   createdAt?: string;
   updatedAt?: string;

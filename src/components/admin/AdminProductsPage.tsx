@@ -3,7 +3,7 @@ import { Edit, Eye, EyeOff, PackagePlus, Search, Trash2 } from 'lucide-react';
 import { AdminShell } from './AdminLayout';
 import { productRoute, type Product, type StoredOrder } from '../../storefrontRuntime';
 
-type ProductFilter = 'all' | 'visible' | 'hidden' | 'low-stock' | 'needs-images' | 'needs-details';
+type ProductFilter = 'all' | 'visible' | 'hidden' | 'drafts' | 'low-stock' | 'needs-images' | 'needs-details';
 type ProductSort = 'newest' | 'stock' | 'price-low' | 'price-high' | 'orders' | 'revenue';
 
 type AdminProductsPageProps = {
@@ -36,6 +36,7 @@ function needsDetails(product: Product) {
 }
 
 function productStatus(product: Product, hidden: boolean) {
+  if (product.isDraft) return { label: 'مسودة', className: 'bg-[#eef3ef] text-[#65716a]' };
   if (hidden) return { label: 'مخفي', className: 'bg-[#fff1d5] text-[#9a5a00]' };
   if ((product.stock ?? 0) <= 0) return { label: 'نفد المخزون', className: 'bg-[#fff1d5] text-[#9a5a00]' };
   if ((product.stock ?? 0) < 10) return { label: 'مخزون منخفض', className: 'bg-[#fff1d5] text-[#9a5a00]' };
@@ -77,8 +78,9 @@ export function AdminProductsPage({
           const haystack = `${row.product.title} ${row.product.slug} ${row.product.category} ${row.product.badge}`.toLowerCase();
           if (!haystack.includes(normalizedQuery)) return false;
         }
-        if (filter === 'visible') return !row.hidden;
-        if (filter === 'hidden') return row.hidden;
+        if (filter === 'visible') return !row.product.isDraft && !row.hidden;
+        if (filter === 'hidden') return !row.product.isDraft && row.hidden;
+        if (filter === 'drafts') return Boolean(row.product.isDraft);
         if (filter === 'low-stock') return (row.product.stock ?? 0) < 10;
         if (filter === 'needs-images') return needsImages(row.product);
         if (filter === 'needs-details') return needsDetails(row.product);
@@ -94,10 +96,9 @@ export function AdminProductsPage({
       });
   }, [filter, hiddenSet, orders, products, query, sort]);
 
-  const visibleCount = products.filter(product => !hiddenSet.has(product.slug)).length;
-  const hiddenCount = products.length - visibleCount;
-  const lowStockCount = products.filter(product => (product.stock ?? 0) < 10).length;
-  const needsImagesCount = products.filter(needsImages).length;
+  const draftCount = products.filter(product => product.isDraft).length;
+  const visibleCount = products.filter(product => !product.isDraft && !hiddenSet.has(product.slug)).length;
+  const hiddenCount = products.filter(product => !product.isDraft && hiddenSet.has(product.slug)).length;
   const selectedProducts = products.filter(product => selected.includes(product.slug));
   const allCurrentSelected = rows.length > 0 && rows.every(row => selected.includes(row.product.slug));
 
@@ -150,7 +151,7 @@ export function AdminProductsPage({
           ['كل المنتجات', products.length.toLocaleString('fr-MA')],
           ['ظاهرة', visibleCount.toLocaleString('fr-MA')],
           ['مخفية', hiddenCount.toLocaleString('fr-MA')],
-          ['تحتاج مراجعة', String(lowStockCount + needsImagesCount)],
+          ['مسودات', draftCount.toLocaleString('fr-MA')],
         ].map(([label, value]) => (
           <article key={label} className="tm-admin-surface rounded-md bg-white p-4">
             <p className="text-xs font-extrabold text-[#65716a]">{label}</p>
@@ -174,6 +175,7 @@ export function AdminProductsPage({
             <option value="all">كل الحالات</option>
             <option value="visible">ظاهر</option>
             <option value="hidden">مخفي</option>
+            <option value="drafts">مسودات</option>
             <option value="low-stock">مخزون منخفض</option>
             <option value="needs-images">صور ناقصة</option>
             <option value="needs-details">تفاصيل ناقصة</option>
