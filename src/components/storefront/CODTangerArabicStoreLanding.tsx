@@ -199,7 +199,7 @@ export const CODTangerArabicStoreLanding = ({
       </section>
 
       <section className="bg-[var(--tm-bg)] px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
-        <div className="tm-shell-dark mx-auto grid w-full max-w-[1180px] gap-4 overflow-hidden rounded-lg p-4 text-white sm:p-6 lg:grid-cols-[1fr_430px] lg:items-center lg:gap-8 lg:rounded-2xl lg:p-8">
+        <div className="tm-home-hero-shell mx-auto grid w-full max-w-[1180px] gap-4 overflow-hidden rounded-lg p-0 text-white lg:grid-cols-[1fr_430px] lg:items-center lg:gap-8 lg:rounded-2xl lg:p-8">
           <div className="hidden min-w-0 lg:block">
             <p className="tm-kicker inline-flex rounded-full bg-white px-3 py-1 text-[#b45309]">الدفع عند الاستلام</p>
             <h1 className="tm-heading mt-3 max-w-[680px] font-heading text-[34px] font-black leading-[1.12] sm:text-5xl lg:text-6xl">

@@ -443,6 +443,17 @@ body {
   color: var(--tm-surface-white);
 }
 
+.tm-home-hero-shell {
+  background: transparent;
+  color: var(--tm-surface-white);
+}
+
+@media (min-width: 1024px) {
+  .tm-home-hero-shell {
+    background: var(--tm-header);
+  }
+}
+
 .tm-panel {
   border-radius: 0.5rem;
   background: var(--tm-surface);
@@ -748,6 +759,10 @@ body {
 
 .tm-mobile-hero-product {
   transform: translateX(12px) scale(0.985);
+}
+
+.tm-mobile-hero-slide-active.tm-mobile-hero-product {
+  transform: translateX(0) scale(1);
 }
 
 .tm-mobile-hero-slogan {
