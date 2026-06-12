@@ -3,7 +3,7 @@ import { defaultSettings } from '../storefrontRuntime';
 import { supabase } from './supabase';
 
 type SettingsRow = {
-  id: string;
+  id: string | number;
   store_name: string | null;
   whatsapp_number: string | null;
   phone: string | null;
@@ -24,14 +24,42 @@ function mapSettings(row: SettingsRow): StoreSettings {
   };
 }
 
+function legacyIntegerIdError(error: { code?: string; message?: string }) {
+  return error.code === '22P02' || (error.message || '').includes('invalid input syntax for type integer');
+}
+
+function settingsPayload(settings: StoreSettings) {
+  return {
+    store_name: settings.storeName,
+    whatsapp_number: settings.whatsappNumber,
+    phone: settings.phone,
+    city: settings.city,
+    delivery_text: settings.deliveryText,
+    address: settings.address,
+    updated_at: new Date().toISOString(),
+  };
+}
+
 export async function fetchStoreSettingsFromSupabase() {
   if (!supabase) return null;
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('store_settings')
     .select('*')
     .eq('id', 'main')
     .maybeSingle();
+
+  if (error && legacyIntegerIdError(error)) {
+    const fallback = await supabase
+      .from('store_settings')
+      .select('*')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    data = fallback.data;
+    error = fallback.error;
+  }
 
   if (error) throw error;
   return data ? mapSettings(data as SettingsRow) : null;
@@ -42,14 +70,34 @@ export async function saveStoreSettingsToSupabase(settings: StoreSettings) {
 
   const { error } = await supabase.from('store_settings').upsert({
     id: 'main',
-    store_name: settings.storeName,
-    whatsapp_number: settings.whatsappNumber,
-    phone: settings.phone,
-    city: settings.city,
-    delivery_text: settings.deliveryText,
-    address: settings.address,
-    updated_at: new Date().toISOString(),
+    ...settingsPayload(settings),
   });
+
+  if (error && legacyIntegerIdError(error)) {
+    const { data: existing, error: readError } = await supabase
+      .from('store_settings')
+      .select('id')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (readError) throw readError;
+
+    const existingId = (existing as Pick<SettingsRow, 'id'> | null)?.id;
+    if (existingId === undefined || existingId === null) {
+      const { error: insertError } = await supabase.from('store_settings').insert(settingsPayload(settings));
+      if (insertError) throw insertError;
+      return;
+    }
+
+    const { error: updateError } = await supabase
+      .from('store_settings')
+      .update(settingsPayload(settings))
+      .eq('id', existingId);
+
+    if (updateError) throw updateError;
+    return;
+  }
 
   if (error) throw error;
 }

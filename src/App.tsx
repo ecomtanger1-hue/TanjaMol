@@ -254,18 +254,24 @@ export function App() {
   useEffect(() => {
     let active = true;
 
-    void Promise.all([
-      import('./lib/supabaseProducts').then(({ fetchProductsFromSupabase }) => fetchProductsFromSupabase(false)),
-      import('./lib/supabaseSettings').then(({ fetchStoreSettingsFromSupabase }) => fetchStoreSettingsFromSupabase()),
-    ])
-      .then(([productsFromSupabase, settingsFromSupabase]) => {
+    void import('./lib/supabaseProducts')
+      .then(({ fetchProductsFromSupabase }) => fetchProductsFromSupabase(false))
+      .then(productsFromSupabase => {
         if (!active) return;
         setRemoteProducts(productsFromSupabase);
-        if (settingsFromSupabase) setSettings(current => ({ ...current, ...settingsFromSupabase }));
       })
       .catch(error => {
-        console.error('Failed to load Supabase storefront data', error);
+        console.error('Failed to load Supabase storefront products', error);
         if (active) setRemoteProducts([]);
+      });
+
+    void import('./lib/supabaseSettings')
+      .then(({ fetchStoreSettingsFromSupabase }) => fetchStoreSettingsFromSupabase())
+      .then(settingsFromSupabase => {
+        if (active && settingsFromSupabase) setSettings(current => ({ ...current, ...settingsFromSupabase }));
+      })
+      .catch(error => {
+        console.error('Failed to load Supabase storefront settings', error);
       });
 
     return () => {
