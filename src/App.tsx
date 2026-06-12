@@ -1,9 +1,6 @@
-import { useEffect, useLayoutEffect, useMemo, useState, type CSSProperties, type FormEvent } from 'react';
+import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useState, type CSSProperties, type FormEvent } from 'react';
 import { CODTangerArabicStoreLanding } from './components/storefront/CODTangerArabicStoreLanding';
 import { TanjaMolArabicCODProductPage } from './components/product/TanjaMolArabicCODProductPage';
-import { TanjaMallAdminProductDashboard } from './components/magicpath/tanja-mol-admin-product-dashboard/TanjaMolAdminProductDashboard';
-import { TanjaMolAddProductPage } from './components/magicpath/tanja-mol-add-product-page/TanjaMolAddProductPage';
-import { AdminProductsPage } from './components/admin/AdminProductsPage';
 import {
   AdminCustomerDetailPage,
   AdminLogin,
@@ -38,12 +35,26 @@ import {
   type StoredOrder,
 } from './storefrontRuntime';
 
+const TanjaMallAdminProductDashboard = lazy(() => import('./components/magicpath/tanja-mol-admin-product-dashboard/TanjaMolAdminProductDashboard').then(module => ({
+  default: module.TanjaMallAdminProductDashboard,
+})));
+
+const TanjaMolAddProductPage = lazy(() => import('./components/magicpath/tanja-mol-add-product-page/TanjaMolAddProductPage').then(module => ({
+  default: module.TanjaMolAddProductPage,
+})));
+
+const AdminProductsPage = lazy(() => import('./components/admin/AdminProductsPage').then(module => ({
+  default: module.AdminProductsPage,
+})));
+
 const CART_KEY = 'tanjamol.cart.v1';
 const ORDERS_KEY = 'tanjamol.orders.v1';
 const ADMIN_PRODUCTS_KEY = 'tanjamol.admin.products.v1';
 const ADMIN_DELETED_PRODUCTS_KEY = 'tanjamol.admin.deletedProducts.v1';
 const ADMIN_HIDDEN_PRODUCTS_KEY = 'tanjamol.admin.hiddenProducts.v1';
 const SETTINGS_KEY = 'tanjamol.settings.v1';
+const STOREFRONT_PRODUCTS_CACHE_KEY = 'tanjamall.storefront.products.cache.v1';
+const STOREFRONT_PRODUCTS_CACHE_MAX_AGE_MS = 1000 * 60 * 60;
 
 function scrollToPageTop() {
   const activeElement = document.activeElement;
@@ -202,7 +213,10 @@ function applyPageSeo(product: Product | undefined, settings: StoreSettings) {
 export function App() {
   const [route, setRoute] = useState(getRoute);
   const [customProducts, setCustomProducts] = useState<Product[]>(() => readStored<Product[]>(ADMIN_PRODUCTS_KEY, []));
-  const [remoteProducts, setRemoteProducts] = useState<Product[] | null>(null);
+  const [remoteProducts, setRemoteProducts] = useState<Product[] | null>(() => readStorefrontProductsCache());
+  const [productDetailsBySlug, setProductDetailsBySlug] = useState<Record<string, Product>>({});
+  const [loadingProductSlug, setLoadingProductSlug] = useState<string | null>(null);
+  const [missingProductSlugs, setMissingProductSlugs] = useState<string[]>([]);
   const [deletedProductSlugs, setDeletedProductSlugs] = useState<string[]>(() => readStored<string[]>(ADMIN_DELETED_PRODUCTS_KEY, []));
   const [hiddenProductSlugs, setHiddenProductSlugs] = useState<string[]>(() => readStored<string[]>(ADMIN_HIDDEN_PRODUCTS_KEY, []));
   const [cart, setCart] = useState<CartItem[]>(() => readStored<CartItem[]>(CART_KEY, []));
@@ -255,14 +269,15 @@ export function App() {
     let active = true;
 
     void import('./lib/supabaseProducts')
-      .then(({ fetchProductsFromSupabase }) => fetchProductsFromSupabase(false))
+      .then(({ fetchProductSummariesFromSupabase }) => fetchProductSummariesFromSupabase(false))
       .then(productsFromSupabase => {
         if (!active) return;
         setRemoteProducts(productsFromSupabase);
+        writeStorefrontProductsCache(productsFromSupabase);
       })
       .catch(error => {
         console.error('Failed to load Supabase storefront products', error);
-        if (active) setRemoteProducts([]);
+        if (active) setRemoteProducts(current => current ?? []);
       });
 
     void import('./lib/supabaseSettings')
@@ -308,6 +323,7 @@ export function App() {
           const nextProducts = await fetchProductsFromSupabase(true);
           if (!active) return;
           setRemoteProducts(nextProducts);
+          setProductDetailsBySlug(Object.fromEntries(nextProducts.map(product => [product.slug, product])));
         }
       })
       .catch(() => undefined)
@@ -330,6 +346,7 @@ export function App() {
       .then(([nextOrders, nextProducts]) => {
         setOrders(nextOrders);
         setRemoteProducts(nextProducts);
+        setProductDetailsBySlug(Object.fromEntries(nextProducts.map(product => [product.slug, product])));
       })
       .catch(error => {
         console.error('Failed to load admin data', error);
@@ -347,6 +364,8 @@ export function App() {
   const categoryId = parseCategoryId(route);
   const collectionId = parseCollectionId(route);
   const searchQuery = parseSearchQuery(route);
+  const cachedProductDetail = productSlug ? productDetailsBySlug[productSlug] : undefined;
+  const isKnownMissingProduct = productSlug ? missingProductSlugs.includes(productSlug) : false;
   const localAdminProducts = useMemo(() => {
     const deleted = new Set(deletedProductSlugs);
     const customSlugs = new Set(customProducts.map(product => product.slug));
@@ -366,7 +385,48 @@ export function App() {
     const hidden = new Set(effectiveHiddenProductSlugs);
     return adminProducts.filter(product => !hidden.has(product.slug) && product.isVisible !== false);
   }, [adminProducts, effectiveHiddenProductSlugs]);
-  const activeProduct = productSlug ? storefrontProducts.find(product => product.slug === productSlug) : undefined;
+  const activeProduct = productSlug
+    ? cachedProductDetail && cachedProductDetail.isVisible !== false && !effectiveHiddenProductSlugs.includes(cachedProductDetail.slug)
+      ? cachedProductDetail
+      : storefrontProducts.find(product => product.slug === productSlug)
+    : undefined;
+
+  useEffect(() => {
+    if (!productSlug || cachedProductDetail || isKnownMissingProduct) return;
+
+    let active = true;
+    setLoadingProductSlug(productSlug);
+
+    void import('./lib/supabaseProducts')
+      .then(({ fetchProductBySlugFromSupabase }) => fetchProductBySlugFromSupabase(productSlug, false))
+      .then(product => {
+        if (!active) return;
+
+        if (!product) {
+          setMissingProductSlugs(current => current.includes(productSlug) ? current : [...current, productSlug]);
+          return;
+        }
+
+        setProductDetailsBySlug(current => ({ ...current, [product.slug]: product }));
+        setRemoteProducts(current => {
+          if (!current) return current;
+          const exists = current.some(item => item.slug === product.slug);
+          return exists
+            ? current.map(item => item.slug === product.slug ? product : item)
+            : [product, ...current];
+        });
+      })
+      .catch(error => {
+        console.error('Failed to load Supabase product details', error);
+      })
+      .finally(() => {
+        if (active) setLoadingProductSlug(current => current === productSlug ? null : current);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [cachedProductDetail, isKnownMissingProduct, productSlug]);
 
   useEffect(() => {
     applyPageSeo(activeProduct, settings);
@@ -474,6 +534,7 @@ export function App() {
       setOrders(nextOrders);
       const nextProducts = await fetchProductsFromSupabase(true);
       setRemoteProducts(nextProducts);
+      setProductDetailsBySlug(Object.fromEntries(nextProducts.map(product => [product.slug, product])));
       setIsAdminLoggedIn(true);
       navigate('#/admin');
     } catch {
@@ -522,6 +583,12 @@ export function App() {
       return next;
     });
     setRemoteProducts(current => [nextProduct, ...(current ?? []).filter(item => item.slug !== product.slug && item.slug !== previousSlug)]);
+    setProductDetailsBySlug(current => {
+      const next = { ...current, [nextProduct.slug]: nextProduct };
+      if (previousSlug !== nextProduct.slug) delete next[previousSlug];
+      return next;
+    });
+    setMissingProductSlugs(current => current.filter(slug => slug !== product.slug && slug !== previousSlug));
     setDeletedProductSlugs(current => {
       const next = current.filter(slug => slug !== product.slug && slug !== previousSlug);
       localStorage.setItem(ADMIN_DELETED_PRODUCTS_KEY, JSON.stringify(next));
@@ -562,6 +629,12 @@ export function App() {
       return next;
     });
     setRemoteProducts(current => (current ?? []).filter(item => item.slug !== product.slug));
+    setProductDetailsBySlug(current => {
+      const next = { ...current };
+      delete next[product.slug];
+      return next;
+    });
+    setMissingProductSlugs(current => current.includes(product.slug) ? current : [...current, product.slug]);
     setNotice('تم حذف المنتج');
 
     void import('./lib/supabaseProducts')
@@ -592,6 +665,12 @@ export function App() {
       return next;
     });
     setRemoteProducts(current => (current ?? []).filter(product => !slugs.includes(product.slug)));
+    setProductDetailsBySlug(current => {
+      const next = { ...current };
+      slugs.forEach(slug => delete next[slug]);
+      return next;
+    });
+    setMissingProductSlugs(current => Array.from(new Set([...current, ...slugs])));
     setNotice('تم حذف المنتجات المحددة');
 
     void Promise.all(slugs.map(slug => import('./lib/supabaseProducts').then(({ deleteProductFromSupabase }) => deleteProductFromSupabase(slug))))
@@ -610,6 +689,11 @@ export function App() {
       return next;
     });
     setRemoteProducts(current => (current ?? []).map(product => product.slug === slug ? { ...product, isVisible: isCurrentlyHidden } : product));
+    setProductDetailsBySlug(current => {
+      const product = current[slug];
+      return product ? { ...current, [slug]: { ...product, isVisible: isCurrentlyHidden } } : current;
+    });
+    if (isCurrentlyHidden) setMissingProductSlugs(current => current.filter(item => item !== slug));
 
     void import('./lib/supabaseProducts')
       .then(({ setProductVisibilityInSupabase }) => setProductVisibilityInSupabase(slug, isCurrentlyHidden))
@@ -627,6 +711,13 @@ export function App() {
       return next;
     });
     setRemoteProducts(current => (current ?? []).map(product => slugs.includes(product.slug) ? { ...product, isVisible: false } : product));
+    setProductDetailsBySlug(current => {
+      const next = { ...current };
+      slugs.forEach(slug => {
+        if (next[slug]) next[slug] = { ...next[slug], isVisible: false };
+      });
+      return next;
+    });
     void import('./lib/supabaseProducts')
       .then(({ setProductsVisibilityInSupabase }) => setProductsVisibilityInSupabase(slugs, false))
       .catch(error => {
@@ -644,6 +735,14 @@ export function App() {
       return next;
     });
     setRemoteProducts(current => (current ?? []).map(product => slugs.includes(product.slug) ? { ...product, isVisible: true } : product));
+    setProductDetailsBySlug(current => {
+      const next = { ...current };
+      slugs.forEach(slug => {
+        if (next[slug]) next[slug] = { ...next[slug], isVisible: true };
+      });
+      return next;
+    });
+    setMissingProductSlugs(current => current.filter(slug => !slugs.includes(slug)));
     void import('./lib/supabaseProducts')
       .then(({ setProductsVisibilityInSupabase }) => setProductsVisibilityInSupabase(slugs, true))
       .catch(error => {
@@ -668,7 +767,9 @@ export function App() {
         await upsertProductToSupabase({ ...product, sortOrder: product.sortOrder ?? index, isVisible }, undefined, isVisible);
       }
 
-      setRemoteProducts(await fetchProductsFromSupabase(true));
+      const nextProducts = await fetchProductsFromSupabase(true);
+      setRemoteProducts(nextProducts);
+      setProductDetailsBySlug(Object.fromEntries(nextProducts.map(product => [product.slug, product])));
       setNotice('تمت مزامنة المنتجات');
     } catch (error) {
       console.error('Failed to sync products to Supabase', error);
@@ -786,6 +887,10 @@ export function App() {
 
     if (productSlug) {
       if (!activeProduct) {
+        if (loadingProductSlug === productSlug || (remoteProducts === null && !isKnownMissingProduct)) {
+          return <ProductRouteLoading />;
+        }
+
         return <NotFoundPage cartCount={cartCount} onNavigate={navigate} onOpenCart={commonProps.onOpenCart} onOpenSearch={commonProps.onOpenSearch} />;
       }
 
@@ -836,11 +941,13 @@ export function App() {
     }
 
     return <NotFoundPage cartCount={cartCount} onNavigate={navigate} onOpenCart={commonProps.onOpenCart} onOpenSearch={commonProps.onOpenSearch} />;
-  }, [activeProduct, adminProducts, cartCount, categoryId, collectionId, commonProps, effectiveHiddenProductSlugs, isAdminLoggedIn, orders, productSlug, route, searchQuery, settings, storefrontProducts]);
+  }, [activeProduct, adminProducts, cartCount, categoryId, collectionId, commonProps, effectiveHiddenProductSlugs, isAdminLoggedIn, isKnownMissingProduct, loadingProductSlug, orders, productSlug, remoteProducts, route, searchQuery, settings, storefrontProducts]);
 
   return (
     <>
-      {renderedPage}
+      <Suspense fallback={route.startsWith('#/admin') ? <AdminRouteLoading /> : null}>
+        {renderedPage}
+      </Suspense>
       <CartPopup
         open={isCartOpen}
         cart={cart}
@@ -864,12 +971,62 @@ export function App() {
   );
 }
 
+function AdminRouteLoading() {
+  return (
+    <main dir="rtl" className="grid min-h-screen place-items-center bg-[#f4f2eb] px-4 text-[#17201b]">
+      <div className="rounded-md bg-white px-5 py-4 text-center shadow-[0_18px_48px_rgba(23,32,27,0.12)]">
+        <p className="font-heading text-lg font-black">جاري تحميل الإدارة</p>
+      </div>
+    </main>
+  );
+}
+
+function ProductRouteLoading() {
+  return (
+    <main dir="rtl" className="grid min-h-screen place-items-center bg-[var(--tm-bg)] px-4 text-[var(--tm-ink)]">
+      <div className="tm-panel-white w-full max-w-[420px] p-5 text-center">
+        <p className="font-heading text-xl font-black">جاري تحميل المنتج</p>
+      </div>
+    </main>
+  );
+}
+
 function readStored<T>(key: string, fallback: T): T {
   try {
     const value = localStorage.getItem(key);
     return value ? JSON.parse(value) as T : fallback;
   } catch {
     return fallback;
+  }
+}
+
+function readStorefrontProductsCache() {
+  try {
+    const value = localStorage.getItem(STOREFRONT_PRODUCTS_CACHE_KEY);
+    if (!value) return null;
+
+    const cache = JSON.parse(value) as { savedAt?: number; products?: Product[] };
+    if (!cache.savedAt || !Array.isArray(cache.products)) return null;
+    if (Date.now() - cache.savedAt > STOREFRONT_PRODUCTS_CACHE_MAX_AGE_MS) {
+      localStorage.removeItem(STOREFRONT_PRODUCTS_CACHE_KEY);
+      return null;
+    }
+
+    return cache.products.filter(product => product?.slug && product?.title && product.isVisible !== false);
+  } catch {
+    localStorage.removeItem(STOREFRONT_PRODUCTS_CACHE_KEY);
+    return null;
+  }
+}
+
+function writeStorefrontProductsCache(products: Product[]) {
+  try {
+    localStorage.setItem(STOREFRONT_PRODUCTS_CACHE_KEY, JSON.stringify({
+      savedAt: Date.now(),
+      products: products.filter(product => product.isVisible !== false),
+    }));
+  } catch {
+    localStorage.removeItem(STOREFRONT_PRODUCTS_CACHE_KEY);
   }
 }
 

@@ -210,31 +210,71 @@ function normalizeUploadFiles(files: UploadFileSource) {
   return files ? Array.from(files) : [];
 }
 
-function readFiles(files: UploadFileSource): Promise<string[]> {
-  const fileArray = normalizeUploadFiles(files);
-  if (!fileArray.length) return Promise.resolve([]);
-
-  return Promise.all(fileArray.map(file => new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result || ''));
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  })));
+function isInlineImageDataUrl(value: string) {
+  return /^data:image\//i.test(value.trim());
 }
 
-async function uploadOrReadFiles(files: UploadFileSource, folder: string) {
+function dataUrlToFile(dataUrl: string, index: number) {
+  const [header, body] = dataUrl.split(',');
+  const mime = header.match(/^data:([^;]+);base64$/i)?.[1] || 'image/jpeg';
+  const extension = mime.split('/')[1]?.replace(/[^a-z0-9]/gi, '') || 'jpg';
+  const binary = atob(body || '');
+  const bytes = new Uint8Array(binary.length);
+  for (let byteIndex = 0; byteIndex < binary.length; byteIndex += 1) {
+    bytes[byteIndex] = binary.charCodeAt(byteIndex);
+  }
+
+  return new File([bytes], `embedded-image-${index + 1}.${extension}`, { type: mime });
+}
+
+async function uploadProductFiles(files: UploadFileSource, folder: string) {
   const fileArray = normalizeUploadFiles(files);
   if (!fileArray.length) return [];
 
-  try {
-    const { uploadProductImages } = await import('../../../lib/supabaseStorage');
-    const uploadedImages = await uploadProductImages(fileArray, folder);
-    if (uploadedImages.length) return uploadedImages;
-  } catch (error) {
-    console.error('Failed to upload images to Supabase Storage', error);
+  const { uploadProductImages } = await import('../../../lib/supabaseStorage');
+  const uploadedImages = await uploadProductImages(fileArray, folder);
+  if (uploadedImages.length !== fileArray.length) {
+    throw new Error('Product image upload did not return every uploaded image URL.');
   }
 
-  return readFiles(fileArray);
+  return uploadedImages;
+}
+
+async function replaceInlineImages(product: Product, folder: string) {
+  const inlineImages = [
+    ...product.gallery,
+    ...(product.details || []).map(detail => detail.mediaUrl),
+    ...(product.variants || []).map(variant => variant.image || ''),
+    ...(product.variantOptions || []).flatMap(option => option.values.map(value => value.image || '')),
+  ].filter(isInlineImageDataUrl);
+
+  const uniqueInlineImages = Array.from(new Set(inlineImages));
+  if (!uniqueInlineImages.length) return product;
+
+  const uploadedImages = await uploadProductFiles(uniqueInlineImages.map(dataUrlToFile), `${folder}-embedded`);
+  const replacements = new Map(uniqueInlineImages.map((image, index) => [image, uploadedImages[index]]));
+  const replace = (value: string) => replacements.get(value) || value;
+
+  return {
+    ...product,
+    image: replace(product.image),
+    gallery: product.gallery.map(replace),
+    details: product.details?.map(detail => ({
+      ...detail,
+      mediaUrl: isInlineImageDataUrl(detail.mediaUrl) ? replace(detail.mediaUrl) : detail.mediaUrl,
+    })),
+    variants: product.variants?.map(variant => ({
+      ...variant,
+      image: variant.image && isInlineImageDataUrl(variant.image) ? replace(variant.image) : variant.image,
+    })),
+    variantOptions: product.variantOptions?.map(option => ({
+      ...option,
+      values: option.values.map(value => ({
+        ...value,
+        image: value.image && isInlineImageDataUrl(value.image) ? replace(value.image) : value.image,
+      })),
+    })),
+  };
 }
 
 export const TanjaMolAddProductPage = ({
@@ -273,6 +313,9 @@ export const TanjaMolAddProductPage = ({
   const [reviewCount, setReviewCount] = useState('');
   const [draftSaved, setDraftSaved] = useState(false);
   const [publishedProduct, setPublishedProduct] = useState<Product | null>(null);
+  const [uploadError, setUploadError] = useState('');
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [publishing, setPublishing] = useState(false);
 
   useEffect(() => {
     if (!product) {
@@ -300,6 +343,9 @@ export const TanjaMolAddProductPage = ({
       setShowPolicies(true);
       setRating('');
       setReviewCount('');
+      setUploadError('');
+      setUploadingImages(false);
+      setPublishing(false);
       return;
     }
 
@@ -328,6 +374,9 @@ export const TanjaMolAddProductPage = ({
     setShowPolicies(product.showPolicies ?? true);
     setRating(product.rating ? String(product.rating) : '4.8');
     setReviewCount(product.reviewCount ? String(product.reviewCount) : '127');
+    setUploadError('');
+    setUploadingImages(false);
+    setPublishing(false);
   }, [product]);
 
   const cleanGallery = gallery.map(item => item.trim()).filter(Boolean);
@@ -528,29 +577,67 @@ export const TanjaMolAddProductPage = ({
   };
 
   const handleImageUpload = async (files: FileList | null) => {
-    const nextImages = await uploadOrReadFiles(files, slug || makeSlug(title || 'product'));
-    if (!nextImages.length) return;
-    setGallery(current => [...current.filter(Boolean), ...nextImages]);
-    if (uploadInputRef.current) uploadInputRef.current.value = '';
+    const fileArray = normalizeUploadFiles(files);
+    if (!fileArray.length) return;
+
+    setUploadError('');
+    setUploadingImages(true);
+    try {
+      const nextImages = await uploadProductFiles(fileArray, slug || makeSlug(title || 'product'));
+      setGallery(current => [...current.filter(Boolean), ...nextImages]);
+      if (uploadInputRef.current) uploadInputRef.current.value = '';
+    } catch (error) {
+      console.error('Failed to upload images to Supabase Storage', error);
+      setUploadError('تعذر رفع الصور. تأكد من إعداد Supabase Storage ثم حاول مرة أخرى.');
+    } finally {
+      setUploadingImages(false);
+    }
   };
 
   const handleBlockImageUpload = async (detailId: string, files: UploadFileSource) => {
-    const nextImages = await uploadOrReadFiles(files, slug || makeSlug(title || 'product'));
-    const selectedImage = nextImages[0];
-    if (!selectedImage) return;
+    const fileArray = normalizeUploadFiles(files);
+    if (!fileArray.length) return;
 
-    setGallery(current => [...current.filter(Boolean), ...nextImages]);
-    updateDetail(detailId, { mediaUrl: selectedImage, mediaType: 'image' });
+    setUploadError('');
+    setUploadingImages(true);
+    try {
+      const nextImages = await uploadProductFiles(fileArray, slug || makeSlug(title || 'product'));
+      const selectedImage = nextImages[0];
+      if (!selectedImage) return;
+
+      setGallery(current => [...current.filter(Boolean), ...nextImages]);
+      updateDetail(detailId, { mediaUrl: selectedImage, mediaType: 'image' });
+    } catch (error) {
+      console.error('Failed to upload detail image to Supabase Storage', error);
+      setUploadError('تعذر رفع صورة التفاصيل. تأكد من إعداد Supabase Storage ثم حاول مرة أخرى.');
+    } finally {
+      setUploadingImages(false);
+    }
   };
 
-  const submitProduct = (event: FormEvent<HTMLFormElement>) => {
+  const submitProduct = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!title.trim() || parsePrice(price) <= 0) {
       event.currentTarget.reportValidity();
       return;
     }
-    onCreateProduct(previewProduct, originalSlug);
-    setPublishedProduct(previewProduct);
+
+    setUploadError('');
+    setPublishing(true);
+    try {
+      const productToPublish = await replaceInlineImages(previewProduct, slug || makeSlug(title || 'product'));
+      setGallery(productToPublish.gallery);
+      setDetails(productToPublish.details || []);
+      setVariants(productToPublish.variants || []);
+      setVariantOptions(productToPublish.variantOptions || []);
+      onCreateProduct(productToPublish, originalSlug);
+      setPublishedProduct(productToPublish);
+    } catch (error) {
+      console.error('Failed to prepare product images for publish', error);
+      setUploadError('تعذر تجهيز صور المنتج للنشر. أعد رفع الصور أو تحقق من Supabase Storage.');
+    } finally {
+      setPublishing(false);
+    }
   };
 
   const handleFormKeyDown = (event: KeyboardEvent<HTMLFormElement>) => {
@@ -584,7 +671,7 @@ export const TanjaMolAddProductPage = ({
                 <button type="button" onClick={() => setDraftSaved(true)} className="tm-admin-press min-h-[38px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">
                   حفظ مسودة
                 </button>
-                <button type="submit" className="tm-admin-press min-h-[38px] rounded-md bg-[#ff9900] px-3 text-xs font-black text-[#131921] shadow-[0_14px_30px_-22px_rgba(255,153,0,0.9)]">
+                <button type="submit" disabled={publishing || uploadingImages} className="tm-admin-press min-h-[38px] rounded-md bg-[#ff9900] px-3 text-xs font-black text-[#131921] shadow-[0_14px_30px_-22px_rgba(255,153,0,0.9)] disabled:cursor-not-allowed disabled:opacity-60">
                   نشر المنتج
                 </button>
               </div>
@@ -633,12 +720,17 @@ export const TanjaMolAddProductPage = ({
 
             <AdminSection title="معرض المنتج" summary={gallerySummary} status={cleanGallery.length ? 'done' : 'missing'} defaultOpen={false} action={
               <>
-                <input id={uploadInputId} ref={uploadInputRef} type="file" accept="image/*" multiple className="sr-only" onChange={event => void handleImageUpload(event.target.files)} />
-                <label htmlFor={uploadInputId} className="tm-admin-press inline-grid min-h-[36px] cursor-pointer place-items-center rounded-md bg-[#131921] px-3 text-xs font-black text-white">
+                <input id={uploadInputId} ref={uploadInputRef} type="file" accept="image/*" multiple disabled={uploadingImages || publishing} className="sr-only" onChange={event => void handleImageUpload(event.target.files)} />
+                <label htmlFor={uploadInputId} aria-disabled={uploadingImages || publishing} className={`tm-admin-press inline-grid min-h-[36px] place-items-center rounded-md bg-[#131921] px-3 text-xs font-black text-white ${uploadingImages || publishing ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
                   رفع صور
                 </label>
               </>
             }>
+              {uploadError ? (
+                <div className="rounded-md bg-[#fff1d5] px-3 py-2 text-sm font-black text-[#9a5a00]" role="alert">
+                  {uploadError}
+                </div>
+              ) : null}
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {gallery.map((image, index) => (
                   <div key={`${image}-${index}`} className="rounded-md border border-dashed border-[#bfcac1] bg-[#fbfaf6] p-3 text-right">
@@ -653,7 +745,7 @@ export const TanjaMolAddProductPage = ({
                     </div>
                   </div>
                 ))}
-                <label htmlFor={uploadInputId} className="tm-admin-press grid min-h-[180px] cursor-pointer place-items-center rounded-md border border-dashed border-[#bfcac1] bg-[#fbfaf6] p-3 text-sm font-black text-[#65716a]">
+                <label htmlFor={uploadInputId} aria-disabled={uploadingImages || publishing} className={`tm-admin-press grid min-h-[180px] place-items-center rounded-md border border-dashed border-[#bfcac1] bg-[#fbfaf6] p-3 text-sm font-black text-[#65716a] ${uploadingImages || publishing ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
                   إضافة صور
                 </label>
               </div>
@@ -889,6 +981,7 @@ export const TanjaMolAddProductPage = ({
                             onSelect={mediaUrl => updateDetail(detail.id, { mediaUrl, mediaType: 'image' })}
                             onUrlChange={mediaUrl => updateDetail(detail.id, { mediaUrl })}
                             onUpload={files => void handleBlockImageUpload(detail.id, files)}
+                            uploadDisabled={uploadingImages || publishing}
                           />
                         </div>
                         <div className={`grid self-start gap-3 ${detail.reverse ? 'lg:col-start-1' : 'lg:col-start-2'} lg:row-start-1 lg:[direction:rtl]`}>
@@ -960,7 +1053,7 @@ export const TanjaMolAddProductPage = ({
                   <p className="mt-2 max-w-[62ch] text-sm font-semibold leading-7 text-[#65716a]">{shortDescription}</p>
                   <div className="mt-4 flex flex-wrap items-center gap-4">
                     <p className="tm-admin-num font-heading text-2xl font-black text-[#b45309]">{priceLabel(price)}</p>
-                    <button type="submit" className="tm-admin-press min-h-[40px] rounded-md bg-[#ff9900] px-4 text-sm font-black text-[#131921]">اطلب الآن</button>
+                    <button type="submit" disabled={publishing || uploadingImages} className="tm-admin-press min-h-[40px] rounded-md bg-[#ff9900] px-4 text-sm font-black text-[#131921] disabled:cursor-not-allowed disabled:opacity-60">اطلب الآن</button>
                   </div>
                   <p className="mt-3 text-xs font-bold leading-5 text-[#65716a]">المنتجات الحالية في المتجر: {products.length}</p>
                 </div>
@@ -1182,6 +1275,7 @@ function BlockMediaPicker({
   onSelect,
   onUrlChange,
   onUpload,
+  uploadDisabled = false,
 }: {
   detailId: string;
   value: string;
@@ -1190,6 +1284,7 @@ function BlockMediaPicker({
   onSelect: (mediaUrl: string) => void;
   onUrlChange: (mediaUrl: string) => void;
   onUpload: (files: File[]) => void;
+  uploadDisabled?: boolean;
 }) {
   const inputId = `tm-block-upload-${detailId}`;
   const imageOptions = gallery.map(item => item.trim()).filter(Boolean);
@@ -1246,10 +1341,10 @@ function BlockMediaPicker({
           ) : null}
         </div>
 
-        <label htmlFor={inputId} className="tm-admin-press mt-[17px] grid min-h-[36px] cursor-pointer place-items-center rounded-md bg-[#131921] px-3 text-xs font-black text-white">
+        <label htmlFor={inputId} aria-disabled={uploadDisabled} className={`tm-admin-press mt-[17px] grid min-h-[36px] place-items-center rounded-md bg-[#131921] px-3 text-xs font-black text-white ${uploadDisabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
           رفع جديد
         </label>
-        <input id={inputId} type="file" accept="image/*" className="sr-only" onChange={event => {
+        <input id={inputId} type="file" accept="image/*" disabled={uploadDisabled} className="sr-only" onChange={event => {
           const files = Array.from(event.currentTarget.files || []);
           onFocus();
           if (files.length) onUpload(files);

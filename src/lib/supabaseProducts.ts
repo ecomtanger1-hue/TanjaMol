@@ -4,41 +4,58 @@ import { supabase } from './supabase';
 type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
 type ProductRow = {
-  id: string;
-  slug: string;
-  title: string;
-  category: string;
-  price: number | string | null;
-  price_label: string | null;
-  old_price: string | null;
-  badge: string | null;
-  image: string | null;
-  gallery: JsonValue | null;
-  description: string | null;
-  stock: number | null;
-  delivery: string | null;
-  reviews_enabled: boolean | null;
-  manual_reviews_enabled: boolean | null;
-  rating: number | string | null;
-  review_count: number | null;
-  show_related: boolean | null;
-  show_policies: boolean | null;
-  details: JsonValue | null;
-  specs: JsonValue | null;
-  variants_enabled: boolean | null;
-  variant_options: JsonValue | null;
-  variants: JsonValue | null;
-  is_visible: boolean | null;
-  sort_order: number | null;
-  created_at: string | null;
-  updated_at: string | null;
+  id?: string | null;
+  slug?: string | null;
+  title?: string | null;
+  category?: string | null;
+  price?: number | string | null;
+  price_label?: string | null;
+  old_price?: string | null;
+  badge?: string | null;
+  image?: string | null;
+  gallery?: JsonValue | null;
+  description?: string | null;
+  stock?: number | null;
+  delivery?: string | null;
+  reviews_enabled?: boolean | null;
+  manual_reviews_enabled?: boolean | null;
+  rating?: number | string | null;
+  review_count?: number | null;
+  show_related?: boolean | null;
+  show_policies?: boolean | null;
+  details?: JsonValue | null;
+  specs?: JsonValue | null;
+  variants_enabled?: boolean | null;
+  variant_options?: JsonValue | null;
+  variants?: JsonValue | null;
+  is_visible?: boolean | null;
+  sort_order?: number | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 };
 
 type ProductPayload = Omit<ProductRow, 'created_at' | 'updated_at'> & {
   updated_at: string;
 };
 
-function jsonArray<T>(value: JsonValue | null, fallback: T[]): T[] {
+const PRODUCT_SUMMARY_COLUMNS = [
+  'id',
+  'slug',
+  'title',
+  'category',
+  'price',
+  'price_label',
+  'old_price',
+  'badge',
+  'image',
+  'stock',
+  'is_visible',
+  'sort_order',
+  'created_at',
+  'updated_at',
+].join(',');
+
+function jsonArray<T>(value: JsonValue | null | undefined, fallback: T[]): T[] {
   return Array.isArray(value) ? value as T[] : fallback;
 }
 
@@ -50,10 +67,10 @@ function mapProduct(row: ProductRow): Product {
   const inferredVariantsEnabled = Boolean(variantOptions.length || variants.some(variant => variant.enabled));
 
   return {
-    id: row.id || row.slug,
-    slug: row.slug,
-    title: row.title,
-    category: row.category,
+    id: row.id || row.slug || '',
+    slug: row.slug || row.id || '',
+    title: row.title || '',
+    category: row.category || '',
     price: Number(row.price || 0),
     priceLabel: row.price_label || `${Number(row.price || 0).toLocaleString('fr-MA')} درهم`,
     oldPrice: row.old_price || '',
@@ -133,6 +150,40 @@ export async function fetchProductsFromSupabase(includeHidden = false) {
   if (error) throw error;
 
   return (data || []).map(row => mapProduct(row as ProductRow));
+}
+
+export async function fetchProductSummariesFromSupabase(includeHidden = false) {
+  if (!supabase) return [];
+
+  let query = supabase
+    .from('products')
+    .select(PRODUCT_SUMMARY_COLUMNS)
+    .order('sort_order', { ascending: true })
+    .order('updated_at', { ascending: false });
+
+  if (!includeHidden) query = query.eq('is_visible', true);
+
+  const { data, error } = await query;
+  if (error) throw error;
+
+  return (data || []).map(row => mapProduct(row as ProductRow));
+}
+
+export async function fetchProductBySlugFromSupabase(slug: string, includeHidden = false) {
+  if (!supabase) return null;
+
+  let query = supabase
+    .from('products')
+    .select('*')
+    .eq('slug', slug)
+    .limit(1);
+
+  if (!includeHidden) query = query.eq('is_visible', true);
+
+  const { data, error } = await query.maybeSingle();
+  if (error) throw error;
+
+  return data ? mapProduct(data as ProductRow) : null;
 }
 
 export async function upsertProductToSupabase(product: Product, previousSlug?: string, isVisible = product.isVisible ?? true) {
