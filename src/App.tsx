@@ -522,6 +522,23 @@ export function App() {
     if (draft) submitOrderDraft(draft);
   };
 
+  const updateOrderStatus = (orderId: string, status: StoredOrder['status']) => {
+    const previousOrders = orders;
+    const nextOrders = orders.map(order => order.id === orderId ? { ...order, status } : order);
+    setOrders(nextOrders);
+    localStorage.setItem(ORDERS_KEY, JSON.stringify(nextOrders));
+    setNotice('تم تحديث حالة الطلب');
+
+    void import('./lib/supabaseAdmin')
+      .then(({ updateAdminOrderStatus }) => updateAdminOrderStatus(orderId, status))
+      .catch(error => {
+        console.error('Failed to update order status', error);
+        setOrders(previousOrders);
+        localStorage.setItem(ORDERS_KEY, JSON.stringify(previousOrders));
+        setNotice('تعذر تحديث حالة الطلب');
+      });
+  };
+
   const loginAdmin = async (email: string, password: string) => {
     setAdminLoginError('');
     try {
@@ -874,16 +891,16 @@ export function App() {
       );
     }
 
-    if (route === '#/admin/orders') return <AdminOrdersPage orders={orders} onNavigate={navigate} />;
+    if (route === '#/admin/orders') return <AdminOrdersPage orders={orders} settings={settings} onNavigate={navigate} onUpdateOrderStatus={updateOrderStatus} />;
 
     if (route.startsWith('#/admin/orders/')) {
       const id = decodeURIComponent(route.replace('#/admin/orders/', ''));
-      return <AdminOrderDetailPage order={orders.find(order => order.id === id)} onNavigate={navigate} />;
+      return <AdminOrderDetailPage order={orders.find(order => order.id === id)} settings={settings} onNavigate={navigate} onUpdateOrderStatus={updateOrderStatus} />;
     }
 
     if (route.startsWith('#/admin/customers/')) {
       const phone = decodeURIComponent(route.replace('#/admin/customers/', ''));
-      return <AdminCustomerDetailPage phone={phone} orders={orders} onNavigate={navigate} />;
+      return <AdminCustomerDetailPage phone={phone} orders={orders} settings={settings} onNavigate={navigate} onUpdateOrderStatus={updateOrderStatus} />;
     }
 
     if (route === '#/admin/settings') {

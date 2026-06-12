@@ -65,6 +65,17 @@ export async function fetchAdminOrders(): Promise<StoredOrder[]> {
   return (data || []).map(mapSupabaseOrder);
 }
 
+export async function updateAdminOrderStatus(orderNumber: string, status: StoredOrder['status']) {
+  if (!supabase) throw new Error('Supabase is not configured.');
+
+  const { error } = await supabase
+    .from('orders')
+    .update({ status })
+    .eq('order_number', orderNumber);
+
+  if (error) throw error;
+}
+
 function mapSupabaseOrder(order: SupabaseOrder): StoredOrder {
   return {
     id: order.order_number,

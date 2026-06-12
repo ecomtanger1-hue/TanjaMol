@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
-import { Grid3X3, Home, Menu, Search, ShoppingCart, X } from 'lucide-react';
+import { useEffect, useMemo, useState, type FormEvent, type MouseEvent, type ReactNode } from 'react';
+import { CheckCircle2, Copy, Grid3X3, Home, MapPin, Menu, MessageCircle, PackageCheck, Phone, Search, ShoppingCart, UserRound, X } from 'lucide-react';
 import {
   categories,
   categoryRoute,
   collectionTitle,
+  buildWhatsAppOrderUrl,
   defaultSettings,
   orderTotal,
   parseOrderForm,
@@ -681,75 +682,403 @@ export function AdminLogin({
   );
 }
 
-export function AdminOrdersPage({ orders, onNavigate }: { orders: StoredOrder[]; onNavigate: (route: string) => void }) {
+type OrderStatus = StoredOrder['status'];
+type OrderFilter = 'all' | OrderStatus;
+type OrderSort = 'newest' | 'oldest' | 'total-high' | 'total-low';
+
+type OrderActionProps = {
+  onNavigate: (route: string) => void;
+  onUpdateOrderStatus: (orderId: string, status: OrderStatus) => void;
+};
+
+const orderStatusMeta: Record<OrderStatus, { label: string; tone: string; next?: OrderStatus; nextLabel?: string }> = {
+  new: { label: 'جديد', tone: 'bg-[#e9f6ef] text-[#17623a]', next: 'whatsapp', nextLabel: 'فتح واتساب' },
+  whatsapp: { label: 'بانتظار التأكيد', tone: 'bg-[#fff3df] text-[#9a5a00]', next: 'confirmed', nextLabel: 'تأكيد الطلب' },
+  confirmed: { label: 'مؤكد', tone: 'bg-[#e9f6ef] text-[#17623a]', next: 'delivery', nextLabel: 'إرسال للتوصيل' },
+  delivery: { label: 'في التوصيل', tone: 'bg-[#eaf1ff] text-[#22559c]', next: 'done', nextLabel: 'تم التسليم' },
+  done: { label: 'مكتمل', tone: 'bg-[#eef3ef] text-[#65716a]' },
+};
+
+const orderFilters: Array<{ value: OrderFilter; label: string }> = [
+  { value: 'all', label: 'كل الطلبات' },
+  { value: 'whatsapp', label: 'بانتظار التأكيد' },
+  { value: 'confirmed', label: 'مؤكدة' },
+  { value: 'delivery', label: 'في التوصيل' },
+  { value: 'done', label: 'مكتملة' },
+];
+
+function orderDate(order: StoredOrder) {
+  return new Intl.DateTimeFormat('ar-MA', {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(order.createdAt));
+}
+
+function orderRelative(order: StoredOrder) {
+  const created = new Date(order.createdAt).getTime();
+  const hours = Math.max(0, Math.round((Date.now() - created) / 36e5));
+  if (hours < 1) return 'الآن';
+  if (hours < 24) return `منذ ${hours} س`;
+  return orderDate(order);
+}
+
+function orderItemsSummary(order: StoredOrder) {
+  const count = order.items.reduce((sum, item) => sum + item.quantity, 0);
+  if (!order.items.length) return 'بدون منتجات';
+  return `${count.toLocaleString('fr-MA')} قطعة · ${order.items[0].title}${order.items.length > 1 ? ` +${order.items.length - 1}` : ''}`;
+}
+
+function normalizeOrderText(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function stopAction(event: MouseEvent<HTMLElement>) {
+  event.stopPropagation();
+}
+
+function OrderStatusBadge({ status }: { status: OrderStatus }) {
+  const meta = orderStatusMeta[status];
+  return <span className={`inline-flex min-h-[30px] items-center rounded-md px-2.5 text-xs font-black ${meta.tone}`}>{meta.label}</span>;
+}
+
+function OrderQuickActions({ order, settings, onNavigate, onUpdateOrderStatus, compact = false }: {
+  order: StoredOrder;
+  settings: StoreSettings;
+  compact?: boolean;
+} & OrderActionProps) {
+  const meta = orderStatusMeta[order.status];
+  const nextStatus = meta.next;
+  const buttonBase = compact
+    ? 'tm-admin-press grid min-h-[42px] place-items-center rounded-md px-3 text-xs font-black'
+    : 'tm-admin-press inline-flex min-h-[40px] items-center justify-center gap-2 rounded-md px-3 text-xs font-black';
+  const whatsappUrl = buildWhatsAppOrderUrl(order, settings);
+
   return (
-    <AdminShell title="الطلبات" onNavigate={onNavigate}>
-      <section className="grid gap-3">
-        {orders.length ? orders.map(order => (
-          <button key={order.id} onClick={() => onNavigate(`#/admin/orders/${order.id}`)} className="tm-admin-press grid gap-3 rounded-md bg-white p-4 text-right shadow-[0_10px_30px_rgba(23,32,27,0.08)] sm:grid-cols-[1fr_auto]" type="button">
-            <div>
-              <p className="font-heading text-xl font-black">{order.id}</p>
-              <p className="mt-1 text-sm font-bold text-[#65716a]">{order.name}، {order.phone}</p>
-            </div>
-            <div className="text-right sm:text-left">
-              <p className="tm-admin-num font-heading text-2xl font-black text-[#b45309]">{order.total} درهم</p>
-              <p className="text-xs font-black text-[#65716a]">{order.status}</p>
-            </div>
-          </button>
-        )) : <EmptyAdmin title="لا توجد طلبات" />}
+    <div className={`grid gap-2 ${compact ? 'grid-cols-3' : 'grid-cols-[repeat(3,max-content)]'}`} onClick={stopAction}>
+      <a href={`tel:${order.phone}`} className={`${buttonBase} border border-[#cfd8d1] bg-white text-[#17201b]`} aria-label={`اتصال ب ${order.name}`}>
+        <Phone className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
+        {!compact ? 'اتصال' : null}
+      </a>
+      <a href={whatsappUrl} target="_blank" rel="noreferrer" className={`${buttonBase} border border-[#cfd8d1] bg-white text-[#17201b]`} aria-label={`واتساب ${order.name}`}>
+        <MessageCircle className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
+        {!compact ? 'واتساب' : null}
+      </a>
+      {nextStatus ? (
+        <button type="button" onClick={() => onUpdateOrderStatus(order.id, nextStatus)} className={`${buttonBase} bg-[#ff9900] text-[#131921] shadow-[0_14px_30px_-22px_rgba(255,153,0,0.9)]`} aria-label={meta.nextLabel}>
+          <CheckCircle2 className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
+          {!compact ? meta.nextLabel : null}
+        </button>
+      ) : (
+        <button type="button" onClick={() => onNavigate(`#/admin/orders/${order.id}`)} className={`${buttonBase} bg-[#eef3ef] text-[#65716a]`} aria-label="عرض التفاصيل">
+          <PackageCheck className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
+          {!compact ? 'التفاصيل' : null}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function sortOrders(orders: StoredOrder[], sort: OrderSort) {
+  const next = [...orders];
+  if (sort === 'oldest') return next.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  if (sort === 'total-high') return next.sort((a, b) => b.total - a.total);
+  if (sort === 'total-low') return next.sort((a, b) => a.total - b.total);
+  return next.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+export function AdminOrdersPage({
+  orders,
+  settings,
+  onNavigate,
+  onUpdateOrderStatus,
+}: {
+  orders: StoredOrder[];
+  settings: StoreSettings;
+} & OrderActionProps) {
+  const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState<OrderFilter>('all');
+  const [sort, setSort] = useState<OrderSort>('newest');
+  const normalizedQuery = normalizeOrderText(query);
+  const pendingOrders = orders.filter(order => order.status === 'new' || order.status === 'whatsapp');
+  const todayOrders = orders.filter(order => new Date(order.createdAt).toDateString() === new Date().toDateString());
+  const confirmedOrders = orders.filter(order => order.status === 'confirmed' || order.status === 'delivery');
+  const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
+
+  const visibleOrders = useMemo(() => {
+    const filtered = orders.filter(order => {
+      if (filter !== 'all' && order.status !== filter) return false;
+      if (!normalizedQuery) return true;
+      const haystack = normalizeOrderText(`${order.id} ${order.name} ${order.phone} ${order.address} ${order.note || ''} ${order.items.map(item => `${item.title} ${item.variant || ''}`).join(' ')}`);
+      return haystack.includes(normalizedQuery);
+    });
+
+    return sortOrders(filtered, sort);
+  }, [filter, normalizedQuery, orders, sort]);
+
+  return (
+    <AdminShell
+      title="الطلبات"
+      eyebrow="إدارة الطلبات"
+      onNavigate={onNavigate}
+      actions={
+        <button type="button" onClick={() => onNavigate('#/')} className="tm-admin-press hidden min-h-[38px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black sm:inline-flex">
+          فتح المتجر
+        </button>
+      }
+    >
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          ['بانتظار التأكيد', pendingOrders.length.toLocaleString('fr-MA'), 'الطلبات التي تحتاج مكالمة أو واتساب'],
+          ['طلبات اليوم', todayOrders.length.toLocaleString('fr-MA'), 'الواردة خلال هذا اليوم'],
+          ['قيد التنفيذ', confirmedOrders.length.toLocaleString('fr-MA'), 'مؤكدة أو في التوصيل'],
+          ['المداخيل', `${totalRevenue.toLocaleString('fr-MA')} درهم`, 'إجمالي الطلبات المحملة'],
+        ].map(([label, value, copy]) => (
+          <article key={label} className="tm-admin-surface rounded-md bg-white p-4">
+            <p className="text-xs font-extrabold text-[#65716a]">{label}</p>
+            <p className="tm-admin-num mt-2 font-heading text-2xl font-black text-[#17201b]">{value}</p>
+            <p className="mt-1 text-xs font-bold text-[#65716a]">{copy}</p>
+          </article>
+        ))}
+      </section>
+
+      <section className="tm-admin-surface overflow-hidden rounded-md bg-white">
+        <div className="grid gap-3 border-b border-[#dfe5df] p-3 sm:p-4 xl:grid-cols-[minmax(280px,1fr)_190px_190px]">
+          <label className="relative block">
+            <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#65716a]" aria-hidden="true" strokeWidth={2.35} />
+            <input
+              value={query}
+              onChange={event => setQuery(event.target.value)}
+              placeholder="بحث بالاسم، الهاتف، العنوان أو المنتج"
+              className="min-h-[44px] w-full rounded-md border border-[#cfd8d1] bg-[#fbfaf6] pr-9 pl-3 text-base font-bold outline-none focus:border-[#b45309] sm:text-sm"
+              type="search"
+            />
+          </label>
+          <select value={filter} onChange={event => setFilter(event.target.value as OrderFilter)} className="min-h-[44px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-3 text-sm font-black outline-none focus:border-[#b45309]">
+            {orderFilters.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+          </select>
+          <select value={sort} onChange={event => setSort(event.target.value as OrderSort)} className="min-h-[44px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-3 text-sm font-black outline-none focus:border-[#b45309]">
+            <option value="newest">الأحدث أولا</option>
+            <option value="oldest">الأقدم أولا</option>
+            <option value="total-high">الأعلى قيمة</option>
+            <option value="total-low">الأقل قيمة</option>
+          </select>
+        </div>
+
+        <div className="grid gap-3 p-3 md:hidden">
+          {visibleOrders.map(order => (
+            <article key={order.id} className="rounded-md bg-[#fbfaf6] p-3 shadow-[inset_0_0_0_1px_rgba(23,32,27,0.08)]">
+              <button type="button" onClick={() => onNavigate(`#/admin/orders/${order.id}`)} className="tm-admin-press w-full rounded-md bg-white p-3 text-right">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="tm-admin-num font-heading text-lg font-black">{order.id}</p>
+                    <p className="mt-1 truncate text-sm font-black text-[#17201b]">{order.name}</p>
+                    <p className="tm-admin-num mt-1 text-sm font-bold text-[#65716a]">{order.phone}</p>
+                  </div>
+                  <div className="shrink-0 text-left">
+                    <p className="tm-admin-num font-heading text-xl font-black text-[#b45309]">{order.total.toLocaleString('fr-MA')} درهم</p>
+                    <p className="mt-1 text-xs font-black text-[#65716a]">{orderRelative(order)}</p>
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <OrderStatusBadge status={order.status} />
+                  <span className="text-xs font-bold text-[#65716a]">{orderItemsSummary(order)}</span>
+                </div>
+              </button>
+              <div className="mt-2">
+                <OrderQuickActions order={order} settings={settings} onNavigate={onNavigate} onUpdateOrderStatus={onUpdateOrderStatus} compact />
+              </div>
+            </article>
+          ))}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
+          <table className="w-full min-w-[1120px] text-sm">
+            <thead className="bg-[#f4f7f4] text-xs font-black text-[#65716a]">
+              <tr>
+                <th className="px-4 py-3 text-right">الطلب</th>
+                <th className="px-4 py-3 text-right">العميل</th>
+                <th className="px-4 py-3 text-right">المنتجات</th>
+                <th className="px-4 py-3 text-right">الحالة</th>
+                <th className="px-4 py-3 text-right">الوقت</th>
+                <th className="px-4 py-3 text-right">المجموع</th>
+                <th className="px-4 py-3 text-right">الإجراءات</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visibleOrders.map(order => (
+                <tr key={order.id} className="border-t border-[#e4e9e4] align-middle">
+                  <td className="px-4 py-3">
+                    <button type="button" onClick={() => onNavigate(`#/admin/orders/${order.id}`)} className="tm-admin-press rounded-md px-2 py-1 text-right">
+                      <span className="tm-admin-num block font-heading text-base font-black">{order.id}</span>
+                      <span className="block text-xs font-bold text-[#65716a]">{order.source}</span>
+                    </button>
+                  </td>
+                  <td className="px-4 py-3">
+                    <p className="font-black">{order.name}</p>
+                    <button type="button" onClick={() => onNavigate(`#/admin/customers/${encodeURIComponent(order.phone)}`)} className="tm-admin-num mt-1 text-xs font-bold text-[#b45309]">{order.phone}</button>
+                  </td>
+                  <td className="max-w-[280px] px-4 py-3 text-xs font-bold leading-5 text-[#65716a]">{orderItemsSummary(order)}</td>
+                  <td className="px-4 py-3"><OrderStatusBadge status={order.status} /></td>
+                  <td className="px-4 py-3">
+                    <p className="font-black">{orderRelative(order)}</p>
+                    <p className="text-xs font-bold text-[#65716a]">{orderDate(order)}</p>
+                  </td>
+                  <td className="tm-admin-num px-4 py-3 font-heading text-lg font-black text-[#b45309]">{order.total.toLocaleString('fr-MA')} درهم</td>
+                  <td className="px-4 py-3">
+                    <OrderQuickActions order={order} settings={settings} onNavigate={onNavigate} onUpdateOrderStatus={onUpdateOrderStatus} />
+                  </td>
+                </tr>
+              ))}
+              {!visibleOrders.length ? (
+                <tr className="border-t border-[#e4e9e4]">
+                  <td colSpan={7} className="px-4 py-10 text-center font-bold text-[#65716a]">لا توجد طلبات مطابقة.</td>
+                </tr>
+              ) : null}
+            </tbody>
+          </table>
+        </div>
+
+        {!orders.length ? <div className="p-3"><EmptyAdmin title="لا توجد طلبات بعد" copy="عندما يصل طلب جديد سيظهر هنا مع أزرار الاتصال، واتساب، والتأكيد." /></div> : null}
       </section>
     </AdminShell>
   );
 }
 
-export function AdminOrderDetailPage({ order, onNavigate }: { order?: StoredOrder; onNavigate: (route: string) => void }) {
-  if (!order) return <AdminShell title="الطلب" onNavigate={onNavigate}><EmptyAdmin title="الطلب غير موجود" /></AdminShell>;
+export function AdminOrderDetailPage({
+  order,
+  settings,
+  onNavigate,
+  onUpdateOrderStatus,
+}: {
+  order?: StoredOrder;
+  settings: StoreSettings;
+} & OrderActionProps) {
+  if (!order) return <AdminShell title="الطلب" onNavigate={onNavigate}><EmptyAdmin title="الطلب غير موجود" copy="ربما تم تحديث القائمة أو حذف الطلب من قاعدة البيانات." /></AdminShell>;
+  const whatsappUrl = buildWhatsAppOrderUrl(order, settings);
 
   return (
-    <AdminShell title={order.id} onNavigate={onNavigate}>
-      <section className="grid gap-4 lg:grid-cols-[1fr_360px]">
-        <article className="rounded-md bg-white p-4 shadow-[0_10px_30px_rgba(23,32,27,0.08)]">
-          <h2 className="font-heading text-2xl font-black">المنتجات</h2>
-          <div className="mt-4 grid gap-3">
+    <AdminShell
+      title={order.id}
+      eyebrow="تفاصيل الطلب"
+      onNavigate={onNavigate}
+      actions={<OrderStatusBadge status={order.status} />}
+    >
+      <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="grid gap-4">
+          <article className="tm-admin-surface rounded-md bg-white p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-xs font-black text-[#65716a]">المجموع</p>
+                <p className="tm-admin-num mt-1 font-heading text-4xl font-black text-[#b45309]">{order.total.toLocaleString('fr-MA')} درهم</p>
+              </div>
+              <div className="grid gap-2 sm:text-left">
+                <p className="text-sm font-black text-[#17201b]">{orderDate(order)}</p>
+                <p className="text-xs font-bold text-[#65716a]">{orderRelative(order)} · {order.source}</p>
+              </div>
+            </div>
+            <div className="mt-4 grid gap-2 sm:flex sm:flex-wrap">
+              <OrderQuickActions order={order} settings={settings} onNavigate={onNavigate} onUpdateOrderStatus={onUpdateOrderStatus} />
+              <button type="button" onClick={() => navigator.clipboard?.writeText(`${order.name}\n${order.phone}\n${order.address}`).catch(() => undefined)} className="tm-admin-press inline-flex min-h-[40px] items-center justify-center gap-2 rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">
+                <Copy className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
+                نسخ بيانات العميل
+              </button>
+            </div>
+          </article>
+
+          <article className="tm-admin-surface rounded-md bg-white p-4">
+            <h2 className="font-heading text-2xl font-black">المنتجات</h2>
+            <div className="mt-4 grid gap-3">
             {order.items.map(item => (
-              <div key={`${item.id}-${item.variant || ''}`} className="grid grid-cols-[64px_1fr] gap-3 rounded-md bg-[#fbfaf6] p-2">
-                <img src={item.image} alt={item.title} className="h-16 w-16 rounded-md object-cover" />
-                <div>
+              <div key={`${item.id}-${item.variant || ''}`} className="grid grid-cols-[72px_1fr] gap-3 rounded-md bg-[#fbfaf6] p-2 shadow-[inset_0_0_0_1px_rgba(23,32,27,0.08)]">
+                <img src={item.image} alt={item.title} className="h-[72px] w-[72px] rounded-md object-cover" loading="lazy" decoding="async" />
+                <div className="min-w-0">
                   <p className="font-heading text-base font-black">{item.title}</p>
-                  <p className="tm-admin-num mt-1 text-sm font-black text-[#b45309]">{item.quantity} x {item.priceLabel}</p>
+                  {item.variant ? <p className="mt-1 text-xs font-bold text-[#65716a]">{item.variant}</p> : null}
+                  <p className="tm-admin-num mt-2 text-sm font-black text-[#b45309]">{item.quantity} x {item.priceLabel}</p>
                 </div>
               </div>
             ))}
-          </div>
-        </article>
-        <aside className="rounded-md bg-white p-4 shadow-[0_10px_30px_rgba(23,32,27,0.08)]">
+            </div>
+          </article>
+        </div>
+
+        <aside className="tm-admin-surface rounded-md bg-white p-4 xl:sticky xl:top-[84px] xl:self-start">
           <h2 className="font-heading text-2xl font-black">العميل</h2>
-          <div className="mt-4 grid gap-2 text-sm font-bold text-[#65716a]">
-            <p>{order.name}</p>
-            <button className="text-right text-[#b45309]" type="button" onClick={() => onNavigate(`#/admin/customers/${encodeURIComponent(order.phone)}`)}>{order.phone}</button>
-            <p>{order.address}</p>
-            {order.note ? <p>{order.note}</p> : null}
+          <div className="mt-4 grid gap-3 text-sm font-bold text-[#65716a]">
+            <div className="grid grid-cols-[36px_1fr] items-start gap-3">
+              <span className="grid h-9 w-9 place-items-center rounded-md bg-[#fff3df] text-[#b45309]"><UserRound className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} /></span>
+              <p className="font-black text-[#17201b]">{order.name}</p>
+            </div>
+            <div className="grid grid-cols-[36px_1fr] items-start gap-3">
+              <span className="grid h-9 w-9 place-items-center rounded-md bg-[#fff3df] text-[#b45309]"><Phone className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} /></span>
+              <button className="tm-admin-num text-right font-black text-[#b45309]" type="button" onClick={() => onNavigate(`#/admin/customers/${encodeURIComponent(order.phone)}`)}>{order.phone}</button>
+            </div>
+            <div className="grid grid-cols-[36px_1fr] items-start gap-3">
+              <span className="grid h-9 w-9 place-items-center rounded-md bg-[#fff3df] text-[#b45309]"><MapPin className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} /></span>
+              <p className="leading-6">{order.address}</p>
+            </div>
+            {order.note ? (
+              <div className="rounded-md bg-[#fbfaf6] p-3 text-[#17201b] shadow-[inset_0_0_0_1px_rgba(23,32,27,0.08)]">
+                {order.note}
+              </div>
+            ) : null}
           </div>
-          <p className="tm-admin-num mt-5 border-t border-[#dfe5df] pt-4 font-heading text-3xl font-black text-[#b45309]">{order.total} درهم</p>
+          <div className="mt-5 grid grid-cols-2 gap-2 border-t border-[#dfe5df] pt-4">
+            <a href={`tel:${order.phone}`} className="tm-admin-press inline-flex min-h-[48px] items-center justify-center gap-2 rounded-md bg-[#131921] px-3 text-sm font-black text-white">
+              <Phone className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
+              اتصال
+            </a>
+            <a href={whatsappUrl} target="_blank" rel="noreferrer" className="tm-admin-press inline-flex min-h-[48px] items-center justify-center gap-2 rounded-md bg-[#ff9900] px-3 text-sm font-black text-[#131921]">
+              <MessageCircle className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
+              واتساب
+            </a>
+          </div>
         </aside>
       </section>
     </AdminShell>
   );
 }
 
-export function AdminCustomerDetailPage({ phone, orders, onNavigate }: { phone: string; orders: StoredOrder[]; onNavigate: (route: string) => void }) {
+export function AdminCustomerDetailPage({
+  phone,
+  orders,
+  settings,
+  onNavigate,
+  onUpdateOrderStatus,
+}: {
+  phone: string;
+  orders: StoredOrder[];
+  settings: StoreSettings;
+} & OrderActionProps) {
   const customerOrders = orders.filter(order => order.phone === phone);
   const latest = customerOrders[0];
+  const customerTotal = customerOrders.reduce((sum, order) => sum + order.total, 0);
 
   return (
-    <AdminShell title="العميل" onNavigate={onNavigate}>
+    <AdminShell title="العميل" eyebrow="سجل العميل" onNavigate={onNavigate}>
       <section className="grid gap-4">
-        <article className="rounded-md bg-white p-4 shadow-[0_10px_30px_rgba(23,32,27,0.08)]">
-          <h2 className="font-heading text-2xl font-black">{latest?.name || phone}</h2>
-          <p className="mt-2 font-bold text-[#65716a]">{phone}</p>
-          {latest?.address ? <p className="mt-2 font-bold text-[#65716a]">{latest.address}</p> : null}
+        <article className="tm-admin-surface rounded-md bg-white p-4">
+          <div className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
+            <div>
+              <h2 className="font-heading text-2xl font-black">{latest?.name || phone}</h2>
+              <p className="tm-admin-num mt-2 font-bold text-[#65716a]">{phone}</p>
+              {latest?.address ? <p className="mt-2 max-w-[720px] font-bold leading-6 text-[#65716a]">{latest.address}</p> : null}
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:flex">
+              <div className="rounded-md bg-[#fbfaf6] px-4 py-3 shadow-[inset_0_0_0_1px_rgba(23,32,27,0.08)]">
+                <p className="text-xs font-black text-[#65716a]">الطلبات</p>
+                <p className="tm-admin-num font-heading text-2xl font-black">{customerOrders.length.toLocaleString('fr-MA')}</p>
+              </div>
+              <div className="rounded-md bg-[#fbfaf6] px-4 py-3 shadow-[inset_0_0_0_1px_rgba(23,32,27,0.08)]">
+                <p className="text-xs font-black text-[#65716a]">المجموع</p>
+                <p className="tm-admin-num font-heading text-2xl font-black text-[#b45309]">{customerTotal.toLocaleString('fr-MA')}</p>
+              </div>
+            </div>
+          </div>
         </article>
-        <AdminOrdersPageContent orders={customerOrders} onNavigate={onNavigate} />
+        <AdminOrdersPageContent orders={customerOrders} settings={settings} onNavigate={onNavigate} onUpdateOrderStatus={onUpdateOrderStatus} />
       </section>
     </AdminShell>
   );
@@ -854,7 +1183,19 @@ function ProductGrid({ products, columns = 'lg:grid-cols-3', ...props }: StoreAc
   );
 }
 
-function AdminShell({ title, onNavigate, children }: { title: string; onNavigate: (route: string) => void; children: ReactNode }) {
+function AdminShell({
+  title,
+  eyebrow,
+  actions,
+  onNavigate,
+  children,
+}: {
+  title: string;
+  eyebrow?: string;
+  actions?: ReactNode;
+  onNavigate: (route: string) => void;
+  children: ReactNode;
+}) {
   const nav = [
     ['لوحة التحكم', '#/admin'],
     ['إضافة منتج', '#/admin/products/new'],
@@ -884,8 +1225,13 @@ function AdminShell({ title, onNavigate, children }: { title: string; onNavigate
         <main className="min-w-0 lg:col-start-2">
           <header className="sticky top-0 z-30 border-b border-[#d9dfd8] bg-[#f8f7f1]/94">
             <div className="mx-auto flex min-h-[72px] max-w-[1440px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-              <h1 className="truncate font-heading text-2xl font-black sm:text-3xl">{title}</h1>
-              <button type="button" onClick={() => onNavigate('#/')} className="tm-admin-press min-h-[42px] rounded-md border border-[#cfd8d1] bg-white px-4 text-sm font-extrabold">فتح المتجر</button>
+              <div className="min-w-0">
+                {eyebrow ? <p className="text-xs font-black text-[#b45309]">{eyebrow}</p> : null}
+                <h1 className="truncate font-heading text-2xl font-black sm:text-3xl">{title}</h1>
+              </div>
+              {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : (
+                <button type="button" onClick={() => onNavigate('#/')} className="tm-admin-press min-h-[42px] rounded-md border border-[#cfd8d1] bg-white px-4 text-sm font-extrabold">فتح المتجر</button>
+              )}
             </div>
           </header>
           <div className="mx-auto grid max-w-[1440px] gap-5 px-4 py-5 sm:px-6 lg:px-8">{children}</div>
@@ -895,21 +1241,42 @@ function AdminShell({ title, onNavigate, children }: { title: string; onNavigate
   );
 }
 
-function AdminOrdersPageContent({ orders, onNavigate }: { orders: StoredOrder[]; onNavigate: (route: string) => void }) {
+function AdminOrdersPageContent({
+  orders,
+  settings,
+  onNavigate,
+  onUpdateOrderStatus,
+}: {
+  orders: StoredOrder[];
+  settings: StoreSettings;
+} & OrderActionProps) {
   return (
     <section className="grid gap-3">
       {orders.map(order => (
-        <button key={order.id} onClick={() => onNavigate(`#/admin/orders/${order.id}`)} className="rounded-md bg-white p-4 text-right shadow-[0_10px_30px_rgba(23,32,27,0.08)]" type="button">
-          <p className="font-heading text-xl font-black">{order.id}</p>
-          <p className="mt-1 text-sm font-bold text-[#65716a]">{order.total} درهم</p>
-        </button>
+        <article key={order.id} className="tm-admin-surface grid gap-3 rounded-md bg-white p-4 lg:grid-cols-[1fr_auto] lg:items-center">
+          <button type="button" onClick={() => onNavigate(`#/admin/orders/${order.id}`)} className="tm-admin-press rounded-md text-right">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="tm-admin-num font-heading text-xl font-black">{order.id}</p>
+              <OrderStatusBadge status={order.status} />
+            </div>
+            <p className="mt-2 text-sm font-bold text-[#65716a]">{orderItemsSummary(order)}</p>
+            <p className="tm-admin-num mt-1 text-sm font-black text-[#b45309]">{order.total.toLocaleString('fr-MA')} درهم · {orderDate(order)}</p>
+          </button>
+          <OrderQuickActions order={order} settings={settings} onNavigate={onNavigate} onUpdateOrderStatus={onUpdateOrderStatus} compact />
+        </article>
       ))}
+      {!orders.length ? <EmptyAdmin title="لا توجد طلبات لهذا العميل" copy="سيظهر سجل العميل هنا بعد أول طلب." /> : null}
     </section>
   );
 }
 
-function EmptyAdmin({ title }: { title: string }) {
-  return <div className="rounded-md bg-white p-6 text-center font-heading text-2xl font-black shadow-[0_10px_30px_rgba(23,32,27,0.08)]">{title}</div>;
+function EmptyAdmin({ title, copy }: { title: string; copy?: string }) {
+  return (
+    <div className="tm-admin-surface rounded-md bg-white p-6 text-center">
+      <p className="font-heading text-2xl font-black">{title}</p>
+      {copy ? <p className="mx-auto mt-2 max-w-[460px] text-sm font-bold leading-6 text-[#65716a]">{copy}</p> : null}
+    </div>
+  );
 }
 
 function SettingsInput({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
