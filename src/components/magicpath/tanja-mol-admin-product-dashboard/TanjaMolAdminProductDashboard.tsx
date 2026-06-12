@@ -84,28 +84,24 @@ export const TanjaMallAdminProductDashboard = ({
     {
       label: 'الطلبات',
       value: orders.length.toLocaleString('fr-MA'),
-      hint: 'طلبات محفوظة',
       icon: ShoppingBag,
       onClick: onOpenOrders,
     },
     {
       label: 'المداخيل',
       value: `${revenue.toLocaleString('fr-MA')} درهم`,
-      hint: 'حسب الطلبات الحالية',
       icon: Wallet,
       onClick: onOpenOrders,
     },
     {
       label: 'المنتجات الظاهرة',
       value: visibleProducts.length.toLocaleString('fr-MA'),
-      hint: `${hiddenProducts.length} مخفي`,
       icon: Store,
       onClick: onOpenProducts,
     },
     {
       label: 'تحتاج انتباها',
       value: String(lowStockProducts.length + outOfStockProducts.length + productsMissingImages.length + productsMissingDetails.length),
-      hint: 'مخزون أو محتوى',
       icon: AlertTriangle,
       onClick: onOpenProducts,
     },
@@ -130,19 +126,20 @@ export const TanjaMallAdminProductDashboard = ({
         </>
       }
     >
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid grid-cols-2 gap-2 sm:gap-3">
         {metrics.map(metric => {
           const Icon = metric.icon;
           return (
-            <button key={metric.label} type="button" onClick={metric.onClick} className="tm-admin-press tm-admin-surface rounded-md bg-white p-4 text-right">
-              <span className="flex items-start justify-between gap-3">
-                <span>
-                  <span className="block text-xs font-extrabold text-[#65716a]">{metric.label}</span>
-                  <span className="tm-admin-num mt-2 block font-heading text-2xl font-black text-[#17201b]">{metric.value}</span>
-                  <span className="mt-1 block text-xs font-bold text-[#65716a]">{metric.hint}</span>
+            <button key={metric.label} type="button" onClick={metric.onClick} className="tm-admin-press tm-admin-surface min-h-[96px] rounded-md bg-white p-3 text-right sm:min-h-[112px] sm:p-4">
+              <span className="grid h-full content-between gap-3">
+                <span className="flex items-start justify-between gap-2">
+                  <span className="block text-xs font-extrabold leading-5 text-[#65716a]">{metric.label}</span>
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-[#fff3df] text-[#b45309] sm:h-10 sm:w-10">
+                    <Icon className="h-4 w-4 sm:h-5 sm:w-5" aria-hidden="true" strokeWidth={2.35} />
+                  </span>
                 </span>
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-[#fff3df] text-[#b45309]">
-                  <Icon className="h-5 w-5" aria-hidden="true" strokeWidth={2.35} />
+                <span className="tm-admin-num block break-words font-heading text-xl font-black leading-tight text-[#17201b] sm:text-2xl">
+                  {metric.value}
                 </span>
               </span>
             </button>
@@ -158,15 +155,15 @@ export const TanjaMallAdminProductDashboard = ({
           </div>
           <div className="grid divide-y divide-[#e4e9e4]">
             {attentionProducts.map(({ product, issues }) => (
-              <button key={product.slug} type="button" onClick={() => onOpenProduct(product.slug)} className="tm-admin-press flex items-center gap-3 p-3 text-right">
+              <button key={product.slug} type="button" onClick={() => onOpenProduct(product.slug)} className="tm-admin-press grid grid-cols-[48px_minmax(0,1fr)] gap-3 p-3 text-right sm:flex sm:items-center">
                 <img src={product.image} alt={product.title} className="h-12 w-12 rounded-md object-cover" loading="lazy" decoding="async" />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate font-heading text-sm font-black">{product.title}</span>
+                  <span className="block break-words font-heading text-sm font-black leading-5 sm:truncate">{product.title}</span>
                   <span className="mt-1 flex flex-wrap gap-1">
                     {issues.map(issue => <span key={issue} className="rounded-md bg-[#fff1d5] px-2 py-1 text-[11px] font-black text-[#9a5a00]">{issue}</span>)}
                   </span>
                 </span>
-                <span className="tm-admin-num shrink-0 text-xs font-black text-[#65716a]">{product.stock ?? 0} في المخزون</span>
+                <span className="tm-admin-num col-start-2 text-xs font-black text-[#65716a] sm:shrink-0">{product.stock ?? 0} في المخزون</span>
               </button>
             ))}
             {!attentionProducts.length ? (
@@ -208,7 +205,25 @@ export const TanjaMallAdminProductDashboard = ({
             <h2 className="font-heading text-lg font-black">آخر الطلبات</h2>
             <button type="button" onClick={onOpenOrders} className="tm-admin-press min-h-[34px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">فتح الطلبات</button>
           </div>
-          <div className="overflow-x-auto">
+          <div className="grid gap-2 p-3 md:hidden">
+            {recentOrders.map(order => (
+              <button key={order.id} type="button" onClick={onOpenOrders} className="tm-admin-press rounded-md bg-[#fbfaf6] p-3 text-right shadow-[inset_0_0_0_1px_rgba(23,32,27,0.08)]">
+                <span className="flex items-start justify-between gap-3">
+                  <span className="min-w-0">
+                    <span className="tm-admin-num block font-heading text-base font-black">{order.id}</span>
+                    <span className="mt-1 block break-words text-sm font-bold">{order.name}</span>
+                    <span className="mt-1 block text-xs font-bold text-[#65716a]">{formatDate(order.createdAt)}</span>
+                  </span>
+                  <span className="tm-admin-num shrink-0 text-left font-heading text-base font-black text-[#b45309]">{(order.total || orderTotal(order.items)).toLocaleString('fr-MA')} درهم</span>
+                </span>
+                <span className="mt-2 block text-xs font-bold text-[#65716a]">{order.items.length} منتجات</span>
+              </button>
+            ))}
+            {!recentOrders.length ? (
+              <div className="px-4 py-8 text-center font-bold text-[#65716a]">لا توجد طلبات بعد.</div>
+            ) : null}
+          </div>
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full min-w-[680px] text-sm">
               <thead className="bg-[#f4f7f4] text-xs font-black text-[#65716a]">
                 <tr>
@@ -249,13 +264,13 @@ export const TanjaMallAdminProductDashboard = ({
               const ordersCount = productOrders(product, orders);
               const revenueTotal = productRevenue(product, orders);
               return (
-                <button key={product.slug} type="button" onClick={() => onOpenProduct(product.slug)} className="tm-admin-press flex items-center gap-3 rounded-md border border-[#dfe5df] bg-[#fbfaf6] p-3 text-right">
+                <button key={product.slug} type="button" onClick={() => onOpenProduct(product.slug)} className="tm-admin-press grid grid-cols-[48px_minmax(0,1fr)] gap-3 rounded-md border border-[#dfe5df] bg-[#fbfaf6] p-3 text-right sm:flex sm:items-center">
                   <img src={product.image} alt={product.title} className="h-12 w-12 rounded-md object-cover" loading="lazy" decoding="async" />
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate font-heading text-sm font-black">{product.title}</span>
+                    <span className="block break-words font-heading text-sm font-black leading-5 sm:truncate">{product.title}</span>
                     <span className="tm-admin-num mt-1 block text-xs font-bold text-[#65716a]">{ordersCount} طلب</span>
                   </span>
-                  <span className="tm-admin-num shrink-0 font-heading text-base font-black text-[#b45309]">{revenueTotal.toLocaleString('fr-MA')} درهم</span>
+                  <span className="tm-admin-num col-start-2 break-words font-heading text-sm font-black text-[#b45309] sm:shrink-0 sm:text-base">{revenueTotal.toLocaleString('fr-MA')} درهم</span>
                 </button>
               );
             })}

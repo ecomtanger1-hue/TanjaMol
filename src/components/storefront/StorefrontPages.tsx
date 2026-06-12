@@ -844,7 +844,7 @@ function OrderStatusSelect({ order, onUpdateOrderStatus, compact = false }: {
   onUpdateOrderStatus: (orderId: string, status: OrderStatus) => void;
 }) {
   return (
-    <label className={compact ? 'min-w-0' : 'min-w-[154px]'}>
+    <label className={compact ? 'min-w-0' : 'col-span-2 min-w-0 sm:col-span-1 sm:min-w-[154px]'}>
       <span className="sr-only">حالة الطلب</span>
       <select
         value={order.status}
@@ -875,7 +875,7 @@ function OrderQuickActions({ order, settings, onNavigate, onUpdateOrderStatus, c
   const whatsappLabel = isSentForCurrentStatus ? 'واتساب مرسل' : 'إرسال واتساب';
 
   return (
-    <div className={`grid gap-2 ${compact ? 'grid-cols-[1fr_1fr_minmax(126px,1.2fr)]' : 'grid-cols-[repeat(2,max-content)_minmax(154px,1fr)]'}`} onClick={stopAction}>
+    <div className={`grid min-w-0 gap-2 ${compact ? 'grid-cols-[1fr_1fr_minmax(112px,1.15fr)]' : 'grid-cols-2 sm:grid-cols-[repeat(2,max-content)_minmax(154px,1fr)]'}`} onClick={stopAction}>
       <a href={`tel:${order.phone}`} className={`${buttonBase} border border-[#cfd8d1] bg-white text-[#17201b]`} aria-label={`اتصال ب ${order.name}`}>
         <Phone className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
         {!compact ? 'اتصال' : null}
@@ -937,17 +937,16 @@ export function AdminOrdersPage({
         </button>
       }
     >
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid grid-cols-2 gap-2 sm:gap-3">
         {[
-          ['بانتظار التأكيد', pendingOrders.length.toLocaleString('fr-MA'), 'الطلبات التي تحتاج مكالمة أو واتساب'],
-          ['طلبات اليوم', todayOrders.length.toLocaleString('fr-MA'), 'الواردة خلال هذا اليوم'],
-          ['قيد التنفيذ', confirmedOrders.length.toLocaleString('fr-MA'), 'مؤكدة أو في التوصيل'],
-          ['المداخيل', `${totalRevenue.toLocaleString('fr-MA')} درهم`, 'إجمالي الطلبات المحملة'],
-        ].map(([label, value, copy]) => (
-          <article key={label} className="tm-admin-surface rounded-md bg-white p-4">
-            <p className="text-xs font-extrabold text-[#65716a]">{label}</p>
-            <p className="tm-admin-num mt-2 font-heading text-2xl font-black text-[#17201b]">{value}</p>
-            <p className="mt-1 text-xs font-bold text-[#65716a]">{copy}</p>
+          ['بانتظار التأكيد', pendingOrders.length.toLocaleString('fr-MA')],
+          ['طلبات اليوم', todayOrders.length.toLocaleString('fr-MA')],
+          ['قيد التنفيذ', confirmedOrders.length.toLocaleString('fr-MA')],
+          ['المداخيل', `${totalRevenue.toLocaleString('fr-MA')} درهم`],
+        ].map(([label, value]) => (
+          <article key={label} className="tm-admin-surface grid min-h-[92px] content-between rounded-md bg-white p-3 sm:min-h-[104px] sm:p-4">
+            <p className="text-xs font-extrabold leading-5 text-[#65716a]">{label}</p>
+            <p className="tm-admin-num mt-2 break-words font-heading text-xl font-black leading-tight text-[#17201b] sm:text-2xl">{value}</p>
           </article>
         ))}
       </section>
@@ -1073,38 +1072,38 @@ export function AdminOrderDetailPage({
       onNavigate={onNavigate}
       actions={<OrderStatusBadge status={order.status} />}
     >
-      <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
-        <div className="grid gap-4">
-          <article className="tm-admin-surface rounded-md bg-white p-4">
+      <section className="grid min-w-0 gap-4 overflow-x-hidden xl:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="grid min-w-0 gap-4">
+          <article className="tm-admin-surface min-w-0 rounded-md bg-white p-3 sm:p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div>
+              <div className="min-w-0">
                 <p className="text-xs font-black text-[#65716a]">المجموع</p>
-                <p className="tm-admin-num mt-1 font-heading text-4xl font-black text-[#b45309]">{order.total.toLocaleString('fr-MA')} درهم</p>
+                <p className="tm-admin-num mt-1 break-words font-heading text-3xl font-black text-[#b45309] sm:text-4xl">{order.total.toLocaleString('fr-MA')} درهم</p>
               </div>
               <div className="grid gap-2 sm:text-left">
                 <p className="text-sm font-black text-[#17201b]">{orderDate(order)}</p>
                 <p className="text-xs font-bold text-[#65716a]">{orderRelative(order)} · {order.source}</p>
               </div>
             </div>
-            <div className="mt-4 grid gap-2 sm:flex sm:flex-wrap">
+            <div className="mt-4 grid min-w-0 gap-2 sm:flex sm:flex-wrap">
               <OrderQuickActions order={order} settings={settings} onNavigate={onNavigate} onUpdateOrderStatus={onUpdateOrderStatus} />
-              <button type="button" onClick={() => navigator.clipboard?.writeText(`${order.name}\n${order.phone}\n${order.address}`).catch(() => undefined)} className="tm-admin-press inline-flex min-h-[40px] items-center justify-center gap-2 rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">
+              <button type="button" onClick={() => navigator.clipboard?.writeText(`${order.name}\n${order.phone}\n${order.address}`).catch(() => undefined)} className="tm-admin-press inline-flex min-h-[40px] min-w-0 items-center justify-center gap-2 rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">
                 <Copy className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
                 نسخ بيانات العميل
               </button>
             </div>
           </article>
 
-          <article className="tm-admin-surface rounded-md bg-white p-4">
-            <h2 className="font-heading text-2xl font-black">المنتجات</h2>
+          <article className="tm-admin-surface min-w-0 rounded-md bg-white p-3 sm:p-4">
+            <h2 className="font-heading text-2xl font-black leading-tight">المنتجات</h2>
             <div className="mt-4 grid gap-3">
             {order.items.map(item => (
-              <div key={`${item.id}-${item.variant || ''}`} className="grid grid-cols-[72px_1fr] gap-3 rounded-md bg-[#fbfaf6] p-2 shadow-[inset_0_0_0_1px_rgba(23,32,27,0.08)]">
-                <img src={item.image} alt={item.title} className="h-[72px] w-[72px] rounded-md object-cover" loading="lazy" decoding="async" />
+              <div key={`${item.id}-${item.variant || ''}`} className="grid min-w-0 grid-cols-[64px_minmax(0,1fr)] gap-3 rounded-md bg-[#fbfaf6] p-2 shadow-[inset_0_0_0_1px_rgba(23,32,27,0.08)] sm:grid-cols-[72px_minmax(0,1fr)]">
+                <img src={item.image} alt={item.title} className="h-16 w-16 rounded-md object-cover sm:h-[72px] sm:w-[72px]" loading="lazy" decoding="async" />
                 <div className="min-w-0">
-                  <p className="font-heading text-base font-black">{item.title}</p>
+                  <p className="break-words font-heading text-sm font-black leading-6 sm:text-base">{item.title}</p>
                   {item.variant ? <p className="mt-1 text-xs font-bold text-[#65716a]">{item.variant}</p> : null}
-                  <p className="tm-admin-num mt-2 text-sm font-black text-[#b45309]">{item.quantity} x {item.priceLabel}</p>
+                  <p className="tm-admin-num mt-2 break-words text-sm font-black text-[#b45309]">{item.quantity} x {item.priceLabel}</p>
                 </div>
               </div>
             ))}
@@ -1112,7 +1111,7 @@ export function AdminOrderDetailPage({
           </article>
         </div>
 
-        <aside className="tm-admin-surface rounded-md bg-white p-4 xl:sticky xl:top-[84px] xl:self-start">
+        <aside className="tm-admin-surface min-w-0 rounded-md bg-white p-3 sm:p-4 xl:sticky xl:top-[84px] xl:self-start">
           <h2 className="font-heading text-2xl font-black">العميل</h2>
           <div className="mt-4 grid gap-3 text-sm font-bold text-[#65716a]">
             <div className="grid grid-cols-[36px_1fr] items-start gap-3">
@@ -1133,7 +1132,7 @@ export function AdminOrderDetailPage({
               </div>
             ) : null}
           </div>
-          <div className="mt-5 border-t border-[#dfe5df] pt-4">
+          <div className="mt-5 min-w-0 border-t border-[#dfe5df] pt-4">
             <OrderQuickActions order={order} settings={settings} onNavigate={onNavigate} onUpdateOrderStatus={onUpdateOrderStatus} />
           </div>
         </aside>
