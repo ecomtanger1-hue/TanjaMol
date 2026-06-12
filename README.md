@@ -21,6 +21,16 @@ npm run build
 npm run preview
 ```
 
+## Supabase Storage
+
+Product, gallery, detail-block, variant, and inline editor images upload to the public `product-images` bucket in Supabase Storage.
+
+If uploads show a Storage setup error, run `supabase/storage-setup.sql` in the Supabase SQL editor for the live project. Then verify it locally:
+
+```bash
+npm run storage:check
+```
+
 ## Cloudflare Pages
 
 Use these settings when creating the Cloudflare Pages project:
