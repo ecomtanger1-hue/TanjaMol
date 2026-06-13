@@ -190,23 +190,24 @@ alter table public.orders enable row level security;
 alter table public.order_items enable row level security;
 
 drop policy if exists "admin_users_read_own" on public.admin_users;
+drop policy if exists admin_users_read_own on public.admin_users;
 create policy "admin_users_read_own"
 on public.admin_users for select
+to authenticated
 using (auth.uid() = user_id);
 
 drop policy if exists "products_public_visible_read" on public.products;
 drop policy if exists "Public can read visible products" on public.products;
 create policy "products_public_visible_read"
 on public.products for select
-using (
-  (is_visible = true and coalesce(is_draft, false) = false)
-  or exists (select 1 from public.admin_users where admin_users.user_id = auth.uid())
-);
+using (is_visible = true and coalesce(is_draft, false) = false);
 
 drop policy if exists "products_admin_manage" on public.products;
+drop policy if exists products_admin_manage on public.products;
 drop policy if exists "Admins can manage products" on public.products;
 create policy "products_admin_manage"
 on public.products for all
+to authenticated
 using (exists (select 1 from public.admin_users where admin_users.user_id = auth.uid()))
 with check (exists (select 1 from public.admin_users where admin_users.user_id = auth.uid()));
 
@@ -216,32 +217,75 @@ on public.store_settings for select
 using (true);
 
 drop policy if exists "settings_admin_manage" on public.store_settings;
+drop policy if exists settings_admin_manage on public.store_settings;
+drop policy if exists "Admins can update store settings" on public.store_settings;
 create policy "settings_admin_manage"
 on public.store_settings for all
+to authenticated
 using (exists (select 1 from public.admin_users where admin_users.user_id = auth.uid()))
 with check (exists (select 1 from public.admin_users where admin_users.user_id = auth.uid()));
 
 drop policy if exists "orders_public_insert" on public.orders;
+drop policy if exists orders_public_insert on public.orders;
+drop policy if exists "Public can create orders" on public.orders;
 create policy "orders_public_insert"
 on public.orders for insert
-with check (true);
+to anon, authenticated
+with check (
+  order_number ~ '^TM-[0-9]{4,}$'
+  and length(trim(customer_name)) between 2 and 120
+  and phone ~ '^[0-9+() .-]{6,30}$'
+  and length(trim(address)) between 3 and 500
+  and coalesce(length(note), 0) <= 1000
+  and source in ('product-page', 'cart', 'storefront')
+  and status in ('new', 'whatsapp')
+  and total > 0
+  and total < 1000000
+  and created_at >= now() - interval '15 minutes'
+  and created_at <= now() + interval '5 minutes'
+);
 
 drop policy if exists "orders_admin_manage" on public.orders;
-create policy "orders_admin_manage"
-on public.orders for all
+drop policy if exists orders_admin_read on public.orders;
+drop policy if exists orders_admin_update on public.orders;
+drop policy if exists "Admins can read orders" on public.orders;
+drop policy if exists "Admins can update orders" on public.orders;
+create policy "orders_admin_read"
+on public.orders for select
+to authenticated
+using (exists (select 1 from public.admin_users where admin_users.user_id = auth.uid()));
+
+create policy "orders_admin_update"
+on public.orders for update
+to authenticated
 using (exists (select 1 from public.admin_users where admin_users.user_id = auth.uid()))
 with check (exists (select 1 from public.admin_users where admin_users.user_id = auth.uid()));
 
 drop policy if exists "order_items_public_insert" on public.order_items;
+drop policy if exists order_items_public_insert on public.order_items;
+drop policy if exists "Public can create order items" on public.order_items;
 create policy "order_items_public_insert"
 on public.order_items for insert
-with check (true);
+to anon, authenticated
+with check (
+  length(trim(product_slug)) between 1 and 180
+  and length(trim(title)) between 1 and 300
+  and coalesce(length(variant), 0) <= 300
+  and price >= 0
+  and price < 1000000
+  and quantity between 1 and 99
+  and coalesce(length(image), 0) <= 1200
+  and created_at >= now() - interval '15 minutes'
+  and created_at <= now() + interval '5 minutes'
+);
 
 drop policy if exists "order_items_admin_manage" on public.order_items;
-create policy "order_items_admin_manage"
-on public.order_items for all
-using (exists (select 1 from public.admin_users where admin_users.user_id = auth.uid()))
-with check (exists (select 1 from public.admin_users where admin_users.user_id = auth.uid()));
+drop policy if exists order_items_admin_read on public.order_items;
+drop policy if exists "Admins can read order items" on public.order_items;
+create policy "order_items_admin_read"
+on public.order_items for select
+to authenticated
+using (exists (select 1 from public.admin_users where admin_users.user_id = auth.uid()));
 
 insert into storage.buckets (id, name, public)
 values ('product-images', 'product-images', true)
@@ -262,13 +306,9 @@ as $$
 $$;
 
 revoke all on function public.tanjamol_is_admin() from public;
-grant execute on function public.tanjamol_is_admin() to anon, authenticated;
+revoke execute on function public.tanjamol_is_admin() from anon, authenticated;
 
 drop policy if exists "product_images_public_read" on storage.objects;
-create policy "product_images_public_read"
-on storage.objects for select
-to anon, authenticated
-using (bucket_id = 'product-images');
 
 drop policy if exists "product_images_admin_insert" on storage.objects;
 create policy "product_images_admin_insert"
@@ -276,7 +316,7 @@ on storage.objects for insert
 to authenticated
 with check (
   bucket_id = 'product-images'
-  and public.tanjamol_is_admin()
+  and exists (select 1 from public.admin_users where admin_users.user_id = auth.uid())
 );
 
 drop policy if exists "product_images_admin_update" on storage.objects;
@@ -285,11 +325,11 @@ on storage.objects for update
 to authenticated
 using (
   bucket_id = 'product-images'
-  and public.tanjamol_is_admin()
+  and exists (select 1 from public.admin_users where admin_users.user_id = auth.uid())
 )
 with check (
   bucket_id = 'product-images'
-  and public.tanjamol_is_admin()
+  and exists (select 1 from public.admin_users where admin_users.user_id = auth.uid())
 );
 
 drop policy if exists "product_images_admin_delete" on storage.objects;
@@ -298,5 +338,5 @@ on storage.objects for delete
 to authenticated
 using (
   bucket_id = 'product-images'
-  and public.tanjamol_is_admin()
+  and exists (select 1 from public.admin_users where admin_users.user_id = auth.uid())
 );
