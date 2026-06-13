@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Grid3X3, Home, PackageSearch, Search, ShoppingCart } from 'lucide-react';
-import { categories, categoryRoute, collectionRoute, type CartItem, type OrderDraft, type Product } from '../../storefrontRuntime';
+import { categories as defaultCategories, categoryRoute, collectionRoute, type CartItem, type Category, type OrderDraft, type Product, type StoreSettings } from '../../storefrontRuntime';
 import { ProductCard as StoreProductCard } from './ProductCard';
 import { SiteFooter, SiteHeader } from './StorefrontPages';
 
 type StorefrontProps = {
   cartCount: number;
   products: Product[];
+  settings: StoreSettings;
+  categories: Category[];
   onOpenCart: () => void;
   onOpenSearch: () => void;
   onOpenProduct: (slug: string) => void;
@@ -64,7 +66,7 @@ function pickUniqueProducts(candidates: Product[], limit: number, exclude: Produ
   return picked;
 }
 
-function getHomepageSections(products: Product[]) {
+function getHomepageSections(products: Product[], heroProductSlug?: string) {
   const availableProducts = products.filter(product => product.stock !== 0);
   const rankedProducts = [...availableProducts].sort((a, b) => {
     const aPopular = a.badge.includes('\u0627\u0644\u0623\u0643\u062b\u0631') ? 1 : 0;
@@ -81,7 +83,7 @@ function getHomepageSections(products: Product[]) {
   );
   const bestSellerProducts = pickUniqueProducts(rankedProducts, 8);
   const newArrivalProducts = pickUniqueProducts(availableProducts, 4, [bestSellerProducts[0]].filter(Boolean));
-  const featuredProduct = rankedProducts.find(product => product.badge.includes('\u0627\u0644\u0623\u0643\u062b\u0631')) ?? rankedProducts[0] ?? products[0];
+  const featuredProduct = availableProducts.find(product => product.slug === heroProductSlug) ?? rankedProducts.find(product => product.badge.includes('\u0627\u0644\u0623\u0643\u062b\u0631')) ?? rankedProducts[0] ?? products[0];
 
   return {
     featuredProduct,
@@ -132,6 +134,8 @@ function ProductCard({
 export const CODTangerArabicStoreLanding = ({
   cartCount,
   products,
+  settings,
+  categories,
   onOpenCart,
   onOpenSearch,
   onOpenProduct,
@@ -144,8 +148,8 @@ export const CODTangerArabicStoreLanding = ({
     bestSellerProducts,
     offerProducts,
     newArrivalProducts,
-  } = getHomepageSections(products);
-  const shortcutCategories = categories.slice(0, 6);
+  } = getHomepageSections(products, settings.heroProductSlug);
+  const shortcutCategories = (categories.length ? categories : defaultCategories).slice(0, 6);
   const navigate = onNavigate || ((route: string) => { window.location.hash = route; });
   const [heroSlide, setHeroSlide] = useState(0);
   const openCategories = () => scrollToSection('categories');
@@ -346,7 +350,7 @@ export const CODTangerArabicStoreLanding = ({
       </section>
     </main>
 
-    <SiteFooter onNavigate={navigate} />
+    <SiteFooter categories={categories} onNavigate={navigate} />
 
     <div className="sticky bottom-0 z-40 bg-[var(--tm-surface-white)]/96 px-3 pt-2 shadow-[0_-12px_30px_rgba(23,32,27,0.14),0_0_0_1px_rgba(0,0,0,0.06)] md:hidden" style={{
       paddingBottom: 'calc(0.75rem + env(safe-area-inset-bottom))'

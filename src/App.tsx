@@ -17,8 +17,9 @@ import {
 import {
   buildWhatsAppOrderUrl,
   cartItemFromProduct,
-  categories as storeCategories,
+  categories as defaultCategories,
   defaultSettings,
+  getStoreCategories,
   orderTotal,
   parseCategoryId,
   parseCollectionId,
@@ -29,6 +30,7 @@ import {
   products as seedProducts,
   searchProducts,
   type CartItem,
+  type Category,
   type OrderDraft,
   type Product,
   type StoreSettings,
@@ -122,7 +124,7 @@ function upsertJsonLd(id: string, data: Record<string, unknown> | null) {
   if (!existing) document.head.appendChild(script);
 }
 
-function applyPageSeo(product: Product | undefined, settings: StoreSettings) {
+function applyPageSeo(product: Product | undefined, settings: StoreSettings, categories: Category[] = defaultCategories) {
   const storeName = settings.storeName || defaultSettings.storeName;
   const baseUrl = `${window.location.origin}${window.location.pathname}`;
   const defaultDescription = `TanjaMol COD store in Tanger with cash on delivery and fast local confirmation.`;
@@ -148,7 +150,7 @@ function applyPageSeo(product: Product | undefined, settings: StoreSettings) {
   const title = cleanText(`${product.title} | ${storeName}`, 62);
   const description = cleanText(product.description || `${product.title} available from ${storeName} with cash on delivery in Tanger.`, 158);
   const image = absoluteAssetUrl(product.image || product.gallery?.[0] || '/tanjamall-icon.svg');
-  const category = storeCategories.find(item => item.title === product.category || product.category.includes(item.title.split(' ')[0]));
+  const category = categories.find(item => item.title === product.category || product.category.includes(item.title.split(' ')[0]));
   const categoryUrl = category ? `${baseUrl}#/category/${encodeURIComponent(category.id)}` : baseUrl;
   const sku = product.variants?.find(variant => variant.enabled && variant.sku)?.sku || product.slug;
   const priceValidUntil = new Date(Date.now() + 1000 * 60 * 60 * 24 * 60).toISOString().slice(0, 10);
@@ -360,6 +362,7 @@ export function App() {
   }, [notice]);
 
   const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const activeCategories = useMemo(() => getStoreCategories(settings), [settings]);
   const productSlug = parseProductSlug(route);
   const categoryId = parseCategoryId(route);
   const collectionId = parseCollectionId(route);
@@ -429,8 +432,8 @@ export function App() {
   }, [cachedProductDetail, isKnownMissingProduct, productSlug]);
 
   useEffect(() => {
-    applyPageSeo(activeProduct, settings);
-  }, [activeProduct, settings]);
+    applyPageSeo(activeProduct, settings, activeCategories);
+  }, [activeCategories, activeProduct, settings]);
 
   const navigate = (nextRoute: string) => {
     window.history.pushState(null, '', nextRoute);
@@ -563,6 +566,7 @@ export function App() {
     cartCount,
     products: storefrontProducts,
     settings,
+    categories: activeCategories,
     onNavigate: navigate,
     onOpenCart: () => {
       setDirectItem(null);
@@ -872,6 +876,7 @@ export function App() {
           key={`edit-${editProduct.slug}`}
           product={editProduct}
           products={adminProducts}
+          categories={activeCategories}
           onBack={() => navigate('#/admin/products')}
           onOpenDashboard={() => navigate('#/admin')}
           onOpenProduct={(nextSlug) => navigate(productRoute(nextSlug))}
@@ -885,6 +890,7 @@ export function App() {
         <TanjaMolAddProductPage
           key="new-product"
           products={adminProducts}
+          categories={activeCategories}
           onBack={() => navigate('#/admin/products')}
           onOpenDashboard={() => navigate('#/admin')}
           onOpenProduct={(slug) => navigate(productRoute(slug))}
@@ -906,7 +912,7 @@ export function App() {
     }
 
     if (route === '#/admin/settings') {
-      return <AdminSettingsPage settings={settings} onSave={saveStoreSettings} onNavigate={navigate} />;
+      return <AdminSettingsPage settings={settings} products={adminProducts} onSave={saveStoreSettings} onNavigate={navigate} />;
     }
 
     if (productSlug) {
@@ -923,6 +929,7 @@ export function App() {
           key={activeProduct.id}
           product={activeProduct}
           products={storefrontProducts}
+          categories={activeCategories}
           cartCount={cartCount}
           onOpenCart={() => {
             setDirectItem(null);
@@ -952,6 +959,8 @@ export function App() {
       return (
         <CODTangerArabicStoreLanding
           products={storefrontProducts}
+          settings={settings}
+          categories={activeCategories}
           cartCount={cartCount}
           onOpenCart={commonProps.onOpenCart}
           onOpenSearch={commonProps.onOpenSearch}
@@ -965,7 +974,7 @@ export function App() {
     }
 
     return <NotFoundPage cartCount={cartCount} onNavigate={navigate} onOpenCart={commonProps.onOpenCart} onOpenSearch={commonProps.onOpenSearch} />;
-  }, [activeProduct, adminProducts, cartCount, categoryId, collectionId, commonProps, effectiveHiddenProductSlugs, isAdminLoggedIn, isKnownMissingProduct, loadingProductSlug, orders, productSlug, remoteProducts, route, searchQuery, settings, storefrontProducts]);
+  }, [activeCategories, activeProduct, adminProducts, cartCount, categoryId, collectionId, commonProps, effectiveHiddenProductSlugs, isAdminLoggedIn, isKnownMissingProduct, loadingProductSlug, orders, productSlug, remoteProducts, route, searchQuery, settings, storefrontProducts]);
 
   return (
     <>

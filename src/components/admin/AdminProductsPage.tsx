@@ -45,6 +45,11 @@ function productStatus(product: Product, hidden: boolean) {
   return { label: 'ظاهر', className: 'bg-[#fff3df] text-[#b45309]' };
 }
 
+function productDateValue(product: Product) {
+  const value = Date.parse(product.createdAt || product.updatedAt || '');
+  return Number.isFinite(value) ? value : 0;
+}
+
 export function AdminProductsPage({
   products,
   orders,
@@ -92,7 +97,7 @@ export function AdminProductsPage({
         if (sort === 'price-high') return b.product.price - a.product.price;
         if (sort === 'orders') return b.sales.sales - a.sales.sales;
         if (sort === 'revenue') return b.sales.revenue - a.sales.revenue;
-        return b.index - a.index;
+        return productDateValue(b.product) - productDateValue(a.product) || a.index - b.index;
       });
   }, [filter, hiddenSet, orders, products, query, sort]);
 

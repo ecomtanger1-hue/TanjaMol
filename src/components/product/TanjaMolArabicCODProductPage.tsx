@@ -1,6 +1,6 @@
 import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { Check } from 'lucide-react';
-import { categories, categoryRoute, parseOrderForm, type CartItem, type OrderDraft, type Product, type ProductVariant } from '../../storefrontRuntime';
+import { categories as defaultCategories, categoryRoute, parseOrderForm, type CartItem, type Category, type OrderDraft, type Product, type ProductVariant } from '../../storefrontRuntime';
 import { ProductDetailMedia, ProductDetailRichText } from './ProductDetailRichText';
 import { ProductCard } from '../storefront/ProductCard';
 import { SiteFooter, SiteHeader } from '../storefront/StorefrontPages';
@@ -55,6 +55,7 @@ type ProductPageProps = {
   onPlaceOrder: (draft: OrderDraft) => void;
   product?: Product;
   products?: Product[];
+  categories: Category[];
 };
 
 export const TanjaMolArabicCODProductPage = ({
@@ -67,6 +68,7 @@ export const TanjaMolArabicCODProductPage = ({
   onPlaceOrder,
   product,
   products = [],
+  categories,
 }: ProductPageProps) => {
   const [selectedVariantIds, setSelectedVariantIds] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
@@ -91,7 +93,8 @@ export const TanjaMolArabicCODProductPage = ({
   const productReviewCount = product?.reviewCount ?? 127;
   const showRelated = product?.showRelated ?? true;
   const showPolicies = product?.showPolicies ?? true;
-  const activeCategory = categories.find(category => category.title === productCategory || productCategory.includes(category.title.split(' ')[0]));
+  const categoryList = categories.length ? categories : defaultCategories;
+  const activeCategory = categoryList.find(category => category.title === productCategory || productCategory.includes(category.title.split(' ')[0]));
   const fallbackVariants: ProductVariant[] = colors.map(color => ({
     id: color.name,
     name: color.name,
@@ -593,7 +596,7 @@ export const TanjaMolArabicCODProductPage = ({
         </section> : null}
       </main>
 
-      <SiteFooter onNavigate={(nextRoute) => { window.location.hash = nextRoute; }} />
+      <SiteFooter categories={categoryList} onNavigate={(nextRoute) => { window.location.hash = nextRoute; }} />
 
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 bg-transparent px-3 py-3 md:hidden" style={{
       paddingBottom: 'max(14px, env(safe-area-inset-bottom))'

@@ -118,6 +118,8 @@ export type StoreSettings = {
   city: string;
   deliveryText: string;
   address: string;
+  categories?: Category[];
+  heroProductSlug?: string;
 };
 
 export const defaultSettings: StoreSettings = {
@@ -167,6 +169,11 @@ export const categories: Category[] = [
     image: 'https://images.unsplash.com/photo-1607083206968-13611e3d76db?auto=format&fit=crop&w=900&q=80',
   },
 ];
+
+export function getStoreCategories(settings?: Pick<StoreSettings, 'categories'> | null) {
+  const configured = settings?.categories?.filter(category => category.id.trim() && category.title.trim());
+  return configured?.length ? configured : categories;
+}
 
 export const products: Product[] = [
   {
@@ -595,9 +602,9 @@ export function orderTotal(items: CartItem[]) {
   return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 }
 
-export function productsForCategory(productList: Product[], categoryId: string | null) {
+export function productsForCategory(productList: Product[], categoryId: string | null, categoryList = categories) {
   if (!categoryId) return productList;
-  const category = categories.find(item => item.id === categoryId);
+  const category = categoryList.find(item => item.id === categoryId);
   if (!category) return productList;
   return productList.filter(product => product.category === category.title || product.category.includes(category.title.split(' ')[0]));
 }

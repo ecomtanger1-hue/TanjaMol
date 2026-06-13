@@ -97,6 +97,8 @@ create table if not exists public.store_settings (
   city text not null default 'طنجة',
   delivery_text text not null default '24 إلى 48 ساعة',
   address text not null default 'طنجة',
+  categories jsonb not null default '[]'::jsonb,
+  hero_product_slug text not null default '',
   updated_at timestamptz not null default now()
 );
 
@@ -110,6 +112,8 @@ alter table public.store_settings add column if not exists phone text default '0
 alter table public.store_settings add column if not exists city text default 'طنجة';
 alter table public.store_settings add column if not exists delivery_text text default '24 إلى 48 ساعة';
 alter table public.store_settings add column if not exists address text default 'طنجة';
+alter table public.store_settings add column if not exists categories jsonb default '[]'::jsonb;
+alter table public.store_settings add column if not exists hero_product_slug text default '';
 alter table public.store_settings add column if not exists updated_at timestamptz default now();
 
 do $$

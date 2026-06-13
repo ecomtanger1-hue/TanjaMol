@@ -57,6 +57,8 @@ const PRODUCT_OPTIONAL_COMPATIBILITY_COLUMNS = [
   'sort_order',
 ] as const;
 
+const STORE_CONFIG_PRODUCT_SLUG = '__tanjamol_store_config__';
+
 const PRODUCT_SUMMARY_COLUMNS = [
   'id',
   'slug',
@@ -187,6 +189,7 @@ export async function fetchProductsFromSupabase(includeHidden = false) {
   let query = supabase
     .from('products')
     .select('*')
+    .neq('slug', STORE_CONFIG_PRODUCT_SLUG)
     .order('sort_order', { ascending: true })
     .order('updated_at', { ascending: false });
 
@@ -204,6 +207,7 @@ export async function fetchProductSummariesFromSupabase(includeHidden = false) {
   let query = supabase
     .from('products')
     .select(PRODUCT_SUMMARY_COLUMNS)
+    .neq('slug', STORE_CONFIG_PRODUCT_SLUG)
     .order('sort_order', { ascending: true })
     .order('updated_at', { ascending: false });
 
@@ -217,6 +221,7 @@ export async function fetchProductSummariesFromSupabase(includeHidden = false) {
 
 export async function fetchProductBySlugFromSupabase(slug: string, includeHidden = false) {
   if (!supabase) return null;
+  if (slug === STORE_CONFIG_PRODUCT_SLUG) return null;
 
   let query = supabase
     .from('products')

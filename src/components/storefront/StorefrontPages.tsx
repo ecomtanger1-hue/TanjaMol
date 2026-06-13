@@ -12,6 +12,7 @@ import {
   productsForCategory,
   searchProducts,
   searchRoute,
+  type Category,
   type CartItem,
   type CollectionId,
   type Product,
@@ -26,6 +27,7 @@ type StoreActions = {
   cartCount: number;
   products: Product[];
   settings: StoreSettings;
+  categories: Category[];
   onNavigate: (route: string) => void;
   onOpenCart: () => void;
   onOpenSearch: () => void;
@@ -57,18 +59,24 @@ const listingLabels = {
 
 const listingPageSize = 8;
 
+function listingProductDateValue(product: Product) {
+  const value = Date.parse(product.createdAt || product.updatedAt || '');
+  return Number.isFinite(value) ? value : 0;
+}
+
 function sortListingProducts(products: Product[], sort: ListingSort) {
-  const sorted = [...products];
-  if (sort === 'price-asc') return sorted.sort((a, b) => a.price - b.price);
-  if (sort === 'price-desc') return sorted.sort((a, b) => b.price - a.price);
+  const sorted = products.map((product, index) => ({ product, index }));
+  const unwrap = (rows: typeof sorted) => rows.map(row => row.product);
+  if (sort === 'price-asc') return unwrap(sorted.sort((a, b) => a.product.price - b.product.price));
+  if (sort === 'price-desc') return unwrap(sorted.sort((a, b) => b.product.price - a.product.price));
   if (sort === 'availability') {
-    return sorted.sort((a, b) => {
-      const aStock = a.stock ?? 0;
-      const bStock = b.stock ?? 0;
+    return unwrap(sorted.sort((a, b) => {
+      const aStock = a.product.stock ?? 0;
+      const bStock = b.product.stock ?? 0;
       return Number(bStock > 0) - Number(aStock > 0) || bStock - aStock;
-    });
+    }));
   }
-  return sorted;
+  return unwrap(sorted.sort((a, b) => listingProductDateValue(b.product) - listingProductDateValue(a.product) || a.index - b.index));
 }
 
 export function SiteHeader({
@@ -181,7 +189,7 @@ export function MobileMenuDrawer({
   );
 }
 
-export function SiteFooter({ onNavigate }: { onNavigate: (route: string) => void }) {
+export function SiteFooter({ categories: footerCategories = categories, onNavigate }: { categories?: Category[]; onNavigate: (route: string) => void }) {
   const links = [
     ['من نحن', '#/about'],
     ['تواصل معنا', '#/contact'],
@@ -209,7 +217,7 @@ export function SiteFooter({ onNavigate }: { onNavigate: (route: string) => void
           ))}
         </nav>
         <div className="grid content-start gap-2 text-sm font-semibold text-white/72">
-          {categories.slice(0, 5).map(category => (
+          {footerCategories.slice(0, 5).map(category => (
             <button key={category.id} type="button" onClick={() => onNavigate(categoryRoute(category.id))} className="tm-press tm-touch rounded-md px-2 text-right">
               {category.title}
             </button>
@@ -225,8 +233,8 @@ export function SiteFooter({ onNavigate }: { onNavigate: (route: string) => void
 }
 
 export function CategoryPage(props: StoreActions & { categoryId: string | null }) {
-  const activeCategory = categories.find(category => category.id === props.categoryId) || categories[0];
-  const listedProducts = productsForCategory(props.products, activeCategory.id);
+  const activeCategory = props.categories.find(category => category.id === props.categoryId) || props.categories[0] || categories[0];
+  const listedProducts = productsForCategory(props.products, activeCategory.id, props.categories);
 
   return (
     <ProductListingPage
@@ -291,7 +299,7 @@ function ProductListingPage({
   const hasMore = visibleProducts.length < filteredProducts.length;
 
   return (
-    <PageShell cartCount={props.cartCount} onNavigate={props.onNavigate} onOpenCart={props.onOpenCart} onOpenSearch={props.onOpenSearch}>
+    <PageShell cartCount={props.cartCount} categories={props.categories} onNavigate={props.onNavigate} onOpenCart={props.onOpenCart} onOpenSearch={props.onOpenSearch}>
       <main className="overflow-x-hidden">
         <section className="bg-[var(--tm-header)] text-white">
           <div className="mx-auto max-w-[1180px] px-4 py-5 sm:px-6 lg:px-8">
@@ -383,7 +391,7 @@ export function SearchResultsPage(props: StoreActions & { query: string }) {
   };
 
   return (
-    <PageShell cartCount={props.cartCount} onNavigate={props.onNavigate} onOpenCart={props.onOpenCart} onOpenSearch={props.onOpenSearch}>
+    <PageShell cartCount={props.cartCount} categories={props.categories} onNavigate={props.onNavigate} onOpenCart={props.onOpenCart} onOpenSearch={props.onOpenSearch}>
       <main className="mx-auto max-w-[1180px] px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
         <section className="tm-shell-dark rounded-lg p-4 text-white sm:p-7">
           <div className="tm-breadcrumb text-sm">
@@ -1186,25 +1194,117 @@ export function AdminCustomerDetailPage({
 
 export function AdminSettingsPage({
   settings,
+  products,
   onSave,
   onNavigate,
 }: {
   settings: StoreSettings;
+  products: Product[];
   onSave: (settings: StoreSettings) => void;
   onNavigate: (route: string) => void;
 }) {
   const [draft, setDraft] = useState(settings);
   const [saved, setSaved] = useState(false);
+  const managedCategories = draft.categories?.length ? draft.categories : categories;
+  const heroProducts = products.filter(product => !product.isDraft && product.isVisible !== false);
+
+  useEffect(() => {
+    setDraft(settings);
+  }, [settings]);
+
+  const updateCategory = (index: number, updates: Partial<Category>) => {
+    setSaved(false);
+    setDraft(current => {
+      const nextCategories = (current.categories?.length ? current.categories : categories).map((category, categoryIndex) =>
+        categoryIndex === index ? { ...category, ...updates } : category
+      );
+      return { ...current, categories: nextCategories };
+    });
+  };
+
+  const addCategory = () => {
+    const id = `category-${Date.now().toString(36)}`;
+    setSaved(false);
+    setDraft(current => ({
+      ...current,
+      categories: [
+        ...(current.categories?.length ? current.categories : categories),
+        {
+          id,
+          title: 'قسم جديد',
+          count: '0 منتج',
+          image: 'https://images.unsplash.com/photo-1607083206968-13611e3d76db?auto=format&fit=crop&w=900&q=80',
+        },
+      ],
+    }));
+  };
+
+  const removeCategory = (index: number) => {
+    if (managedCategories.length <= 1) return;
+    setSaved(false);
+    setDraft(current => ({
+      ...current,
+      categories: (current.categories?.length ? current.categories : categories).filter((_, categoryIndex) => categoryIndex !== index),
+    }));
+  };
+
+  const saveDraft = () => {
+    const cleanedCategories = managedCategories
+      .map(category => ({
+        ...category,
+        id: category.id.trim(),
+        title: category.title.trim(),
+        image: category.image.trim(),
+        count: category.count.trim(),
+      }))
+      .filter(category => category.id && category.title);
+
+    onSave({
+      ...draft,
+      categories: cleanedCategories.length ? cleanedCategories : categories,
+      heroProductSlug: draft.heroProductSlug || '',
+    });
+    setSaved(true);
+  };
 
   return (
     <AdminShell title="الإعدادات" onNavigate={onNavigate}>
-      <form onSubmit={event => { event.preventDefault(); onSave(draft); setSaved(true); }} className="grid gap-4 rounded-md bg-white p-4 shadow-[0_10px_30px_rgba(23,32,27,0.08)] sm:p-5">
-        <SettingsInput label="اسم المتجر" value={draft.storeName} onChange={storeName => setDraft(current => ({ ...current, storeName }))} />
-        <SettingsInput label="رقم واتساب" value={draft.whatsappNumber} onChange={whatsappNumber => setDraft(current => ({ ...current, whatsappNumber }))} />
-        <SettingsInput label="رقم الهاتف" value={draft.phone} onChange={phone => setDraft(current => ({ ...current, phone }))} />
-        <SettingsInput label="المدينة" value={draft.city} onChange={city => setDraft(current => ({ ...current, city }))} />
-        <SettingsInput label="مدة التوصيل" value={draft.deliveryText} onChange={deliveryText => setDraft(current => ({ ...current, deliveryText }))} />
-        <SettingsInput label="العنوان" value={draft.address} onChange={address => setDraft(current => ({ ...current, address }))} />
+      <form onSubmit={event => { event.preventDefault(); saveDraft(); }} className="grid gap-4 rounded-md bg-white p-4 shadow-[0_10px_30px_rgba(23,32,27,0.08)] sm:p-5">
+        <section className="grid gap-4 md:grid-cols-2">
+          <SettingsInput label="اسم المتجر" value={draft.storeName} onChange={storeName => { setSaved(false); setDraft(current => ({ ...current, storeName })); }} />
+          <SettingsInput label="رقم واتساب" value={draft.whatsappNumber} onChange={whatsappNumber => { setSaved(false); setDraft(current => ({ ...current, whatsappNumber })); }} />
+          <SettingsInput label="رقم الهاتف" value={draft.phone} onChange={phone => { setSaved(false); setDraft(current => ({ ...current, phone })); }} />
+          <SettingsInput label="المدينة" value={draft.city} onChange={city => { setSaved(false); setDraft(current => ({ ...current, city })); }} />
+          <SettingsInput label="مدة التوصيل" value={draft.deliveryText} onChange={deliveryText => { setSaved(false); setDraft(current => ({ ...current, deliveryText })); }} />
+          <SettingsInput label="العنوان" value={draft.address} onChange={address => { setSaved(false); setDraft(current => ({ ...current, address })); }} />
+        </section>
+
+        <section className="grid gap-2 rounded-md border border-[#dfe5df] bg-[#fbfaf6] p-3">
+          <label className="grid gap-1">
+            <span className="text-xs font-black text-[#65716a]">منتج الهيرو في الصفحة الرئيسية</span>
+            <select value={draft.heroProductSlug || ''} onChange={event => { setSaved(false); setDraft(current => ({ ...current, heroProductSlug: event.target.value })); }} className="min-h-[44px] rounded-md border border-[#cfd8d1] bg-white px-3 text-sm font-bold outline-none focus:border-[#b45309]">
+              <option value="">اختيار تلقائي</option>
+              {heroProducts.map(product => <option key={product.slug} value={product.slug}>{product.title}</option>)}
+            </select>
+          </label>
+        </section>
+
+        <section className="grid gap-3 rounded-md border border-[#dfe5df] bg-[#fbfaf6] p-3">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-black text-[#17201b]">إدارة الأقسام</p>
+            <button type="button" onClick={addCategory} className="tm-press min-h-[36px] rounded-md bg-[#ff9900] px-3 text-xs font-black text-[#131921]">إضافة قسم</button>
+          </div>
+          <div className="grid gap-3">
+            {managedCategories.map((category, index) => (
+              <article key={`${category.id}-${index}`} className="grid gap-2 rounded-md border border-[#dfe5df] bg-white p-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)_auto] md:items-end">
+                <SettingsInput label="اسم القسم" value={category.title} onChange={title => updateCategory(index, { title })} />
+                <SettingsInput label="رابط الصورة" value={category.image} onChange={image => updateCategory(index, { image })} />
+                <button type="button" onClick={() => removeCategory(index)} disabled={managedCategories.length <= 1} className="tm-admin-press min-h-[44px] rounded-md bg-[#fff1d5] px-3 text-xs font-black text-[#9a5a00] disabled:cursor-not-allowed disabled:opacity-45">حذف</button>
+              </article>
+            ))}
+          </div>
+        </section>
+
         <button type="submit" className="min-h-[48px] rounded-md bg-[#ff9900] px-5 font-black text-[#131921]">حفظ</button>
         {saved ? <p className="text-sm font-black text-[#b45309]">تم الحفظ</p> : null}
       </form>
@@ -1212,12 +1312,12 @@ export function AdminSettingsPage({
   );
 }
 
-function PageShell({ cartCount, onNavigate, onOpenCart, onOpenSearch, children }: { cartCount: number; onNavigate: (route: string) => void; onOpenCart: () => void; onOpenSearch: () => void; children: ReactNode }) {
+function PageShell({ cartCount, categories: footerCategories, onNavigate, onOpenCart, onOpenSearch, children }: { cartCount: number; categories?: Category[]; onNavigate: (route: string) => void; onOpenCart: () => void; onOpenSearch: () => void; children: ReactNode }) {
   return (
     <div dir="rtl" className="min-h-screen overflow-x-hidden bg-[var(--tm-bg)] pb-[calc(76px+env(safe-area-inset-bottom))] pt-16 text-[var(--tm-ink)] md:pb-0">
       <SiteHeader cartCount={cartCount} onNavigate={onNavigate} onOpenCart={onOpenCart} onOpenSearch={onOpenSearch} />
       {children}
-      <SiteFooter onNavigate={onNavigate} />
+      <SiteFooter categories={footerCategories} onNavigate={onNavigate} />
       <MobileNav cartCount={cartCount} onNavigate={onNavigate} onOpenCart={onOpenCart} onOpenSearch={onOpenSearch} />
     </div>
   );

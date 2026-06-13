@@ -1,12 +1,12 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from 'react';
-import { categories } from '../../../storefrontRuntime';
-import type { Product, ProductDetailBlock, ProductVariant, ProductVariantOption } from '../../../storefrontRuntime';
+import type { Category, Product, ProductDetailBlock, ProductVariant, ProductVariantOption } from '../../../storefrontRuntime';
 import { AdminSidebar } from '../../admin/AdminLayout';
 import { TanjaMallLogo } from '../../brand/TanjaMallLogo';
 
 type AddProductProps = {
   product?: Product;
   products: Product[];
+  categories: Category[];
   onBack: () => void;
   onOpenDashboard: () => void;
   onOpenProduct: (slug: string) => void;
@@ -283,6 +283,7 @@ async function replaceInlineImages(product: Product, folder: string) {
 export const TanjaMolAddProductPage = ({
   product,
   products,
+  categories,
   onBack,
   onOpenDashboard,
   onOpenProduct,
@@ -380,7 +381,7 @@ export const TanjaMolAddProductPage = ({
     setUploadError('');
     setUploadingImages(false);
     setPublishing(false);
-  }, [product]);
+  }, [product, categories]);
 
   const cleanGallery = gallery.map(item => item.trim()).filter(Boolean);
   const readinessItems = [
@@ -405,6 +406,10 @@ export const TanjaMolAddProductPage = ({
     showRelated ? 'منتجات مقترحة' : '',
     showPolicies ? 'سياسات' : '',
   ].filter(Boolean).join(' · ') || 'كل عناصر الظهور مخفية';
+  const categoryOptions = useMemo(() => {
+    if (!category || categories.some(item => item.title === category)) return categories;
+    return [{ id: `current-${category}`, title: category, count: '', image: '' }, ...categories];
+  }, [categories, category]);
 
   const previewProduct = useMemo<Product>(() => ({
     id: slug || makeSlug(title),
@@ -744,7 +749,7 @@ export const TanjaMolAddProductPage = ({
                   <label className="grid gap-1">
                     <span className="text-xs font-black text-[#65716a]">القسم</span>
                     <select value={category} onChange={event => setCategory(event.target.value)} className="min-h-[42px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-3 text-sm font-bold outline-none focus:border-[#b45309]">
-                      {categories.map(item => <option key={item.id} value={item.title}>{item.title}</option>)}
+                      {categoryOptions.map(item => <option key={item.id} value={item.title}>{item.title}</option>)}
                     </select>
                   </label>
                   <TextField label="شارة المنتج" value={badge} onChange={setBadge} />
