@@ -36,6 +36,7 @@ import {
   type StoreSettings,
   type StoredOrder,
 } from './storefrontRuntime';
+import { getCurrentRoute, replaceLegacyHashRoute, routeToPath } from './lib/routing';
 
 const TanjaMallAdminProductDashboard = lazy(() => import('./components/magicpath/tanja-mol-admin-product-dashboard/TanjaMolAdminProductDashboard').then(module => ({
   default: module.TanjaMallAdminProductDashboard,
@@ -77,7 +78,7 @@ function scrollToPageTop() {
 }
 
 function getRoute() {
-  return window.location.hash || '#/';
+  return getCurrentRoute();
 }
 
 function cleanText(value: string, maxLength: number) {
@@ -126,7 +127,7 @@ function upsertJsonLd(id: string, data: Record<string, unknown> | null) {
 
 function applyPageSeo(product: Product | undefined, settings: StoreSettings, categories: Category[] = defaultCategories) {
   const storeName = settings.storeName || defaultSettings.storeName;
-  const baseUrl = `${window.location.origin}${window.location.pathname}`;
+  const baseUrl = window.location.origin;
   const defaultDescription = `TanjaMol COD store in Tanger with cash on delivery and fast local confirmation.`;
 
   if (!product) {
@@ -146,12 +147,12 @@ function applyPageSeo(product: Product | undefined, settings: StoreSettings, cat
     return;
   }
 
-  const productUrl = `${baseUrl}${productRoute(product.slug)}`;
+  const productUrl = `${baseUrl}${routeToPath(productRoute(product.slug))}`;
   const title = cleanText(`${product.title} | ${storeName}`, 62);
   const description = cleanText(product.description || `${product.title} available from ${storeName} with cash on delivery in Tanger.`, 158);
   const image = absoluteAssetUrl(product.image || product.gallery?.[0] || '/tanjamall-icon.svg');
   const category = categories.find(item => item.title === product.category || product.category.includes(item.title.split(' ')[0]));
-  const categoryUrl = category ? `${baseUrl}#/category/${encodeURIComponent(category.id)}` : baseUrl;
+  const categoryUrl = category ? `${baseUrl}${routeToPath(`#/category/${encodeURIComponent(category.id)}`)}` : baseUrl;
   const sku = product.variants?.find(variant => variant.enabled && variant.sku)?.sku || product.slug;
   const priceValidUntil = new Date(Date.now() + 1000 * 60 * 60 * 24 * 60).toISOString().slice(0, 10);
 
@@ -242,8 +243,10 @@ export function App() {
 
   useEffect(() => {
     if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
+    replaceLegacyHashRoute();
 
     const onRouteChange = () => {
+      replaceLegacyHashRoute();
       setRoute(getRoute());
       setDirectItem(null);
       setIsCartOpen(false);
@@ -436,7 +439,7 @@ export function App() {
   }, [activeCategories, activeProduct, settings]);
 
   const navigate = (nextRoute: string) => {
-    window.history.pushState(null, '', nextRoute);
+    window.history.pushState(null, '', routeToPath(nextRoute));
     setRoute(nextRoute);
     setDirectItem(null);
     setIsCartOpen(false);

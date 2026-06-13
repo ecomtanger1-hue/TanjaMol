@@ -22,6 +22,7 @@ import {
 import { TanjaMallLogo } from '../brand/TanjaMallLogo';
 import { ProductCard } from './ProductCard';
 import { AdminSidebar } from '../admin/AdminLayout';
+import { getCurrentRoute } from '../../lib/routing';
 
 type StoreActions = {
   cartCount: number;
@@ -91,7 +92,7 @@ export function SiteHeader({
   onOpenSearch: () => void;
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const route = window.location.hash || '#/';
+  const route = getCurrentRoute();
   const navButtonClass = (active = false) => `tm-press rounded-md px-2 py-2 ${active ? 'bg-white/14 text-white' : 'text-white/82 hover:bg-white/10 hover:text-white'}`;
 
   const openCategories = () => {
@@ -1324,7 +1325,7 @@ function PageShell({ cartCount, categories: footerCategories, onNavigate, onOpen
 }
 
 function MobileNav({ cartCount, onNavigate, onOpenCart, onOpenSearch }: { cartCount: number; onNavigate: (route: string) => void; onOpenCart: () => void; onOpenSearch: () => void }) {
-  const route = window.location.hash || '#/';
+  const route = getCurrentRoute();
   const isHome = route === '#/' || route === '';
   const isSearch = route.startsWith('#/search');
   const openCategories = () => {

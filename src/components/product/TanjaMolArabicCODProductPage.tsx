@@ -4,6 +4,7 @@ import { categories as defaultCategories, categoryRoute, parseOrderForm, type Ca
 import { ProductDetailMedia, ProductDetailRichText } from './ProductDetailRichText';
 import { ProductCard } from '../storefront/ProductCard';
 import { SiteFooter, SiteHeader } from '../storefront/StorefrontPages';
+import { navigateToRoute } from '../../lib/routing';
 const gallery = [{
   src: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=1200&q=85',
   alt: 'ساعة ذكية سوداء على مكتب مرتب'
@@ -245,7 +246,7 @@ export const TanjaMolArabicCODProductPage = ({
   }, [resolvedImageVariant?.image, product?.id]);
 
   const goHome = (sectionId?: string) => {
-    window.location.hash = '#/';
+    navigateToRoute('#/');
     if (sectionId) {
       window.setTimeout(() => {
         document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -253,11 +254,11 @@ export const TanjaMolArabicCODProductPage = ({
     }
   };
   const navigate = (route: string) => {
-    window.location.hash = route;
+    navigateToRoute(route);
   };
 
   const goCategory = () => {
-    window.location.hash = activeCategory ? categoryRoute(activeCategory.id) : '#/';
+    navigateToRoute(activeCategory ? categoryRoute(activeCategory.id) : '#/');
   };
 
   const orderItem: CartItem = {
@@ -576,7 +577,7 @@ export const TanjaMolArabicCODProductPage = ({
                 <ProductCard
                   product={item}
                   compact
-                  onOpenProduct={onOpenProduct || ((slug) => { window.location.hash = `#/product/${slug}`; })}
+                  onOpenProduct={onOpenProduct || ((slug) => navigateToRoute(`#/product/${slug}`))}
                   onAddToCart={onAddToCart}
                   onOrderProduct={onOrderProduct || ((cartItem) => onAddToCart(cartItem))}
                 />
@@ -596,7 +597,7 @@ export const TanjaMolArabicCODProductPage = ({
         </section> : null}
       </main>
 
-      <SiteFooter categories={categoryList} onNavigate={(nextRoute) => { window.location.hash = nextRoute; }} />
+      <SiteFooter categories={categoryList} onNavigate={navigateToRoute} />
 
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 bg-transparent px-3 py-3 md:hidden" style={{
       paddingBottom: 'max(14px, env(safe-area-inset-bottom))'

@@ -2,6 +2,7 @@ import { AlertTriangle, EyeOff, ImageOff, PackagePlus, ShoppingBag, Store, Walle
 import type { CartItem, Product, StoredOrder } from '../../../storefrontRuntime';
 import { productRoute } from '../../../storefrontRuntime';
 import { AdminShell } from '../../admin/AdminLayout';
+import { navigateToRoute } from '../../../lib/routing';
 
 type DashboardProps = {
   products: Product[];
@@ -111,9 +112,7 @@ export const TanjaMallAdminProductDashboard = ({
     <AdminShell
       title="لوحة التحكم"
       eyebrow="إدارة المتجر"
-      onNavigate={route => {
-        window.location.hash = route;
-      }}
+      onNavigate={navigateToRoute}
       actions={
         <>
           <button type="button" onClick={onOpenStorefront} className="tm-admin-press hidden min-h-[38px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black sm:inline-flex">

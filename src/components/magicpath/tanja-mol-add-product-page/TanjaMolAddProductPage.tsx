@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState, type FormEvent, t
 import type { Category, Product, ProductDetailBlock, ProductVariant, ProductVariantOption } from '../../../storefrontRuntime';
 import { AdminSidebar } from '../../admin/AdminLayout';
 import { TanjaMallLogo } from '../../brand/TanjaMallLogo';
+import { navigateToRoute } from '../../../lib/routing';
 
 type AddProductProps = {
   product?: Product;
@@ -1524,7 +1525,7 @@ function AdminRail({ onOpenDashboard }: { onOpenDashboard: () => void }) {
       onOpenDashboard();
       return;
     }
-    window.location.hash = route;
+    navigateToRoute(route);
   }} />;
 
   return (

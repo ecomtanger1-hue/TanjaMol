@@ -3,6 +3,7 @@ import { Grid3X3, Home, PackageSearch, Search, ShoppingCart } from 'lucide-react
 import { categories as defaultCategories, categoryRoute, collectionRoute, type CartItem, type Category, type OrderDraft, type Product, type StoreSettings } from '../../storefrontRuntime';
 import { ProductCard as StoreProductCard } from './ProductCard';
 import { SiteFooter, SiteHeader } from './StorefrontPages';
+import { navigateToRoute } from '../../lib/routing';
 
 type StorefrontProps = {
   cartCount: number;
@@ -150,7 +151,7 @@ export const CODTangerArabicStoreLanding = ({
     newArrivalProducts,
   } = getHomepageSections(products, settings.heroProductSlug);
   const shortcutCategories = (categories.length ? categories : defaultCategories).slice(0, 6);
-  const navigate = onNavigate || ((route: string) => { window.location.hash = route; });
+  const navigate = onNavigate || navigateToRoute;
   const [heroSlide, setHeroSlide] = useState(0);
   const openCategories = () => scrollToSection('categories');
   const bottomItemClass = 'tm-press tm-touch rounded-md bg-[var(--tm-surface-tint)] px-2 py-2 text-center text-xs font-black text-[var(--tm-ink-muted)]';

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { LayoutDashboard, Package, Settings, ShoppingBag, Store } from 'lucide-react';
 import { TanjaMallLogo } from '../brand/TanjaMallLogo';
+import { getCurrentRoute, navigateToRoute } from '../../lib/routing';
 
 type AdminShellProps = {
   title: string;
@@ -18,7 +19,7 @@ const adminNav = [
 ];
 
 function defaultNavigate(route: string) {
-  window.location.hash = route;
+  navigateToRoute(route);
 }
 
 function isActive(route: string, currentRoute: string) {
@@ -27,7 +28,7 @@ function isActive(route: string, currentRoute: string) {
 }
 
 export function AdminSidebar({ onNavigate = defaultNavigate }: { onNavigate?: (route: string) => void }) {
-  const currentRoute = window.location.hash || '#/admin';
+  const currentRoute = getCurrentRoute();
 
   return (
     <aside className="group/admin-sidebar fixed bottom-0 right-0 top-0 z-50 hidden w-[76px] overflow-hidden border-l border-[#273341] bg-[#131921] text-white transition-[width,box-shadow] duration-200 ease-out lg:block lg:hover:w-[188px] lg:hover:shadow-[-22px_0_44px_-32px_rgba(19,25,33,0.8)]">
