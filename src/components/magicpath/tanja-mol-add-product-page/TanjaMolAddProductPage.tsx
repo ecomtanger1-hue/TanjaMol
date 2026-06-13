@@ -10,7 +10,7 @@ type AddProductProps = {
   onBack: () => void;
   onOpenDashboard: () => void;
   onOpenProduct: (slug: string) => void;
-  onCreateProduct: (product: Product, previousSlug?: string, options?: { isDraft?: boolean }) => void | Promise<void>;
+  onCreateProduct: (product: Product, previousSlug?: string, options?: { isDraft?: boolean; silent?: boolean }) => void | Promise<void>;
 };
 
 type SpecDraft = {
@@ -292,7 +292,10 @@ export const TanjaMolAddProductPage = ({
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const detailHistoryRef = useRef<DetailDraft[][]>([]);
   const detailFutureRef = useRef<DetailDraft[][]>([]);
+  const autoSaveSequenceRef = useRef(0);
+  const onCreateProductRef = useRef(onCreateProduct);
   const originalSlug = product?.slug;
+  const [draftBaseSlug, setDraftBaseSlug] = useState(product?.slug || '');
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
   const [category, setCategory] = useState(categories[0]?.title || '');
@@ -318,11 +321,18 @@ export const TanjaMolAddProductPage = ({
   const [draftSaved, setDraftSaved] = useState(false);
   const [publishedProduct, setPublishedProduct] = useState<Product | null>(null);
   const [uploadError, setUploadError] = useState('');
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [lastAutoSavedAt, setLastAutoSavedAt] = useState('');
   const [uploadingImages, setUploadingImages] = useState(false);
   const [publishing, setPublishing] = useState(false);
 
   useEffect(() => {
+    onCreateProductRef.current = onCreateProduct;
+  }, [onCreateProduct]);
+
+  useEffect(() => {
     if (!product) {
+      setDraftBaseSlug('');
       setTitle('');
       setSlug('');
       setCategory(categories[0]?.title || '');
@@ -348,11 +358,14 @@ export const TanjaMolAddProductPage = ({
       setRating('');
       setReviewCount('');
       setUploadError('');
+      setAutoSaveStatus('idle');
+      setLastAutoSavedAt('');
       setUploadingImages(false);
       setPublishing(false);
       return;
     }
 
+    setDraftBaseSlug(product.slug);
     setTitle(product.title);
     setSlug(product.slug);
     setCategory(product.category);
@@ -379,11 +392,13 @@ export const TanjaMolAddProductPage = ({
     setRating(product.rating ? String(product.rating) : '4.8');
     setReviewCount(product.reviewCount ? String(product.reviewCount) : '127');
     setUploadError('');
+    setAutoSaveStatus('idle');
+    setLastAutoSavedAt('');
     setUploadingImages(false);
     setPublishing(false);
   }, [product, categories]);
 
-  const cleanGallery = gallery.map(item => item.trim()).filter(Boolean);
+  const cleanGallery = useMemo(() => gallery.map(item => item.trim()).filter(Boolean), [gallery]);
   const readinessItems = [
     title.trim().length > 2 && slug.trim().length > 2,
     category.trim().length > 0,
@@ -437,6 +452,71 @@ export const TanjaMolAddProductPage = ({
     variantOptions: variantsEnabled ? variantOptions.filter(group => group.label.trim() && group.values.some(value => value.label.trim())) : [],
     variants: variantsEnabled ? variants : [],
   }), [badge, category, cleanGallery, delivery, details, manualReviewsEnabled, oldPrice, price, rating, reviewCount, reviewsEnabled, shortDescription, showPolicies, showRelated, slug, specs, stock, title, variantOptions, variants, variantsEnabled]);
+
+  const hasStartedListing = useMemo(() => (
+    Boolean(title.trim()) ||
+    Boolean(slug.trim()) ||
+    Boolean(shortDescription.trim()) ||
+    Boolean(price.trim()) ||
+    Boolean(oldPrice.trim()) ||
+    Boolean(stock.trim()) ||
+    Boolean(delivery.trim()) ||
+    Boolean(badge.trim()) ||
+    gallery.some(item => item.trim()) ||
+    variantsEnabled ||
+    variantOptions.some(group => group.label.trim() || group.values.some(value => value.label.trim())) ||
+    variants.some(variant => variant.name.trim() || variant.sku.trim()) ||
+    details.some(detail => detail.title.trim() || detail.text.trim() || detail.mediaUrl.trim()) ||
+    specs.some(spec => spec.label.trim() || spec.value.trim())
+  ), [badge, delivery, details, gallery, oldPrice, price, shortDescription, slug, specs, stock, title, variantOptions, variants, variantsEnabled]);
+
+  const autoSaveEnabled = !product || Boolean(product.isDraft);
+
+  useEffect(() => {
+    if (!autoSaveEnabled || !hasStartedListing || publishing || uploadingImages || publishedProduct) return;
+
+    const timer = window.setTimeout(() => {
+      const sequence = autoSaveSequenceRef.current + 1;
+      autoSaveSequenceRef.current = sequence;
+
+      const draftTitle = title.trim() || 'مسودة منتج';
+      const draftSlug = slug.trim() || draftBaseSlug || makeSlug(`${draftTitle}-${Date.now().toString().slice(-6)}`);
+      const draftProduct: Product = {
+        ...previewProduct,
+        id: draftSlug,
+        slug: draftSlug,
+        title: draftTitle,
+        isDraft: true,
+        isVisible: false,
+      };
+
+      setAutoSaveStatus('saving');
+
+      void replaceInlineImages(draftProduct, draftSlug)
+        .then(async productToSave => {
+          if (sequence !== autoSaveSequenceRef.current) return;
+
+          await onCreateProductRef.current(productToSave, draftBaseSlug || originalSlug || draftSlug, { isDraft: true, silent: true });
+          if (sequence !== autoSaveSequenceRef.current) return;
+
+          setDraftBaseSlug(productToSave.slug);
+          if (!slug.trim()) setSlug(productToSave.slug);
+          setGallery(productToSave.gallery);
+          setDetails(productToSave.details || []);
+          setVariants(productToSave.variants || []);
+          setVariantOptions(productToSave.variantOptions || []);
+          setLastAutoSavedAt(new Date().toLocaleTimeString('fr-MA', { hour: '2-digit', minute: '2-digit' }));
+          setAutoSaveStatus('saved');
+        })
+        .catch(error => {
+          if (sequence !== autoSaveSequenceRef.current) return;
+          console.error('Failed to autosave draft', error);
+          setAutoSaveStatus('error');
+        });
+    }, 1800);
+
+    return () => window.clearTimeout(timer);
+  }, [autoSaveEnabled, draftBaseSlug, hasStartedListing, originalSlug, previewProduct, publishedProduct, publishing, slug, title, uploadingImages]);
 
   const addVariant = () => {
     const index = variants.length + 1;
@@ -643,13 +723,16 @@ export const TanjaMolAddProductPage = ({
 
     setUploadError('');
     setPublishing(true);
+    autoSaveSequenceRef.current += 1;
     try {
       const productToPublish = await replaceInlineImages(previewProduct, slug || makeSlug(title || 'product'));
       setGallery(productToPublish.gallery);
       setDetails(productToPublish.details || []);
       setVariants(productToPublish.variants || []);
       setVariantOptions(productToPublish.variantOptions || []);
-      await onCreateProduct(productToPublish, originalSlug);
+      await onCreateProduct(productToPublish, draftBaseSlug || originalSlug);
+      setDraftBaseSlug(productToPublish.slug);
+      setAutoSaveStatus('idle');
       setPublishedProduct(productToPublish);
     } catch (error) {
       console.error('Failed to publish product', error);
@@ -673,6 +756,7 @@ export const TanjaMolAddProductPage = ({
 
     setUploadError('');
     setPublishing(true);
+    autoSaveSequenceRef.current += 1;
     try {
       const productToSave = await replaceInlineImages(draftProduct, draftSlug);
       setSlug(draftSlug);
@@ -680,7 +764,10 @@ export const TanjaMolAddProductPage = ({
       setDetails(productToSave.details || []);
       setVariants(productToSave.variants || []);
       setVariantOptions(productToSave.variantOptions || []);
-      await onCreateProduct(productToSave, originalSlug, { isDraft: true });
+      await onCreateProduct(productToSave, draftBaseSlug || originalSlug || draftSlug, { isDraft: true });
+      setDraftBaseSlug(productToSave.slug);
+      setAutoSaveStatus('saved');
+      setLastAutoSavedAt(new Date().toLocaleTimeString('fr-MA', { hour: '2-digit', minute: '2-digit' }));
       setDraftSaved(true);
     } catch (error) {
       console.error('Failed to save draft', error);
@@ -715,6 +802,17 @@ export const TanjaMolAddProductPage = ({
               </div>
 
               <div className="flex shrink-0 items-center gap-2">
+                {autoSaveEnabled && autoSaveStatus !== 'idle' ? (
+                  <span className={`hidden rounded-md px-2.5 py-2 text-[11px] font-black sm:inline-flex ${
+                    autoSaveStatus === 'error'
+                      ? 'bg-[#fff1d5] text-[#9a5a00]'
+                      : autoSaveStatus === 'saving'
+                        ? 'bg-[#eef3ef] text-[#65716a]'
+                        : 'bg-[#fff3df] text-[#b45309]'
+                  }`}>
+                    {autoSaveStatus === 'saving' ? 'حفظ تلقائي...' : autoSaveStatus === 'error' ? 'تعذر الحفظ التلقائي' : `حفظ تلقائي ${lastAutoSavedAt}`}
+                  </span>
+                ) : null}
                 <button type="button" onClick={onBack} className="tm-admin-press min-h-[38px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">
                   رجوع
                 </button>

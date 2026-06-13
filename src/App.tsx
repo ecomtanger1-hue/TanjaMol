@@ -593,7 +593,7 @@ export function App() {
       });
   };
 
-  const saveProduct = async (product: Product, previousSlug = product.slug, options?: { isDraft?: boolean }) => {
+  const saveProduct = async (product: Product, previousSlug = product.slug, options?: { isDraft?: boolean; silent?: boolean }) => {
     const previousProduct = adminProducts.find(item => item.slug === previousSlug || item.slug === product.slug);
     const isDraft = options?.isDraft ?? false;
     const isVisible = isDraft
@@ -608,7 +608,7 @@ export function App() {
       await upsertProductToSupabase(nextProduct, previousSlug, isVisible);
     } catch (error) {
       console.error('Failed to save product to Supabase', error);
-      setNotice(isDraft ? 'تعذر حفظ المسودة في قاعدة البيانات' : 'تعذر حفظ المنتج في قاعدة البيانات');
+      if (!options?.silent) setNotice(isDraft ? 'تعذر حفظ المسودة في قاعدة البيانات' : 'تعذر حفظ المنتج في قاعدة البيانات');
       throw error;
     }
 
@@ -634,7 +634,7 @@ export function App() {
       localStorage.setItem(ADMIN_HIDDEN_PRODUCTS_KEY, JSON.stringify(next));
       return next;
     });
-    setNotice(isDraft ? 'تم حفظ المسودة' : 'تم نشر المنتج');
+    if (!options?.silent) setNotice(isDraft ? 'تم حفظ المسودة' : 'تم نشر المنتج');
   };
 
   const deleteProduct = (product: Product) => {

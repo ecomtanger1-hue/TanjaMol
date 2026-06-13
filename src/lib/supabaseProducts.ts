@@ -53,7 +53,6 @@ const PRODUCT_OPTIONAL_COMPATIBILITY_COLUMNS = [
   'variants_enabled',
   'variant_options',
   'variants',
-  'is_draft',
   'sort_order',
 ] as const;
 

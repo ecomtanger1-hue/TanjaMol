@@ -195,6 +195,7 @@ on public.admin_users for select
 using (auth.uid() = user_id);
 
 drop policy if exists "products_public_visible_read" on public.products;
+drop policy if exists "Public can read visible products" on public.products;
 create policy "products_public_visible_read"
 on public.products for select
 using (
@@ -203,6 +204,7 @@ using (
 );
 
 drop policy if exists "products_admin_manage" on public.products;
+drop policy if exists "Admins can manage products" on public.products;
 create policy "products_admin_manage"
 on public.products for all
 using (exists (select 1 from public.admin_users where admin_users.user_id = auth.uid()))
