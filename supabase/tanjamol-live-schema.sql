@@ -146,10 +146,24 @@ create table if not exists public.orders (
   address text not null,
   note text,
   source text not null default 'storefront',
-  status text not null default 'whatsapp',
+  status text not null default 'new',
+  customer_message_status text,
+  customer_message_sent_at timestamptz,
   total numeric not null default 0,
   created_at timestamptz not null default now()
 );
+
+alter table public.orders
+  alter column status set default 'new',
+  add column if not exists customer_message_status text,
+  add column if not exists customer_message_sent_at timestamptz;
+
+alter table public.orders
+  drop constraint if exists orders_customer_message_status_check;
+
+alter table public.orders
+  add constraint orders_customer_message_status_check
+  check (customer_message_status is null or customer_message_status in ('new', 'whatsapp', 'confirmed', 'delivery', 'done'));
 
 create table if not exists public.order_items (
   id uuid primary key default gen_random_uuid(),
@@ -237,8 +251,10 @@ with check (
   and phone ~ '^[0-9+() .-]{6,30}$'
   and length(trim(address)) between 3 and 500
   and coalesce(length(note), 0) <= 1000
-  and source in ('product-page', 'cart', 'storefront')
+  and source in ('product-page', 'cart', 'storefront', 'direct-product')
   and status in ('new', 'whatsapp')
+  and customer_message_status is null
+  and customer_message_sent_at is null
   and total > 0
   and total < 1000000
   and created_at >= now() - interval '15 minutes'

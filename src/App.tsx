@@ -15,7 +15,6 @@ import {
   SearchResultsPage,
 } from './components/storefront/StorefrontPages';
 import {
-  buildWhatsAppOrderUrl,
   cartItemFromProduct,
   categories as defaultCategories,
   defaultSettings,
@@ -236,6 +235,8 @@ export function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [directItem, setDirectItem] = useState<CartItem | null>(null);
+  const [submittedOrder, setSubmittedOrder] = useState<StoredOrder | null>(null);
+  const [isOrderSubmitting, setIsOrderSubmitting] = useState(false);
   const [notice, setNotice] = useState('');
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [isAdminLoading, setIsAdminLoading] = useState(() => getRoute().startsWith('#/admin'));
@@ -452,6 +453,7 @@ export function App() {
   }, [route]);
 
   const addToCart = (item: CartItem) => {
+    setSubmittedOrder(null);
     setCart(current => {
       const existing = current.find(cartItem => cartItem.id === item.id && cartItem.variant === item.variant);
       if (existing) {
@@ -466,6 +468,7 @@ export function App() {
   };
 
   const orderProduct = (item: CartItem) => {
+    setSubmittedOrder(null);
     setDirectItem(item);
     setIsCartOpen(true);
   };
@@ -487,50 +490,55 @@ export function App() {
     setCart(current => current.filter(item => item.id !== id || item.variant !== variant));
   };
 
-  const submitOrderDraft = (draft: OrderDraft) => {
-    if (!draft.items.length) return;
+  const submitOrderDraft = async (draft: OrderDraft) => {
+    if (!draft.items.length || isOrderSubmitting) return null;
 
     const order: StoredOrder = {
       ...draft,
       id: `TM-${Date.now().toString().slice(-6)}`,
       createdAt: new Date().toISOString(),
-      status: 'whatsapp',
+      status: 'new',
       total: orderTotal(draft.items),
     };
-    const nextOrders = [order, ...readStored<StoredOrder[]>(ORDERS_KEY, [])];
-    localStorage.setItem(ORDERS_KEY, JSON.stringify(nextOrders));
-    setOrders(nextOrders);
-    void import('./lib/supabaseOrders').then(({ saveOrderToSupabase }) => saveOrderToSupabase(order)).catch(error => {
+    setIsOrderSubmitting(true);
+    try {
+      const { saveOrderToSupabase } = await import('./lib/supabaseOrders');
+      await saveOrderToSupabase(order);
+
+      const nextOrders = [order, ...readStored<StoredOrder[]>(ORDERS_KEY, [])];
+      localStorage.setItem(ORDERS_KEY, JSON.stringify(nextOrders));
+      setOrders(nextOrders);
+
+      if (draft.source === 'cart') setCart([]);
+      setDirectItem(null);
+      setSubmittedOrder(order);
+      setIsCartOpen(true);
+      setNotice('تم استلام طلبك');
+      return order;
+    } catch (error) {
       console.error('Failed to save order to Supabase', error);
-    });
-
-    if (draft.source === 'cart') setCart([]);
-    setDirectItem(null);
-    setIsCartOpen(false);
-    const whatsappUrl = buildWhatsAppOrderUrl(order, settings);
-    const opened = window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
-
-    if (opened) {
-      setNotice('تم فتح واتساب');
-      return;
+      setNotice('تعذر إرسال الطلب. المرجو المحاولة مرة أخرى.');
+      return null;
+    } finally {
+      setIsOrderSubmitting(false);
     }
-
-    navigator.clipboard?.writeText(whatsappUrl).catch(() => undefined);
-    setNotice('لم يفتح واتساب تلقائيا. تم نسخ رابط الطلب');
   };
 
-  const placeOrder = (draft: OrderDraft) => {
-    submitOrderDraft(draft);
-  };
+  const placeOrder = (draft: OrderDraft) => submitOrderDraft(draft);
 
   const placeOrderFromForm = (items: CartItem[], source: string, event: FormEvent<HTMLFormElement>) => {
     const draft = parseOrderForm(event, source, items);
-    if (draft) submitOrderDraft(draft);
+    return draft ? submitOrderDraft(draft) : Promise.resolve(null);
   };
 
   const updateOrderStatus = (orderId: string, status: StoredOrder['status']) => {
     const previousOrders = orders;
-    const nextOrders = orders.map(order => order.id === orderId ? { ...order, status } : order);
+    const nextOrders = orders.map(order => order.id === orderId ? {
+      ...order,
+      status,
+      customerMessageStatus: undefined,
+      customerMessageSentAt: undefined,
+    } : order);
     setOrders(nextOrders);
     localStorage.setItem(ORDERS_KEY, JSON.stringify(nextOrders));
     setNotice('تم تحديث حالة الطلب');
@@ -542,6 +550,28 @@ export function App() {
         setOrders(previousOrders);
         localStorage.setItem(ORDERS_KEY, JSON.stringify(previousOrders));
         setNotice('تعذر تحديث حالة الطلب');
+      });
+  };
+
+  const markOrderCustomerMessageSent = (orderId: string, status: StoredOrder['status']) => {
+    const previousOrders = orders;
+    const sentAt = new Date().toISOString();
+    const nextOrders = orders.map(order => order.id === orderId ? {
+      ...order,
+      status,
+      customerMessageStatus: status,
+      customerMessageSentAt: sentAt,
+    } : order);
+    setOrders(nextOrders);
+    localStorage.setItem(ORDERS_KEY, JSON.stringify(nextOrders));
+
+    void import('./lib/supabaseAdmin')
+      .then(({ markAdminOrderCustomerMessageSent }) => markAdminOrderCustomerMessageSent(orderId, status))
+      .catch(error => {
+        console.error('Failed to mark customer message sent', error);
+        setOrders(previousOrders);
+        localStorage.setItem(ORDERS_KEY, JSON.stringify(previousOrders));
+        setNotice('تعذر حفظ حالة رسالة واتساب');
       });
   };
 
@@ -572,6 +602,7 @@ export function App() {
     categories: activeCategories,
     onNavigate: navigate,
     onOpenCart: () => {
+      setSubmittedOrder(null);
       setDirectItem(null);
       setIsCartOpen(true);
     },
@@ -902,16 +933,16 @@ export function App() {
       );
     }
 
-    if (route === '#/admin/orders') return <AdminOrdersPage orders={orders} settings={settings} onNavigate={navigate} onUpdateOrderStatus={updateOrderStatus} />;
+    if (route === '#/admin/orders') return <AdminOrdersPage orders={orders} settings={settings} onNavigate={navigate} onUpdateOrderStatus={updateOrderStatus} onMarkCustomerMessageSent={markOrderCustomerMessageSent} />;
 
     if (route.startsWith('#/admin/orders/')) {
       const id = decodeURIComponent(route.replace('#/admin/orders/', ''));
-      return <AdminOrderDetailPage order={orders.find(order => order.id === id)} settings={settings} onNavigate={navigate} onUpdateOrderStatus={updateOrderStatus} />;
+      return <AdminOrderDetailPage order={orders.find(order => order.id === id)} settings={settings} onNavigate={navigate} onUpdateOrderStatus={updateOrderStatus} onMarkCustomerMessageSent={markOrderCustomerMessageSent} />;
     }
 
     if (route.startsWith('#/admin/customers/')) {
       const phone = decodeURIComponent(route.replace('#/admin/customers/', ''));
-      return <AdminCustomerDetailPage phone={phone} orders={orders} settings={settings} onNavigate={navigate} onUpdateOrderStatus={updateOrderStatus} />;
+      return <AdminCustomerDetailPage phone={phone} orders={orders} settings={settings} onNavigate={navigate} onUpdateOrderStatus={updateOrderStatus} onMarkCustomerMessageSent={markOrderCustomerMessageSent} />;
     }
 
     if (route === '#/admin/settings') {
@@ -935,6 +966,7 @@ export function App() {
           categories={activeCategories}
           cartCount={cartCount}
           onOpenCart={() => {
+            setSubmittedOrder(null);
             setDirectItem(null);
             setIsCartOpen(true);
           }}
@@ -943,6 +975,7 @@ export function App() {
           onOrderProduct={orderProduct}
           onOpenProduct={(slug) => navigate(productRoute(slug))}
           onPlaceOrder={placeOrder}
+          isOrderSubmitting={isOrderSubmitting}
         />
       );
     }
@@ -977,7 +1010,7 @@ export function App() {
     }
 
     return <NotFoundPage cartCount={cartCount} onNavigate={navigate} onOpenCart={commonProps.onOpenCart} onOpenSearch={commonProps.onOpenSearch} />;
-  }, [activeCategories, activeProduct, adminProducts, cartCount, categoryId, collectionId, commonProps, effectiveHiddenProductSlugs, isAdminLoggedIn, isKnownMissingProduct, loadingProductSlug, orders, productSlug, remoteProducts, route, searchQuery, settings, storefrontProducts]);
+  }, [activeCategories, activeProduct, adminProducts, cartCount, categoryId, collectionId, commonProps, effectiveHiddenProductSlugs, isAdminLoggedIn, isKnownMissingProduct, isOrderSubmitting, loadingProductSlug, markOrderCustomerMessageSent, orders, productSlug, remoteProducts, route, searchQuery, settings, storefrontProducts]);
 
   return (
     <>
@@ -988,9 +1021,12 @@ export function App() {
         open={isCartOpen}
         cart={cart}
         directItem={directItem}
+        submittedOrder={submittedOrder}
+        submitting={isOrderSubmitting}
         onClose={() => {
           setIsCartOpen(false);
           setDirectItem(null);
+          setSubmittedOrder(null);
         }}
         onQuantityChange={updateQuantity}
         onRemove={removeCartItem}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent, type MouseEvent, type ReactNode } from 'react';
-import { Copy, Grid3X3, Home, MapPin, Menu, MessageCircle, Phone, Search, ShoppingCart, UserRound, X } from 'lucide-react';
+import { CheckCircle2, Copy, Grid3X3, Home, MapPin, Menu, MessageCircle, Phone, Search, ShoppingCart, UserRound, X } from 'lucide-react';
 import {
   categories,
   categoryRoute,
@@ -35,7 +35,7 @@ type StoreActions = {
   onOpenProduct: (slug: string) => void;
   onAddToCart: (item: CartItem) => void;
   onOrderProduct: (item: CartItem) => void;
-  onPlaceOrder: (items: CartItem[], source: string, event: FormEvent<HTMLFormElement>) => void;
+  onPlaceOrder: (items: CartItem[], source: string, event: FormEvent<HTMLFormElement>) => Promise<StoredOrder | null>;
 };
 
 type ListingSort = 'newest' | 'price-asc' | 'price-desc' | 'availability';
@@ -491,6 +491,8 @@ export function CartPopup({
   open,
   cart,
   directItem,
+  submittedOrder,
+  submitting = false,
   onClose,
   onQuantityChange,
   onRemove,
@@ -499,10 +501,12 @@ export function CartPopup({
   open: boolean;
   cart: CartItem[];
   directItem: CartItem | null;
+  submittedOrder?: StoredOrder | null;
+  submitting?: boolean;
   onClose: () => void;
   onQuantityChange: (id: string, variant: string | undefined, quantity: number) => void;
   onRemove: (id: string, variant: string | undefined) => void;
-  onPlaceOrder: (items: CartItem[], source: string, event: FormEvent<HTMLFormElement>) => void;
+  onPlaceOrder: (items: CartItem[], source: string, event: FormEvent<HTMLFormElement>) => Promise<StoredOrder | null>;
 }) {
   const items = directItem ? [directItem] : cart;
   const total = orderTotal(items);
@@ -571,6 +575,38 @@ export function CartPopup({
 
   if (!open) return null;
 
+  if (submittedOrder) {
+    return (
+      <div className="tm-modal-backdrop fixed inset-0 z-[90] flex items-center justify-center bg-[#131921]/72 p-3 text-[#17201b] sm:p-5 lg:justify-end" role="dialog" aria-modal="true" aria-labelledby="tm-order-success-title" dir="rtl" data-cart-dialog onClick={onClose}>
+        <section className="tm-cart-drawer tm-panel flex w-full max-w-[440px] flex-col overflow-hidden" onClick={event => event.stopPropagation()}>
+          <header className="flex items-center justify-between gap-3 border-b border-[var(--tm-border)] px-4 py-3">
+            <div>
+              <h2 id="tm-order-success-title" className="font-heading text-2xl font-black">{'\u062a\u0645 \u0627\u0633\u062a\u0644\u0627\u0645 \u0637\u0644\u0628\u0643'}</h2>
+              <p className="tm-num tm-text-muted mt-1 text-xs font-bold">{submittedOrder.id}</p>
+            </div>
+            <button aria-label="إغلاق السلة" onClick={onClose} className="tm-press tm-icon-button bg-[var(--tm-surface-tint)] text-xl font-black" type="button">×</button>
+          </header>
+          <div className="grid gap-4 p-4">
+            <div className="grid justify-items-center gap-3 text-center">
+              <span className="grid h-14 w-14 place-items-center rounded-full bg-[#e9f6ef] text-[#17623a]">
+                <CheckCircle2 className="h-8 w-8" aria-hidden="true" strokeWidth={2.4} />
+              </span>
+              <p className="tm-copy text-sm font-bold leading-6 text-[#65716a]">
+                {'\u0633\u0646\u0631\u0627\u062c\u0639 \u0627\u0644\u0637\u0644\u0628 \u0648\u0646\u062a\u0648\u0627\u0635\u0644 \u0645\u0639\u0643 \u0639\u0628\u0631 \u0648\u0627\u062a\u0633\u0627\u0628 \u0623\u0648 \u0627\u0644\u0647\u0627\u062a\u0641 \u0644\u062a\u0623\u0643\u064a\u062f \u0627\u0644\u062a\u0641\u0627\u0635\u064a\u0644 \u0642\u0628\u0644 \u0627\u0644\u062a\u0648\u0635\u064a\u0644.'}
+              </p>
+            </div>
+            <div className="grid gap-2 rounded-md border border-[#dfe5df] bg-[#fbfaf6] p-3 text-sm font-bold">
+              <div className="flex justify-between gap-3"><span>{'\u0631\u0642\u0645 \u0627\u0644\u0637\u0644\u0628'}</span><span className="tm-admin-num">{submittedOrder.id}</span></div>
+              <div className="flex justify-between gap-3"><span>{'\u0627\u0644\u0645\u062c\u0645\u0648\u0639'}</span><span className="tm-admin-num text-[#b45309]">{submittedOrder.total.toLocaleString('fr-MA')} {'\u062f\u0631\u0647\u0645'}</span></div>
+              <div className="flex justify-between gap-3"><span>{'\u0627\u0644\u062f\u0641\u0639'}</span><span>{'\u0639\u0646\u062f \u0627\u0644\u0627\u0633\u062a\u0644\u0627\u0645'}</span></div>
+            </div>
+            <button onClick={onClose} className="tm-press tm-button-dark min-h-[48px] px-5 text-sm" type="button">{'\u0645\u062a\u0627\u0628\u0639\u0629 \u0627\u0644\u062a\u0633\u0648\u0642'}</button>
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="tm-modal-backdrop fixed inset-0 z-[90] flex items-center justify-center bg-[#131921]/72 p-3 text-[#17201b] sm:p-5 lg:justify-end" role="dialog" aria-modal="true" aria-labelledby="tm-cart-title" aria-describedby={items.length > 0 ? 'tm-cart-summary' : 'tm-cart-empty'} dir="rtl" data-cart-dialog onClick={onClose}>
       <section className={`tm-cart-drawer tm-panel flex w-full max-w-[440px] flex-col overflow-hidden ${items.length > 0 ? 'h-[calc(100vh-24px)] max-h-[820px]' : 'max-h-[calc(100vh-24px)]'}`} onClick={event => event.stopPropagation()}>
@@ -621,7 +657,7 @@ export function CartPopup({
           {items.length > 0 ? <form id="tm-cart-order-form" className="tm-panel-white mt-4 grid scroll-mt-24 gap-3 p-3" onSubmit={event => onPlaceOrder(items, directItem ? 'direct-product' : 'cart', event)}>
             <div>
               <h2 className="tm-heading font-heading text-xl font-black">معلومات العميل</h2>
-              <p id="tm-cart-form-help" className="tm-field-help">اكتب بيانات واضحة حتى نؤكد الطلب عبر واتساب قبل التوصيل.</p>
+              <p id="tm-cart-form-help" className="tm-field-help">{'\u0627\u0643\u062a\u0628 \u0628\u064a\u0627\u0646\u0627\u062a \u0648\u0627\u0636\u062d\u0629 \u062d\u062a\u0649 \u0646\u0624\u0643\u062f \u0627\u0644\u0637\u0644\u0628 \u0645\u0639\u0643 \u0639\u0628\u0631 \u0648\u0627\u062a\u0633\u0627\u0628 \u0623\u0648 \u0627\u0644\u0647\u0627\u062a\u0641 \u0642\u0628\u0644 \u0627\u0644\u062a\u0648\u0635\u064a\u0644.'}</p>
             </div>
             <label className="grid gap-1" htmlFor="tm-cart-name">
               <span className="tm-field-label">الاسم الكامل *</span>
@@ -645,9 +681,11 @@ export function CartPopup({
         {items.length > 0 ? <footer className="border-t border-[var(--tm-border)] bg-[var(--tm-surface-white)] p-3 sm:p-4" style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
           <div id="tm-cart-summary" className="mb-3 grid gap-1 text-sm font-bold">
             <div className="flex justify-between"><span>المجموع</span><span className="tm-num tm-price-text font-heading text-lg font-black">{total} {'\u062f\u0631\u0647\u0645'}</span></div>
-            <p className="tm-copy tm-text-muted text-xs leading-5">لا يوجد دفع مسبق. نؤكد تفاصيل الطلب معك قبل الإرسال.</p>
+            <p className="tm-copy tm-text-muted text-xs leading-5">{'\u0644\u0627 \u064a\u0648\u062c\u062f \u062f\u0641\u0639 \u0645\u0633\u0628\u0642. \u0646\u0624\u0643\u062f \u062a\u0641\u0627\u0635\u064a\u0644 \u0627\u0644\u0637\u0644\u0628 \u0645\u0639\u0643 \u0642\u0628\u0644 \u0627\u0644\u062a\u0648\u0635\u064a\u0644.'}</p>
           </div>
-          <button form="tm-cart-order-form" disabled={items.length === 0} className="tm-press tm-button-primary min-h-[52px] w-full px-5 text-base" type="submit">إرسال الطلب عبر واتساب</button>
+          <button form="tm-cart-order-form" disabled={items.length === 0 || submitting} className="tm-press tm-button-primary min-h-[52px] w-full px-5 text-base disabled:cursor-not-allowed disabled:opacity-60" type="submit">
+            {submitting ? '\u062c\u0627\u0631\u064a \u0625\u0631\u0633\u0627\u0644 \u0627\u0644\u0637\u0644\u0628...' : '\u062a\u0623\u0643\u064a\u062f \u0627\u0644\u0637\u0644\u0628'}
+          </button>
           <button onClick={onClose} className="tm-press tm-button-secondary mt-2 w-full px-5 text-sm" type="button">متابعة التسوق</button>
         </footer> : null}
       </section>
@@ -697,6 +735,7 @@ type OrderSort = 'newest' | 'oldest' | 'total-high' | 'total-low';
 type OrderActionProps = {
   onNavigate: (route: string) => void;
   onUpdateOrderStatus: (orderId: string, status: OrderStatus) => void;
+  onMarkCustomerMessageSent: (orderId: string, status: OrderStatus) => void;
 };
 
 const orderStatusMeta: Record<OrderStatus, { label: string; tone: string }> = {
@@ -723,9 +762,6 @@ const orderFilters: Array<{ value: OrderFilter; label: string }> = [
   { value: 'delivery', label: 'في التوصيل' },
   { value: 'done', label: 'مكتملة' },
 ];
-
-const orderWhatsappSentKey = 'tanjamall.admin.orderWhatsappStatusSent.v1';
-const orderWhatsappSentEvent = 'tanjamall-admin-order-whatsapp-sent';
 
 function orderDate(order: StoredOrder) {
   return new Intl.DateTimeFormat('ar-MA', {
@@ -800,41 +836,11 @@ function buildCustomerWhatsappUrl(order: StoredOrder, settings: StoreSettings) {
   return `https://wa.me/${phone}?text=${encodeURIComponent(customerWhatsappMessage(order, settings))}`;
 }
 
-function readOrderWhatsappSentMap() {
-  try {
-    return JSON.parse(localStorage.getItem(orderWhatsappSentKey) || '{}') as Record<string, OrderStatus>;
-  } catch {
-    return {};
-  }
-}
-
-function writeOrderWhatsappSentStatus(orderId: string, status: OrderStatus) {
-  const next = { ...readOrderWhatsappSentMap(), [orderId]: status };
-  localStorage.setItem(orderWhatsappSentKey, JSON.stringify(next));
-  window.dispatchEvent(new CustomEvent(orderWhatsappSentEvent, { detail: { orderId, status } }));
-}
-
 function useOrderWhatsappSent(order: StoredOrder) {
-  const [sentStatus, setSentStatus] = useState<OrderStatus | undefined>(() => readOrderWhatsappSentMap()[order.id]);
-
-  useEffect(() => {
-    setSentStatus(readOrderWhatsappSentMap()[order.id]);
-
-    const onSent = (event: Event) => {
-      const detail = (event as CustomEvent<{ orderId: string; status: OrderStatus }>).detail;
-      if (detail?.orderId === order.id) setSentStatus(detail.status);
-    };
-
-    window.addEventListener(orderWhatsappSentEvent, onSent);
-    return () => window.removeEventListener(orderWhatsappSentEvent, onSent);
-  }, [order.id, order.status]);
+  const sentStatus = order.customerMessageStatus;
 
   return {
     isSentForCurrentStatus: sentStatus === order.status,
-    markSent: () => {
-      writeOrderWhatsappSentStatus(order.id, order.status);
-      setSentStatus(order.status);
-    },
   };
 }
 
@@ -868,12 +874,12 @@ function OrderStatusSelect({ order, onUpdateOrderStatus, compact = false }: {
   );
 }
 
-function OrderQuickActions({ order, settings, onNavigate, onUpdateOrderStatus, compact = false }: {
+function OrderQuickActions({ order, settings, onUpdateOrderStatus, onMarkCustomerMessageSent, compact = false }: {
   order: StoredOrder;
   settings: StoreSettings;
   compact?: boolean;
 } & OrderActionProps) {
-  const { isSentForCurrentStatus, markSent } = useOrderWhatsappSent(order);
+  const { isSentForCurrentStatus } = useOrderWhatsappSent(order);
   const buttonBase = compact
     ? 'tm-admin-press grid min-h-[42px] place-items-center rounded-md px-3 text-xs font-black'
     : 'tm-admin-press inline-flex min-h-[40px] items-center justify-center gap-2 rounded-md px-3 text-xs font-black';
@@ -882,6 +888,7 @@ function OrderQuickActions({ order, settings, onNavigate, onUpdateOrderStatus, c
     ? 'border-[#a8d7bd] bg-[#e9f6ef] text-[#17623a]'
     : 'border-[#ff9900] bg-[#fff3df] text-[#9a5a00] shadow-[0_14px_30px_-24px_rgba(255,153,0,0.95)]';
   const whatsappLabel = isSentForCurrentStatus ? 'واتساب مرسل' : 'إرسال واتساب';
+  const markSentStatus = order.status === 'new' ? 'whatsapp' : order.status;
 
   return (
     <div className={`grid min-w-0 gap-2 ${compact ? 'grid-cols-[1fr_1fr_minmax(112px,1.15fr)]' : 'grid-cols-2 sm:grid-cols-[repeat(2,max-content)_minmax(154px,1fr)]'}`} onClick={stopAction}>
@@ -889,7 +896,7 @@ function OrderQuickActions({ order, settings, onNavigate, onUpdateOrderStatus, c
         <Phone className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
         {!compact ? 'اتصال' : null}
       </a>
-      <a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={markSent} className={`${buttonBase} border ${whatsappStateClass}`} aria-label={`${whatsappLabel} إلى ${order.name}`} title={whatsappLabel}>
+      <a href={whatsappUrl} target="_blank" rel="noreferrer" onClick={() => onMarkCustomerMessageSent(order.id, markSentStatus)} className={`${buttonBase} border ${whatsappStateClass}`} aria-label={`${whatsappLabel} إلى ${order.name}`} title={whatsappLabel}>
         <MessageCircle className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
         {!compact ? whatsappLabel : null}
       </a>
@@ -911,6 +918,7 @@ export function AdminOrdersPage({
   settings,
   onNavigate,
   onUpdateOrderStatus,
+  onMarkCustomerMessageSent,
 }: {
   orders: StoredOrder[];
   settings: StoreSettings;
@@ -1004,7 +1012,7 @@ export function AdminOrdersPage({
                 </div>
               </button>
               <div className="mt-2">
-                <OrderQuickActions order={order} settings={settings} onNavigate={onNavigate} onUpdateOrderStatus={onUpdateOrderStatus} compact />
+                <OrderQuickActions order={order} settings={settings} onNavigate={onNavigate} onUpdateOrderStatus={onUpdateOrderStatus} onMarkCustomerMessageSent={onMarkCustomerMessageSent} compact />
               </div>
             </article>
           ))}
@@ -1044,7 +1052,7 @@ export function AdminOrdersPage({
                   </td>
                   <td className="tm-admin-num px-4 py-3 font-heading text-lg font-black text-[#b45309]">{order.total.toLocaleString('fr-MA')} درهم</td>
                   <td className="px-4 py-3">
-                    <OrderQuickActions order={order} settings={settings} onNavigate={onNavigate} onUpdateOrderStatus={onUpdateOrderStatus} />
+                    <OrderQuickActions order={order} settings={settings} onNavigate={onNavigate} onUpdateOrderStatus={onUpdateOrderStatus} onMarkCustomerMessageSent={onMarkCustomerMessageSent} />
                   </td>
                 </tr>
               ))}
@@ -1068,6 +1076,7 @@ export function AdminOrderDetailPage({
   settings,
   onNavigate,
   onUpdateOrderStatus,
+  onMarkCustomerMessageSent,
 }: {
   order?: StoredOrder;
   settings: StoreSettings;
@@ -1095,7 +1104,7 @@ export function AdminOrderDetailPage({
               </div>
             </div>
             <div className="mt-4 grid min-w-0 gap-2 sm:flex sm:flex-wrap">
-              <OrderQuickActions order={order} settings={settings} onNavigate={onNavigate} onUpdateOrderStatus={onUpdateOrderStatus} />
+              <OrderQuickActions order={order} settings={settings} onNavigate={onNavigate} onUpdateOrderStatus={onUpdateOrderStatus} onMarkCustomerMessageSent={onMarkCustomerMessageSent} />
               <button type="button" onClick={() => navigator.clipboard?.writeText(`${order.name}\n${order.phone}\n${order.address}`).catch(() => undefined)} className="tm-admin-press inline-flex min-h-[40px] min-w-0 items-center justify-center gap-2 rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">
                 <Copy className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
                 نسخ بيانات العميل
@@ -1142,7 +1151,7 @@ export function AdminOrderDetailPage({
             ) : null}
           </div>
           <div className="mt-5 min-w-0 border-t border-[#dfe5df] pt-4">
-            <OrderQuickActions order={order} settings={settings} onNavigate={onNavigate} onUpdateOrderStatus={onUpdateOrderStatus} />
+            <OrderQuickActions order={order} settings={settings} onNavigate={onNavigate} onUpdateOrderStatus={onUpdateOrderStatus} onMarkCustomerMessageSent={onMarkCustomerMessageSent} />
           </div>
         </aside>
       </section>
@@ -1156,6 +1165,7 @@ export function AdminCustomerDetailPage({
   settings,
   onNavigate,
   onUpdateOrderStatus,
+  onMarkCustomerMessageSent,
 }: {
   phone: string;
   orders: StoredOrder[];
@@ -1187,7 +1197,7 @@ export function AdminCustomerDetailPage({
             </div>
           </div>
         </article>
-        <AdminOrdersPageContent orders={customerOrders} settings={settings} onNavigate={onNavigate} onUpdateOrderStatus={onUpdateOrderStatus} />
+        <AdminOrdersPageContent orders={customerOrders} settings={settings} onNavigate={onNavigate} onUpdateOrderStatus={onUpdateOrderStatus} onMarkCustomerMessageSent={onMarkCustomerMessageSent} />
       </section>
     </AdminShell>
   );
@@ -1447,6 +1457,7 @@ function AdminOrdersPageContent({
   settings,
   onNavigate,
   onUpdateOrderStatus,
+  onMarkCustomerMessageSent,
 }: {
   orders: StoredOrder[];
   settings: StoreSettings;
@@ -1463,7 +1474,7 @@ function AdminOrdersPageContent({
             <p className="mt-2 text-sm font-bold text-[#65716a]">{orderItemsSummary(order)}</p>
             <p className="tm-admin-num mt-1 text-sm font-black text-[#b45309]">{order.total.toLocaleString('fr-MA')} درهم · {orderDate(order)}</p>
           </button>
-          <OrderQuickActions order={order} settings={settings} onNavigate={onNavigate} onUpdateOrderStatus={onUpdateOrderStatus} compact />
+          <OrderQuickActions order={order} settings={settings} onNavigate={onNavigate} onUpdateOrderStatus={onUpdateOrderStatus} onMarkCustomerMessageSent={onMarkCustomerMessageSent} compact />
         </article>
       ))}
       {!orders.length ? <EmptyAdmin title="لا توجد طلبات لهذا العميل" copy="سيظهر سجل العميل هنا بعد أول طلب." /> : null}
@@ -1495,7 +1506,7 @@ const infoPages: Record<string, { eyebrow: string; title: string; copy?: string;
     title: 'شراء سريع، تأكيد إنساني، ودفع عند الباب.',
     copy: 'TanjaMall يجمع منتجات عملية للبيت، الهاتف، السفر، والجمال في تجربة طلب واضحة.',
     blocks: [
-      { title: 'الفكرة', text: 'اختيار المنتج، إرسال الطلب عبر واتساب، ثم الدفع عند الاستلام.' },
+      { title: '\u0627\u0644\u0641\u0643\u0631\u0629', text: '\u0627\u062e\u062a\u064a\u0627\u0631 \u0627\u0644\u0645\u0646\u062a\u062c\u060c \u0625\u0631\u0633\u0627\u0644 \u0627\u0644\u0637\u0644\u0628 \u0645\u0646 \u0627\u0644\u0645\u0648\u0642\u0639\u060c \u062b\u0645 \u0646\u0624\u0643\u062f\u0647 \u0645\u0639\u0643 \u0639\u0628\u0631 \u0648\u0627\u062a\u0633\u0627\u0628 \u0623\u0648 \u0627\u0644\u0647\u0627\u062a\u0641 \u0642\u0628\u0644 \u0627\u0644\u062a\u0648\u0635\u064a\u0644 \u0648\u0627\u0644\u062f\u0641\u0639 \u0639\u0646\u062f \u0627\u0644\u0627\u0633\u062a\u0644\u0627\u0645.' },
       { title: 'المدينة', text: 'نخدم {city} بمنتجات مختارة ومسار طلب بسيط.' },
     ],
   },
@@ -1546,7 +1557,7 @@ const infoPages: Record<string, { eyebrow: string; title: string; copy?: string;
     eyebrow: 'الشروط',
     title: 'شروط الاستخدام',
     blocks: [
-      { title: 'قبول الطلب', text: 'إرسال الطلب عبر واتساب لا يعني أنه مؤكد مباشرة. يتم التأكيد بعد مراجعة المنتج والعنوان.' },
+      { title: '\u0642\u0628\u0648\u0644 \u0627\u0644\u0637\u0644\u0628', text: '\u0625\u0631\u0633\u0627\u0644 \u0627\u0644\u0637\u0644\u0628 \u0645\u0646 \u0627\u0644\u0645\u0648\u0642\u0639 \u0644\u0627 \u064a\u0639\u0646\u064a \u0623\u0646\u0647 \u0645\u0624\u0643\u062f \u0645\u0628\u0627\u0634\u0631\u0629. \u064a\u062a\u0645 \u0627\u0644\u062a\u0623\u0643\u064a\u062f \u0628\u0639\u062f \u0645\u0631\u0627\u062c\u0639\u0629 \u0627\u0644\u0645\u0646\u062a\u062c \u0648\u0627\u0644\u0639\u0646\u0648\u0627\u0646.' },
       { title: 'الأسعار والتوفر', text: 'يتم تأكيد السعر النهائي والتوفر في محادثة واتساب قبل الإرسال.' },
     ],
   },

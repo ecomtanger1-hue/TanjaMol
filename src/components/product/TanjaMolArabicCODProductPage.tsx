@@ -53,7 +53,8 @@ type ProductPageProps = {
   onAddToCart: (item: CartItem) => void;
   onOrderProduct?: (item: CartItem) => void;
   onOpenProduct?: (slug: string) => void;
-  onPlaceOrder: (draft: OrderDraft) => void;
+  onPlaceOrder: (draft: OrderDraft) => Promise<unknown>;
+  isOrderSubmitting?: boolean;
   product?: Product;
   products?: Product[];
   categories: Category[];
@@ -67,6 +68,7 @@ export const TanjaMolArabicCODProductPage = ({
   onOrderProduct,
   onOpenProduct,
   onPlaceOrder,
+  isOrderSubmitting = false,
   product,
   products = [],
   categories,
@@ -282,7 +284,7 @@ export const TanjaMolArabicCODProductPage = ({
 
   const submitOrder = (event: FormEvent<HTMLFormElement>) => {
     const draft = parseOrderForm(event, 'product-page', [orderItem]);
-    if (draft) onPlaceOrder(draft);
+    if (draft) void onPlaceOrder(draft);
   };
   const addProduct = () => {
     if (isResolvedSoldOut) return;
@@ -307,7 +309,7 @@ export const TanjaMolArabicCODProductPage = ({
   };
 
   const handleOrderNow = () => {
-    if (isResolvedSoldOut) return;
+    if (isResolvedSoldOut || isOrderSubmitting) return;
     if (!showOrderForm) {
       scrollToOrder();
       return;
@@ -447,8 +449,8 @@ export const TanjaMolArabicCODProductPage = ({
               </div>
 
               <div className="mt-4 grid gap-2">
-                <button className="tm-press tm-order-cta tm-button-primary px-5 text-base disabled:cursor-not-allowed disabled:opacity-55" type="button" disabled={isResolvedSoldOut} onClick={handleOrderNow}>
-                  اطلب الآن
+                <button className="tm-press tm-order-cta tm-button-primary px-5 text-base disabled:cursor-not-allowed disabled:opacity-55" type="button" disabled={isResolvedSoldOut || isOrderSubmitting} onClick={handleOrderNow}>
+                  {isOrderSubmitting ? '\u062c\u0627\u0631\u064a \u0627\u0644\u0625\u0631\u0633\u0627\u0644' : '\u0627\u0637\u0644\u0628 \u0627\u0644\u0622\u0646'}
                 </button>
                 <button className={`tm-press tm-secondary-label relative overflow-hidden px-5 text-sm disabled:cursor-not-allowed disabled:opacity-55 ${added ? 'tm-add-button-added tm-button-dark' : 'tm-button-secondary'}`} type="button" disabled={isResolvedSoldOut} onClick={addProduct} aria-live="polite" aria-label={added ? `تمت إضافة ${productTitle} للسلة` : `أضف ${productTitle} للسلة`}>
                   <span className="relative z-10 inline-flex items-center justify-center gap-2">
@@ -480,11 +482,13 @@ export const TanjaMolArabicCODProductPage = ({
                     <span className="tm-field-label">الحي أو العنوان داخل طنجة *</span>
                     <input id="product-order-address" required name="address" className="tm-field" autoComplete="address-line1" enterKeyHint="send" />
                   </label>
-                  <button className="tm-press tm-button-primary min-h-[52px] px-5 text-base" type="submit">إرسال الطلب عبر واتساب</button>
+                  <button className="tm-press tm-button-primary min-h-[52px] px-5 text-base disabled:cursor-not-allowed disabled:opacity-60" type="submit" disabled={isOrderSubmitting}>
+                    {isOrderSubmitting ? '\u062c\u0627\u0631\u064a \u0625\u0631\u0633\u0627\u0644 \u0627\u0644\u0637\u0644\u0628...' : '\u062a\u0623\u0643\u064a\u062f \u0627\u0644\u0637\u0644\u0628'}
+                  </button>
                 </form>
               ) : (
                 <div className="tm-body-copy tm-panel-white mt-3 px-3 py-2.5 text-sm leading-7 text-[var(--tm-ink-soft)]">
-                  {hasRealVariants ? 'اختر الخيارات المناسبة، ثم أرسل طلبك عبر واتساب.' : 'أرسل طلبك عبر واتساب، وسنؤكد التفاصيل قبل التوصيل.'}
+                  {hasRealVariants ? '\u0627\u062e\u062a\u0631 \u0627\u0644\u062e\u064a\u0627\u0631\u0627\u062a \u0627\u0644\u0645\u0646\u0627\u0633\u0628\u0629\u060c \u062b\u0645 \u0623\u0631\u0633\u0644 \u0637\u0644\u0628\u0643 \u0645\u0646 \u0627\u0644\u0645\u0648\u0642\u0639.' : '\u0623\u0631\u0633\u0644 \u0637\u0644\u0628\u0643 \u0645\u0646 \u0627\u0644\u0645\u0648\u0642\u0639\u060c \u0648\u0633\u0646\u0624\u0643\u062f \u0627\u0644\u062a\u0641\u0627\u0635\u064a\u0644 \u0645\u0639\u0643 \u0642\u0628\u0644 \u0627\u0644\u062a\u0648\u0635\u064a\u0644.'}
                 </div>
               )}
 
@@ -607,8 +611,8 @@ export const TanjaMolArabicCODProductPage = ({
             <p className="tm-num font-heading text-xl font-black text-[#b45309]">{resolvedVariantPriceLabel}</p>
             <p className="truncate text-[11px] font-extrabold text-[#68736c]">{'\u0627\u0644\u062f\u0641\u0639 \u0639\u0646\u062f \u0627\u0644\u0627\u0633\u062a\u0644\u0627\u0645'}</p>
           </div>
-          <button className="tm-press tm-order-cta min-h-[52px] min-w-[138px] overflow-hidden rounded-md bg-[#ff9900] px-5 text-sm font-black text-[#131921] shadow-[0_16px_34px_-18px_rgba(255,153,0,0.95)] disabled:cursor-not-allowed disabled:opacity-60" type="button" disabled={isResolvedSoldOut} onClick={handleOrderNow}>
-            اطلب الآن
+          <button className="tm-press tm-order-cta min-h-[52px] min-w-[138px] overflow-hidden rounded-md bg-[#ff9900] px-5 text-sm font-black text-[#131921] shadow-[0_16px_34px_-18px_rgba(255,153,0,0.95)] disabled:cursor-not-allowed disabled:opacity-60" type="button" disabled={isResolvedSoldOut || isOrderSubmitting} onClick={handleOrderNow}>
+            {isOrderSubmitting ? '\u062c\u0627\u0631\u064a \u0627\u0644\u0625\u0631\u0633\u0627\u0644' : '\u0627\u0637\u0644\u0628 \u0627\u0644\u0622\u0646'}
           </button>
         </div>
       </div>

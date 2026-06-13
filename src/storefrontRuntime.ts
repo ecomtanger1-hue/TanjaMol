@@ -108,6 +108,8 @@ export type StoredOrder = OrderDraft & {
   id: string;
   createdAt: string;
   status: 'new' | 'whatsapp' | 'confirmed' | 'delivery' | 'done';
+  customerMessageStatus?: 'new' | 'whatsapp' | 'confirmed' | 'delivery' | 'done';
+  customerMessageSentAt?: string;
   total: number;
 };
 
