@@ -866,7 +866,7 @@ function OrderStatusSelect({ order, onUpdateOrderStatus, compact = false }: {
         onClick={stopAction}
         onChange={event => onUpdateOrderStatus(order.id, event.target.value as OrderStatus)}
         aria-label={`تغيير حالة الطلب ${order.id}`}
-        className={`min-h-[42px] w-full rounded-md border border-[#cfd8d1] bg-[#fbfaf6] text-xs font-black text-[#17201b] outline-none focus:border-[#b45309] ${compact ? 'px-1 text-center text-[11px]' : 'px-2'}`}
+        className={`min-h-[44px] w-full rounded-md border border-[#cfd8d1] bg-[#fbfaf6] text-xs font-black text-[#17201b] outline-none focus:border-[#b45309] focus-visible:ring-2 focus-visible:ring-[#ff9900]/30 ${compact ? 'px-1 text-center text-[11px]' : 'px-2'}`}
       >
         {orderStatusOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
       </select>
@@ -881,8 +881,8 @@ function OrderQuickActions({ order, settings, onUpdateOrderStatus, onMarkCustome
 } & OrderActionProps) {
   const { isSentForCurrentStatus } = useOrderWhatsappSent(order);
   const buttonBase = compact
-    ? 'tm-admin-press grid min-h-[42px] place-items-center rounded-md px-3 text-xs font-black'
-    : 'tm-admin-press inline-flex min-h-[40px] items-center justify-center gap-2 rounded-md px-3 text-xs font-black';
+    ? 'tm-admin-press grid min-h-[44px] place-items-center rounded-md px-3 text-xs font-black'
+    : 'tm-admin-press inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md px-3 text-xs font-black';
   const whatsappUrl = buildCustomerWhatsappUrl(order, settings);
   const whatsappStateClass = isSentForCurrentStatus
     ? 'border-[#a8d7bd] bg-[#e9f6ef] text-[#17623a]'
@@ -949,7 +949,7 @@ export function AdminOrdersPage({
       eyebrow="إدارة الطلبات"
       onNavigate={onNavigate}
       actions={
-        <button type="button" onClick={() => onNavigate('#/')} className="tm-admin-press hidden min-h-[38px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black sm:inline-flex">
+        <button type="button" onClick={() => onNavigate('#/')} className="tm-admin-press hidden min-h-[44px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black sm:inline-flex">
           فتح المتجر
         </button>
       }
@@ -970,14 +970,14 @@ export function AdminOrdersPage({
 
       <section className="tm-admin-surface overflow-hidden rounded-md bg-white">
         <div className="grid grid-cols-[44px_minmax(0,1fr)_minmax(0,1fr)] gap-2 border-b border-[#dfe5df] p-3 sm:grid-cols-[minmax(280px,1fr)_190px_190px] sm:gap-3 sm:p-4">
-          <label className="relative block w-11 min-w-0 focus-within:col-span-3 focus-within:w-full sm:w-auto sm:focus-within:col-span-1">
-            <Search className="pointer-events-none absolute right-1/2 top-1/2 h-4 w-4 translate-x-1/2 -translate-y-1/2 text-[#65716a] sm:right-3 sm:translate-x-0" aria-hidden="true" strokeWidth={2.35} />
+          <label className="relative block w-11 min-w-0 rounded-md focus-within:col-span-3 focus-within:w-full sm:w-auto sm:focus-within:col-span-1">
+            <Search className="pointer-events-none absolute right-1/2 top-1/2 h-4 w-4 translate-x-1/2 -translate-y-1/2 text-[#65716a] transition-colors focus-within:text-[#b45309] sm:right-3 sm:translate-x-0" aria-hidden="true" strokeWidth={2.35} />
             <input
               value={query}
               onChange={event => setQuery(event.target.value)}
               placeholder=""
-              aria-label={'\u0628\u062d\u062b'}
-              className="min-h-[44px] w-full rounded-md border border-[#cfd8d1] bg-[#fbfaf6] pr-10 pl-2 text-sm font-bold text-transparent outline-none focus:border-[#b45309] focus:text-[#17201b] sm:pr-9 sm:pl-3 sm:text-[#17201b]"
+              aria-label={'\u0628\u062d\u062b \u0641\u064a \u0627\u0644\u0637\u0644\u0628\u0627\u062a'}
+              className="min-h-[44px] w-full rounded-md border border-[#cfd8d1] bg-[#fbfaf6] pr-10 pl-2 text-sm font-bold text-transparent outline-none transition-colors focus:border-[#b45309] focus:text-[#17201b] focus-visible:ring-2 focus-visible:ring-[#ff9900]/30 sm:pr-9 sm:pl-3 sm:text-[#17201b]"
               type="search"
             />
           </label>
@@ -1106,7 +1106,7 @@ export function AdminOrderDetailPage({
             </div>
             <div className="mt-4 grid min-w-0 gap-2 sm:flex sm:flex-wrap">
               <OrderQuickActions order={order} settings={settings} onNavigate={onNavigate} onUpdateOrderStatus={onUpdateOrderStatus} onMarkCustomerMessageSent={onMarkCustomerMessageSent} />
-              <button type="button" onClick={() => navigator.clipboard?.writeText(`${order.name}\n${order.phone}\n${order.address}`).catch(() => undefined)} className="tm-admin-press inline-flex min-h-[40px] min-w-0 items-center justify-center gap-2 rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">
+              <button type="button" onClick={() => navigator.clipboard?.writeText(`${order.name}\n${order.phone}\n${order.address}`).catch(() => undefined)} className="tm-admin-press inline-flex min-h-[44px] min-w-0 items-center justify-center gap-2 rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">
                 <Copy className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
                 نسخ بيانات العميل
               </button>
@@ -1304,7 +1304,7 @@ export function AdminSettingsPage({
         <section className="grid min-w-0 gap-3 rounded-md border border-[#dfe5df] bg-[#fbfaf6] p-2.5 sm:p-3">
           <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
             <p className="text-sm font-black text-[#17201b]">إدارة الأقسام</p>
-            <button type="button" onClick={addCategory} className="tm-press min-h-[36px] rounded-md bg-[#ff9900] px-3 text-xs font-black text-[#131921]">إضافة قسم</button>
+            <button type="button" onClick={addCategory} className="tm-press min-h-[44px] rounded-md bg-[#ff9900] px-3 text-xs font-black text-[#131921]">إضافة قسم</button>
           </div>
           <div className="grid min-w-0 gap-3">
             {managedCategories.map((category, index) => (
@@ -1423,7 +1423,7 @@ function AdminShell({
                 <h1 className="truncate font-heading text-lg font-black sm:text-3xl">{title}</h1>
               </div>
               {actions ? <div className="flex min-w-0 shrink-0 items-center justify-end gap-2">{actions}</div> : (
-                <button type="button" onClick={() => onNavigate('#/')} className="tm-admin-press min-h-[42px] rounded-md border border-[#cfd8d1] bg-white px-4 text-sm font-extrabold">{'\u0641\u062a\u062d \u0627\u0644\u0645\u062a\u062c\u0631'}</button>
+                <button type="button" onClick={() => onNavigate('#/')} className="tm-admin-press min-h-[44px] rounded-md border border-[#cfd8d1] bg-white px-4 text-sm font-extrabold">{'\u0641\u062a\u062d \u0627\u0644\u0645\u062a\u062c\u0631'}</button>
               )}
             </div>
           </header>

@@ -115,10 +115,10 @@ export const TanjaMallAdminProductDashboard = ({
       onNavigate={navigateToRoute}
       actions={
         <>
-          <button type="button" onClick={onOpenStorefront} className="tm-admin-press hidden min-h-[38px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black sm:inline-flex">
+          <button type="button" onClick={onOpenStorefront} className="tm-admin-press hidden min-h-[44px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black sm:inline-flex">
             فتح المتجر
           </button>
-          <button type="button" onClick={onAddProduct} className="tm-admin-press inline-flex min-h-[38px] items-center gap-2 rounded-md bg-[#ff9900] px-3 text-xs font-black text-[#131921]">
+          <button type="button" onClick={onAddProduct} className="tm-admin-press inline-flex min-h-[44px] items-center gap-2 rounded-md bg-[#ff9900] px-3 text-xs font-black text-[#131921]">
             <PackagePlus className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
             إضافة منتج
           </button>
@@ -150,7 +150,7 @@ export const TanjaMallAdminProductDashboard = ({
         <article className="tm-admin-surface rounded-md bg-white">
           <div className="flex items-center justify-between gap-3 border-b border-[#dfe5df] p-4">
             <h2 className="font-heading text-lg font-black">منتجات تحتاج مراجعة</h2>
-            <button type="button" onClick={onOpenProducts} className="tm-admin-press min-h-[34px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">كل المنتجات</button>
+            <button type="button" onClick={onOpenProducts} className="tm-admin-press min-h-[44px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">كل المنتجات</button>
           </div>
           <div className="grid divide-y divide-[#e4e9e4]">
             {attentionProducts.map(({ product, issues }) => (
@@ -202,7 +202,7 @@ export const TanjaMallAdminProductDashboard = ({
         <article className="tm-admin-surface overflow-hidden rounded-md bg-white">
           <div className="flex items-center justify-between gap-3 border-b border-[#dfe5df] p-4">
             <h2 className="font-heading text-lg font-black">آخر الطلبات</h2>
-            <button type="button" onClick={onOpenOrders} className="tm-admin-press min-h-[34px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">فتح الطلبات</button>
+            <button type="button" onClick={onOpenOrders} className="tm-admin-press min-h-[44px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">فتح الطلبات</button>
           </div>
           <div className="grid gap-2 p-3 md:hidden">
             {recentOrders.map(order => (
@@ -256,7 +256,7 @@ export const TanjaMallAdminProductDashboard = ({
         <article className="tm-admin-surface rounded-md bg-white p-4">
           <div className="flex items-center justify-between gap-3">
             <h2 className="font-heading text-lg font-black">أفضل المنتجات</h2>
-            <button type="button" onClick={onOpenProducts} className="tm-admin-press min-h-[34px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">إدارة</button>
+            <button type="button" onClick={onOpenProducts} className="tm-admin-press min-h-[44px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">إدارة</button>
           </div>
           <div className="mt-3 grid gap-2">
             {topProducts.map(product => {

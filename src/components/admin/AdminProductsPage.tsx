@@ -136,15 +136,15 @@ export function AdminProductsPage({
       onNavigate={onNavigate}
       actions={
         <>
-          <button type="button" onClick={() => onNavigate('#/')} className="tm-admin-press hidden min-h-[38px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black sm:inline-flex">
+          <button type="button" onClick={() => onNavigate('#/')} className="tm-admin-press hidden min-h-[44px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black sm:inline-flex">
             فتح المتجر
           </button>
           {onSyncProducts ? (
-            <button type="button" onClick={onSyncProducts} className="tm-admin-press hidden min-h-[38px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black sm:inline-flex">
+            <button type="button" onClick={onSyncProducts} className="tm-admin-press hidden min-h-[44px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black sm:inline-flex">
               مزامنة
             </button>
           ) : null}
-          <button type="button" onClick={() => onNavigate('#/admin/products/new')} className="tm-admin-press inline-flex min-h-[38px] items-center gap-2 rounded-md bg-[#ff9900] px-3 text-xs font-black text-[#131921]">
+          <button type="button" onClick={() => onNavigate('#/admin/products/new')} className="tm-admin-press inline-flex min-h-[44px] items-center gap-2 rounded-md bg-[#ff9900] px-3 text-xs font-black text-[#131921]">
             <PackagePlus className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
             إضافة منتج
           </button>
@@ -167,17 +167,17 @@ export function AdminProductsPage({
 
       <section className="tm-admin-surface overflow-hidden rounded-md bg-white">
         <div className="grid grid-cols-[44px_minmax(0,1fr)_minmax(0,1fr)] gap-2 border-b border-[#dfe5df] p-3 sm:grid-cols-[minmax(280px,1fr)_210px_210px] sm:gap-3 sm:p-4">
-          <label className="relative block w-11 min-w-0 focus-within:col-span-3 focus-within:w-full sm:w-auto sm:focus-within:col-span-1">
-            <Search className="pointer-events-none absolute right-1/2 top-1/2 h-4 w-4 translate-x-1/2 -translate-y-1/2 text-[#65716a] sm:right-3 sm:translate-x-0" aria-hidden="true" strokeWidth={2.35} />
+          <label className="relative block w-11 min-w-0 rounded-md focus-within:col-span-3 focus-within:w-full sm:w-auto sm:focus-within:col-span-1">
+            <Search className="pointer-events-none absolute right-1/2 top-1/2 h-4 w-4 translate-x-1/2 -translate-y-1/2 text-[#65716a] transition-colors focus-within:text-[#b45309] sm:right-3 sm:translate-x-0" aria-hidden="true" strokeWidth={2.35} />
             <input
               value={query}
               onChange={event => setQuery(event.target.value)}
               placeholder=""
-              aria-label={'\u0628\u062d\u062b'}
-              className="min-h-[40px] w-full rounded-md border border-[#cfd8d1] bg-[#fbfaf6] pr-10 pl-2 text-sm font-bold text-transparent outline-none focus:border-[#b45309] focus:text-[#17201b] sm:pr-9 sm:pl-3 sm:text-[#17201b]"
+              aria-label={'\u0628\u062d\u062b \u0641\u064a \u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a'}
+              className="min-h-[44px] w-full rounded-md border border-[#cfd8d1] bg-[#fbfaf6] pr-10 pl-2 text-sm font-bold text-transparent outline-none transition-colors focus:border-[#b45309] focus:text-[#17201b] focus-visible:ring-2 focus-visible:ring-[#ff9900]/30 sm:pr-9 sm:pl-3 sm:text-[#17201b]"
             />
           </label>
-          <select value={filter} onChange={event => setFilter(event.target.value as ProductFilter)} className="min-h-[40px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-3 text-sm font-black outline-none focus:border-[#b45309]">
+          <select value={filter} onChange={event => setFilter(event.target.value as ProductFilter)} className="min-h-[44px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-3 text-sm font-black outline-none focus:border-[#b45309] focus-visible:ring-2 focus-visible:ring-[#ff9900]/30">
             <option value="all">كل الحالات</option>
             <option value="visible">ظاهر</option>
             <option value="hidden">مخفي</option>
@@ -186,7 +186,7 @@ export function AdminProductsPage({
             <option value="needs-images">صور ناقصة</option>
             <option value="needs-details">تفاصيل ناقصة</option>
           </select>
-          <select value={sort} onChange={event => setSort(event.target.value as ProductSort)} className="min-h-[40px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-3 text-sm font-black outline-none focus:border-[#b45309]">
+          <select value={sort} onChange={event => setSort(event.target.value as ProductSort)} className="min-h-[44px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-3 text-sm font-black outline-none focus:border-[#b45309] focus-visible:ring-2 focus-visible:ring-[#ff9900]/30">
             <option value="newest">الأحدث</option>
             <option value="stock">المخزون</option>
             <option value="price-low">السعر الأقل</option>
@@ -200,9 +200,9 @@ export function AdminProductsPage({
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#dfe5df] bg-[#fff8eb] px-4 py-3">
             <p className="text-sm font-black">{selected.length} محدد</p>
             <div className="flex flex-wrap gap-2">
-              <button type="button" onClick={bulkHide} className="tm-admin-press min-h-[34px] rounded-md border border-[#d8c3a0] bg-white px-3 text-xs font-black">إخفاء المحدد</button>
-              <button type="button" onClick={bulkShow} className="tm-admin-press min-h-[34px] rounded-md border border-[#d8c3a0] bg-white px-3 text-xs font-black">إظهار المحدد</button>
-              <button type="button" onClick={bulkDelete} className="tm-admin-press min-h-[34px] rounded-md bg-[#fff1d5] px-3 text-xs font-black text-[#9a5a00]">حذف المحدد</button>
+              <button type="button" onClick={bulkHide} className="tm-admin-press min-h-[44px] rounded-md border border-[#d8c3a0] bg-white px-3 text-xs font-black">إخفاء المحدد</button>
+              <button type="button" onClick={bulkShow} className="tm-admin-press min-h-[44px] rounded-md border border-[#d8c3a0] bg-white px-3 text-xs font-black">إظهار المحدد</button>
+              <button type="button" onClick={bulkDelete} className="tm-admin-press min-h-[44px] rounded-md bg-[#fff1d5] px-3 text-xs font-black text-[#9a5a00]">حذف المحدد</button>
             </div>
           </div>
         ) : null}
@@ -237,16 +237,16 @@ export function AdminProductsPage({
                   </div>
                 </div>
                 <div className="mt-3 grid grid-cols-4 gap-2">
-                  <button type="button" onClick={() => onNavigate(productRoute(product.slug))} className="tm-admin-press grid min-h-[40px] place-items-center rounded-md border border-[#cfd8d1] bg-white text-[#17201b]" aria-label={`Open ${product.title}`}>
+                  <button type="button" onClick={() => onNavigate(productRoute(product.slug))} className="tm-admin-press grid min-h-[44px] place-items-center rounded-md border border-[#cfd8d1] bg-white text-[#17201b]" aria-label={`Open ${product.title}`}>
                     <Eye className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
                   </button>
-                  <button type="button" onClick={() => onNavigate(`#/admin/products/${encodeURIComponent(product.slug)}/edit`)} className="tm-admin-press grid min-h-[40px] place-items-center rounded-md border border-[#cfd8d1] bg-white text-[#17201b]" aria-label={`Edit ${product.title}`}>
+                  <button type="button" onClick={() => onNavigate(`#/admin/products/${encodeURIComponent(product.slug)}/edit`)} className="tm-admin-press grid min-h-[44px] place-items-center rounded-md border border-[#cfd8d1] bg-white text-[#17201b]" aria-label={`Edit ${product.title}`}>
                     <Edit className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
                   </button>
-                  <button type="button" onClick={() => onToggleVisibility(product.slug)} className="tm-admin-press grid min-h-[40px] place-items-center rounded-md border border-[#cfd8d1] bg-white text-[#17201b]" aria-label={hidden ? `Show ${product.title}` : `Hide ${product.title}`}>
+                  <button type="button" onClick={() => onToggleVisibility(product.slug)} className="tm-admin-press grid min-h-[44px] place-items-center rounded-md border border-[#cfd8d1] bg-white text-[#17201b]" aria-label={hidden ? `Show ${product.title}` : `Hide ${product.title}`}>
                     {hidden ? <EyeOff className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} /> : <Eye className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />}
                   </button>
-                  <button type="button" onClick={() => onDeleteProduct(product)} className="tm-admin-press grid min-h-[40px] place-items-center rounded-md bg-[#fff1d5] text-[#9a5a00]" aria-label={`Delete ${product.title}`}>
+                  <button type="button" onClick={() => onDeleteProduct(product)} className="tm-admin-press grid min-h-[44px] place-items-center rounded-md bg-[#fff1d5] text-[#9a5a00]" aria-label={`Delete ${product.title}`}>
                     <Trash2 className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
                   </button>
                 </div>
@@ -312,16 +312,16 @@ export function AdminProductsPage({
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5">
-                        <button type="button" onClick={() => onNavigate(productRoute(product.slug))} className="tm-admin-press grid h-9 w-9 place-items-center rounded-md border border-[#cfd8d1] bg-white text-[#17201b]" aria-label={`فتح ${product.title}`}>
+                        <button type="button" onClick={() => onNavigate(productRoute(product.slug))} className="tm-admin-press grid h-11 w-11 place-items-center rounded-md border border-[#cfd8d1] bg-white text-[#17201b]" aria-label={`فتح ${product.title}`}>
                           <Eye className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
                         </button>
-                        <button type="button" onClick={() => onNavigate(`#/admin/products/${encodeURIComponent(product.slug)}/edit`)} className="tm-admin-press grid h-9 w-9 place-items-center rounded-md border border-[#cfd8d1] bg-white text-[#17201b]" aria-label={`تعديل ${product.title}`}>
+                        <button type="button" onClick={() => onNavigate(`#/admin/products/${encodeURIComponent(product.slug)}/edit`)} className="tm-admin-press grid h-11 w-11 place-items-center rounded-md border border-[#cfd8d1] bg-white text-[#17201b]" aria-label={`تعديل ${product.title}`}>
                           <Edit className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
                         </button>
-                        <button type="button" onClick={() => onToggleVisibility(product.slug)} className="tm-admin-press grid h-9 w-9 place-items-center rounded-md border border-[#cfd8d1] bg-white text-[#17201b]" aria-label={hidden ? `إظهار ${product.title}` : `إخفاء ${product.title}`}>
+                        <button type="button" onClick={() => onToggleVisibility(product.slug)} className="tm-admin-press grid h-11 w-11 place-items-center rounded-md border border-[#cfd8d1] bg-white text-[#17201b]" aria-label={hidden ? `إظهار ${product.title}` : `إخفاء ${product.title}`}>
                           {hidden ? <EyeOff className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} /> : <Eye className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />}
                         </button>
-                        <button type="button" onClick={() => onDeleteProduct(product)} className="tm-admin-press grid h-9 w-9 place-items-center rounded-md bg-[#fff1d5] text-[#9a5a00]" aria-label={`حذف ${product.title}`}>
+                        <button type="button" onClick={() => onDeleteProduct(product)} className="tm-admin-press grid h-11 w-11 place-items-center rounded-md bg-[#fff1d5] text-[#9a5a00]" aria-label={`حذف ${product.title}`}>
                           <Trash2 className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
                         </button>
                       </div>
