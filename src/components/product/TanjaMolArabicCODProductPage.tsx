@@ -217,7 +217,7 @@ export const TanjaMolArabicCODProductPage = ({
     group: typeof activeVariantGroups[number],
     value: typeof activeVariantGroups[number]['values'][number],
   ) => {
-    if (group.type !== 'color' && !group.label.includes('Ù„ÙˆÙ†')) return undefined;
+    if (group.type !== 'color' && !group.label.includes('\u0644\u0648\u0646')) return undefined;
     const label = getOptionValueLabel(value);
     const variant = getValueVariant(group, value);
     return value.color ?? colors.find(color => color.name === variant?.name || color.name === label)?.value;

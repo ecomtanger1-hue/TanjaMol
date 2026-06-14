@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
-    "build": "tsc -b && vite build",
+    "encoding:check": "node scripts/check-arabic-encoding.mjs",
+    "build": "npm run encoding:check && tsc -b && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "storage:check": "node scripts/check-supabase-storage.mjs"
   },
