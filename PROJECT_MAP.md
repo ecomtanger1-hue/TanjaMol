@@ -97,6 +97,9 @@ Use this map before editing. The goal is to find the smallest relevant code path
 - Mobile layout overflow:
   Start with the component rendering the visible screen. Search for fixed widths, `grid-cols`, `min-w`, `overflow`, product image sizes, and long unbroken text.
 
+- Blank page after refreshing a clean URL:
+  Check `vite.config.ts` `base` first. Cloudflare Pages uses `public/_redirects` to serve `index.html` for SPA routes, so production assets must be root-relative (`base: '/'`). A relative base (`'./'`) makes refreshed routes like `/admin/products` look for chunks under `/admin/assets/...` and the app can load as a white page.
+
 ## Data Flows
 
 Customer order flow:
