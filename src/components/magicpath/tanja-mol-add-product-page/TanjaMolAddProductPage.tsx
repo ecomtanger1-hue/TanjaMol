@@ -324,6 +324,7 @@ export const TanjaMolAddProductPage = ({
   const [uploadError, setUploadError] = useState('');
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [lastAutoSavedAt, setLastAutoSavedAt] = useState('');
+  const [detailsEditorReady, setDetailsEditorReady] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [publishing, setPublishing] = useState(false);
 
@@ -1105,7 +1106,7 @@ export const TanjaMolAddProductPage = ({
               </div>
             </AdminSection>
 
-            <AdminSection title="تفاصيل المنتج المصورة" summary={detailsSummary} status={details.some(detail => detail.text.trim()) ? 'done' : 'missing'} defaultOpen={false} action={<button type="button" onClick={addDetailBlock} className="tm-admin-press min-h-[36px] rounded-md bg-[#ff9900] px-3 text-xs font-black text-[#131921]">إضافة بلوك</button>}>
+            <AdminSection title="تفاصيل المنتج المصورة" summary={detailsSummary} status={details.some(detail => detail.text.trim()) ? 'done' : 'missing'} defaultOpen={false} onOpen={() => setDetailsEditorReady(true)} action={<button type="button" onClick={addDetailBlock} className="tm-admin-press min-h-[36px] rounded-md bg-[#ff9900] px-3 text-xs font-black text-[#131921]">إضافة بلوك</button>}>
               <div className="rounded-md border border-[#dfe5df] bg-[#fbfaf6] p-3">
                 <div className="grid gap-4">
                   {details.map((detail, index) => (
@@ -1145,13 +1146,15 @@ export const TanjaMolAddProductPage = ({
                             detail={detail}
                             onChange={next => updateDetail(detail.id, next)}
                           />
-                          <Suspense fallback={<div className="grid min-h-[280px] place-items-center rounded-md border border-[#dfe5df] bg-[#fbfaf6] text-sm font-black text-[#65716a]">جار تحميل محرر النص...</div>}>
-                            <JoditBlockEditor
-                              detail={detail}
-                              folder={slug || makeSlug(title || 'product')}
-                              onChange={(html, text) => updateDetailRichText(detail.id, html, text)}
-                            />
-                          </Suspense>
+                          {detailsEditorReady ? (
+                            <Suspense fallback={<div className="grid min-h-[280px] place-items-center rounded-md border border-[#dfe5df] bg-[#fbfaf6] text-sm font-black text-[#65716a]">جار تحميل محرر النص...</div>}>
+                              <JoditBlockEditor
+                                detail={detail}
+                                folder={slug || makeSlug(title || 'product')}
+                                onChange={(html, text) => updateDetailRichText(detail.id, html, text)}
+                              />
+                            </Suspense>
+                          ) : null}
                         </div>
                       </div>
                     </article>
@@ -1343,6 +1346,7 @@ function AdminSection({
   status = 'neutral',
   action,
   defaultOpen = true,
+  onOpen,
   children,
 }: {
   title: string;
@@ -1351,6 +1355,7 @@ function AdminSection({
   status?: 'done' | 'missing' | 'neutral';
   action?: ReactNode;
   defaultOpen?: boolean;
+  onOpen?: () => void;
   children: ReactNode;
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -1359,11 +1364,16 @@ function AdminSection({
     status === 'done' ? 'bg-[#fff3df] text-[#b45309]' :
     status === 'missing' ? 'bg-[#fff1d5] text-[#9a5a00]' :
     'bg-[#eef3ef] text-[#65716a]';
+  const toggleOpen = () => {
+    const next = !isOpen;
+    setIsOpen(next);
+    if (next) onOpen?.();
+  };
 
   return (
     <section className={`tm-admin-surface rounded-md bg-white transition-shadow ${isOpen ? 'overflow-visible shadow-[0_16px_44px_-32px_rgba(19,25,33,0.45)]' : 'overflow-hidden'}`}>
       <div className="flex flex-wrap items-center gap-3 p-3 sm:p-4">
-        <button type="button" aria-expanded={isOpen} onClick={() => setIsOpen(current => !current)} className="tm-admin-press flex min-h-[42px] min-w-0 items-center gap-3 rounded-md px-1 text-right">
+        <button type="button" aria-expanded={isOpen} onClick={toggleOpen} className="tm-admin-press flex min-h-[42px] min-w-0 items-center gap-3 rounded-md px-1 text-right">
           <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-md bg-[#eef3ef] text-[#131921] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
             <AdminIcon name="chevron" />
           </span>
