@@ -1,5 +1,6 @@
 # Project Editing Rules
 
+- Start every task by checking `PROJECT_MAP.md` for the relevant files, data flow, and common debugging path.
 - Start by locating the smallest set of files that can satisfy the request. Do not refactor nearby code unless the task requires it.
 - Before editing, inspect the relevant code path and identify whether the issue is display, save/load, database, or deployment related.
 - Prefer one or two focused patches over broad rewrites. If a change starts expanding, pause and re-check the simpler path.
