@@ -885,7 +885,7 @@ export const TanjaMolAddProductPage = ({
                 {gallery.map((image, index) => (
                   <div key={`${image}-${index}`} className="rounded-md border border-dashed border-[#bfcac1] bg-[#fbfaf6] p-3 text-right">
                     <div className="grid aspect-[4/3] place-items-center overflow-hidden rounded-md bg-[#eef3ef] text-sm font-black text-[#65716a]">
-                      <img src={image} alt={`صورة المنتج ${index + 1}`} className="h-full w-full object-cover" />
+                      <img src={image} alt={`صورة المنتج ${index + 1}`} className="h-full w-full object-cover" loading="lazy" decoding="async" width="320" height="320" />
                     </div>
                     <div className="mt-3 flex items-center justify-between gap-2">
                       <p className="text-sm font-black">{index === 0 ? 'الصورة الرئيسية' : `صورة ${index + 1}`}</p>
@@ -1128,7 +1128,7 @@ export const TanjaMolAddProductPage = ({
                       <div className={`mt-3 grid items-start gap-3 lg:[direction:ltr] ${detail.reverse ? 'lg:grid-cols-[minmax(0,1fr)_280px]' : 'lg:grid-cols-[280px_minmax(0,1fr)]'}`}>
                         <div className={`grid self-start gap-2 ${detail.reverse ? 'lg:col-start-2' : 'lg:col-start-1'} lg:row-start-1`}>
                           <div className="grid h-[260px] place-items-center overflow-hidden rounded-md bg-[#eef3ef] text-sm font-black text-[#65716a]">
-                            {detail.mediaUrl ? <img src={detail.mediaUrl} alt={detail.title} className="h-full w-full object-contain" /> : 'وسائط البلوك'}
+                            {detail.mediaUrl ? <img src={detail.mediaUrl} alt={detail.title} className="h-full w-full object-contain" loading="lazy" decoding="async" width="560" height="520" /> : 'وسائط البلوك'}
                           </div>
                           <BlockMediaPicker
                             detailId={detail.id}
@@ -1201,7 +1201,7 @@ export const TanjaMolAddProductPage = ({
             <AdminSection title="معاينة مصغرة" status="neutral" defaultOpen={false}>
               <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
                 <div className="grid aspect-[4/3] place-items-center overflow-hidden rounded-md bg-[#eef3ef] text-sm font-black text-[#65716a]">
-                  <img src={previewProduct.image} alt={previewProduct.title} className="h-full w-full object-cover" />
+                  <img src={previewProduct.image} alt={previewProduct.title} className="h-full w-full object-cover" loading="lazy" decoding="async" width="320" height="320" />
                 </div>
                 <div>
                   <div className="flex flex-wrap gap-2">
@@ -1497,7 +1497,7 @@ function BlockMediaPicker({
                   }}
                   className={`tm-admin-press grid min-h-[46px] grid-cols-[46px_minmax(0,1fr)] items-center gap-2 rounded-md p-1 text-right ${image === value ? 'bg-[#fff3df] text-[#b45309]' : 'bg-[#fbfaf6] text-[#17201b] hover:bg-[#eef3ef]'}`}
                 >
-                  <img src={image} alt={`صورة ${imageIndex + 1}`} className="h-[46px] w-[46px] rounded object-cover" />
+                  <img src={image} alt={`صورة ${imageIndex + 1}`} className="h-[46px] w-[46px] rounded object-cover" loading="lazy" decoding="async" width="92" height="92" />
                   <span className="text-xs font-black">صورة {imageIndex + 1}</span>
                 </button>
               )) : (

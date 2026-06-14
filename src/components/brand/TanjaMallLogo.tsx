@@ -18,7 +18,7 @@ export function TanjaMallLogo({
   return (
     <span className={`tm-logo inline-flex min-w-0 items-center gap-3 ${className}`} aria-label="TanjaMall">
       <span className={`tm-logo-mark grid shrink-0 place-items-center ${compact ? 'h-10 w-10' : 'h-11 w-11'} ${markClassName}`}>
-        <img src="/logo-variants/tanjamall-icon-12-uppercase-t-closer-smile.svg" alt="" aria-hidden="true" className="h-full w-full" />
+        <img src="/logo-variants/tanjamall-icon-12-uppercase-t-closer-smile.svg" alt="" aria-hidden="true" className="h-full w-full" decoding="async" width="128" height="128" />
       </span>
       {!iconOnly ? (
         <span className={`min-w-0 ${compact ? 'hidden sm:block' : ''} ${textClassName}`}>

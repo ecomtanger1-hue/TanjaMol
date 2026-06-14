@@ -155,7 +155,7 @@ export const TanjaMallAdminProductDashboard = ({
           <div className="grid divide-y divide-[#e4e9e4]">
             {attentionProducts.map(({ product, issues }) => (
               <button key={product.slug} type="button" onClick={() => onOpenProduct(product.slug)} className="tm-admin-press grid grid-cols-[48px_minmax(0,1fr)] gap-3 p-3 text-right sm:flex sm:items-center">
-                <img src={product.image} alt={product.title} className="h-12 w-12 rounded-md object-cover" loading="lazy" decoding="async" />
+                <img src={product.image} alt={product.title} className="h-12 w-12 rounded-md object-cover" loading="lazy" decoding="async" width="96" height="96" />
                 <span className="min-w-0 flex-1">
                   <span className="block break-words font-heading text-sm font-black leading-5 sm:truncate">{product.title}</span>
                   <span className="mt-1 flex flex-wrap gap-1">
@@ -264,7 +264,7 @@ export const TanjaMallAdminProductDashboard = ({
               const revenueTotal = productRevenue(product, orders);
               return (
                 <button key={product.slug} type="button" onClick={() => onOpenProduct(product.slug)} className="tm-admin-press grid grid-cols-[48px_minmax(0,1fr)] gap-3 rounded-md border border-[#dfe5df] bg-[#fbfaf6] p-3 text-right sm:flex sm:items-center">
-                  <img src={product.image} alt={product.title} className="h-12 w-12 rounded-md object-cover" loading="lazy" decoding="async" />
+                  <img src={product.image} alt={product.title} className="h-12 w-12 rounded-md object-cover" loading="lazy" decoding="async" width="96" height="96" />
                   <span className="min-w-0 flex-1">
                     <span className="block break-words font-heading text-sm font-black leading-5 sm:truncate">{product.title}</span>
                     <span className="tm-admin-num mt-1 block text-xs font-bold text-[#65716a]">{ordersCount} طلب</span>

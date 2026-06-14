@@ -1118,7 +1118,7 @@ export function AdminOrderDetailPage({
             <div className="mt-4 grid gap-3">
             {order.items.map(item => (
               <div key={`${item.id}-${item.variant || ''}`} className="grid min-w-0 grid-cols-[64px_minmax(0,1fr)] gap-3 rounded-md bg-[#fbfaf6] p-2 shadow-[inset_0_0_0_1px_rgba(23,32,27,0.08)] sm:grid-cols-[72px_minmax(0,1fr)]">
-                <img src={item.image} alt={item.title} className="h-16 w-16 rounded-md object-cover sm:h-[72px] sm:w-[72px]" loading="lazy" decoding="async" />
+                <img src={item.image} alt={item.title} className="h-16 w-16 rounded-md object-cover sm:h-[72px] sm:w-[72px]" loading="lazy" decoding="async" width="144" height="144" />
                 <div className="min-w-0">
                   <p className="break-words font-heading text-sm font-black leading-6 sm:text-base">{item.title}</p>
                   {item.variant ? <p className="mt-1 text-xs font-bold text-[#65716a]">{item.variant}</p> : null}
