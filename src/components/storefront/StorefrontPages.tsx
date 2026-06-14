@@ -21,7 +21,7 @@ import {
 } from '../../storefrontRuntime';
 import { TanjaMallLogo } from '../brand/TanjaMallLogo';
 import { ProductCard } from './ProductCard';
-import { AdminSidebar } from '../admin/AdminLayout';
+import { AdminMobileDeck, AdminSidebar } from '../admin/AdminLayout';
 import { getCurrentRoute } from '../../lib/routing';
 
 type StoreActions = {
@@ -859,7 +859,7 @@ function OrderStatusSelect({ order, onUpdateOrderStatus, compact = false }: {
   onUpdateOrderStatus: (orderId: string, status: OrderStatus) => void;
 }) {
   return (
-    <label className={compact ? 'min-w-0' : 'col-span-2 min-w-0 sm:col-span-1 sm:min-w-[154px]'}>
+    <label className={compact ? 'col-span-2 min-w-0' : 'col-span-2 min-w-0 sm:col-span-1 sm:min-w-[154px]'}>
       <span className="sr-only">حالة الطلب</span>
       <select
         value={order.status}
@@ -891,7 +891,7 @@ function OrderQuickActions({ order, settings, onUpdateOrderStatus, onMarkCustome
   const markSentStatus = order.status === 'new' ? 'whatsapp' : order.status;
 
   return (
-    <div className={`grid min-w-0 gap-2 ${compact ? 'grid-cols-[1fr_1fr_minmax(112px,1.15fr)]' : 'grid-cols-2 sm:grid-cols-[repeat(2,max-content)_minmax(154px,1fr)]'}`} onClick={stopAction}>
+    <div className={`grid min-w-0 gap-2 ${compact ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-[repeat(2,max-content)_minmax(154px,1fr)]'}`} onClick={stopAction}>
       <a href={`tel:${order.phone}`} className={`${buttonBase} border border-[#cfd8d1] bg-white text-[#17201b]`} aria-label={`اتصال ب ${order.name}`}>
         <Phone className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
         {!compact ? 'اتصال' : null}
@@ -991,18 +991,18 @@ export function AdminOrdersPage({
           </select>
         </div>
 
-        <div className="grid gap-3 p-3 md:hidden">
+        <div className="grid gap-2 p-3 md:hidden">
           {visibleOrders.map(order => (
-            <article key={order.id} className="rounded-md bg-[#fbfaf6] p-3 shadow-[inset_0_0_0_1px_rgba(23,32,27,0.08)]">
+            <article key={order.id} className="rounded-md bg-[#fbfaf6] p-2 shadow-[inset_0_0_0_1px_rgba(23,32,27,0.08)]">
               <button type="button" onClick={() => onNavigate(`#/admin/orders/${order.id}`)} className="tm-admin-press w-full rounded-md bg-white p-3 text-right">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="tm-admin-num font-heading text-lg font-black">{order.id}</p>
-                    <p className="mt-1 truncate text-sm font-black text-[#17201b]">{order.name}</p>
+                    <p className="mt-1 break-words text-sm font-black leading-5 text-[#17201b]">{order.name}</p>
                     <p className="tm-admin-num mt-1 text-sm font-bold text-[#65716a]">{order.phone}</p>
                   </div>
-                  <div className="shrink-0 text-left">
-                    <p className="tm-admin-num font-heading text-xl font-black text-[#b45309]">{order.total.toLocaleString('fr-MA')} درهم</p>
+                  <div className="min-w-[96px] shrink-0 text-left">
+                    <p className="tm-admin-num break-words font-heading text-lg font-black leading-tight text-[#b45309]">{order.total.toLocaleString('fr-MA')} درهم</p>
                     <p className="mt-1 text-xs font-black text-[#65716a]">{orderRelative(order)}</p>
                   </div>
                 </div>
@@ -1150,7 +1150,7 @@ export function AdminOrderDetailPage({
               </div>
             ) : null}
           </div>
-          <div className="mt-5 min-w-0 border-t border-[#dfe5df] pt-4">
+          <div className="mt-5 hidden min-w-0 border-t border-[#dfe5df] pt-4 xl:block">
             <OrderQuickActions order={order} settings={settings} onNavigate={onNavigate} onUpdateOrderStatus={onUpdateOrderStatus} onMarkCustomerMessageSent={onMarkCustomerMessageSent} />
           </div>
         </aside>
@@ -1280,7 +1280,7 @@ export function AdminSettingsPage({
 
   return (
     <AdminShell title="الإعدادات" onNavigate={onNavigate}>
-      <form onSubmit={event => { event.preventDefault(); saveDraft(); }} className="grid gap-4 rounded-md bg-white p-4 shadow-[0_10px_30px_rgba(23,32,27,0.08)] sm:p-5">
+      <form onSubmit={event => { event.preventDefault(); saveDraft(); }} className="grid gap-3 rounded-md bg-white p-3 shadow-[0_10px_30px_rgba(23,32,27,0.08)] sm:gap-4 sm:p-5">
         <section className="grid gap-4 md:grid-cols-2">
           <SettingsInput label="اسم المتجر" value={draft.storeName} onChange={storeName => { setSaved(false); setDraft(current => ({ ...current, storeName })); }} />
           <SettingsInput label="رقم واتساب" value={draft.whatsappNumber} onChange={whatsappNumber => { setSaved(false); setDraft(current => ({ ...current, whatsappNumber })); }} />
@@ -1301,13 +1301,13 @@ export function AdminSettingsPage({
         </section>
 
         <section className="grid gap-3 rounded-md border border-[#dfe5df] bg-[#fbfaf6] p-3">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
             <p className="text-sm font-black text-[#17201b]">إدارة الأقسام</p>
             <button type="button" onClick={addCategory} className="tm-press min-h-[36px] rounded-md bg-[#ff9900] px-3 text-xs font-black text-[#131921]">إضافة قسم</button>
           </div>
           <div className="grid gap-3">
             {managedCategories.map((category, index) => (
-              <article key={`${category.id}-${index}`} className="grid gap-2 rounded-md border border-[#dfe5df] bg-white p-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)_auto] md:items-end">
+              <article key={`${category.id}-${index}`} className="grid gap-3 rounded-md border border-[#dfe5df] bg-white p-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)_auto] md:items-end">
                 <SettingsInput label="اسم القسم" value={category.title} onChange={title => updateCategory(index, { title })} />
                 <SettingsInput label="رابط الصورة" value={category.image} onChange={image => updateCategory(index, { image })} />
                 <button type="button" onClick={() => removeCategory(index)} disabled={managedCategories.length <= 1} className="tm-admin-press min-h-[44px] rounded-md bg-[#fff1d5] px-3 text-xs font-black text-[#9a5a00] disabled:cursor-not-allowed disabled:opacity-45">حذف</button>
@@ -1316,7 +1316,7 @@ export function AdminSettingsPage({
           </div>
         </section>
 
-        <button type="submit" className="min-h-[48px] rounded-md bg-[#ff9900] px-5 font-black text-[#131921]">حفظ</button>
+        <button type="submit" className="sticky z-20 min-h-[48px] rounded-md bg-[#ff9900] px-5 font-black text-[#131921] shadow-[0_16px_32px_-24px_rgba(19,25,33,0.75)] sm:static sm:shadow-none" style={{ bottom: 'calc(92px + env(safe-area-inset-bottom))' }}>حفظ</button>
         {saved ? <p className="text-sm font-black text-[#b45309]">تم الحفظ</p> : null}
       </form>
     </AdminShell>
@@ -1407,45 +1407,24 @@ function AdminShell({
   onNavigate: (route: string) => void;
   children: ReactNode;
 }) {
-  const nav = [
-    ['لوحة التحكم', '#/admin'],
-    ['إضافة منتج', '#/admin/products/new'],
-    ['الطلبات', '#/admin/orders'],
-    ['الإعدادات', '#/admin/settings'],
-    ['المتجر', '#/'],
-  ];
-
   return (
-    <div dir="rtl" className="min-h-screen bg-[#f4f2eb] text-[#17201b]">
+    <div dir="rtl" className="min-h-screen bg-[#f4f2eb] pb-[calc(88px+env(safe-area-inset-bottom))] text-[#17201b] lg:pb-0">
       <AdminSidebar onNavigate={onNavigate} />
+      <AdminMobileDeck onNavigate={onNavigate} />
       <div className="grid min-h-screen lg:grid-cols-[76px_minmax(0,1fr)]">
-        <aside className="hidden">
-          <div className="sticky top-0 flex h-screen flex-col px-4 py-5">
-            <button type="button" onClick={() => onNavigate('#/')} className="flex items-center gap-3 px-2 text-right">
-              <TanjaMallLogo textClassName="text-xl" />
-            </button>
-            <nav className="mt-8 grid gap-1 text-sm font-extrabold">
-              {nav.map(([label, route]) => (
-                <button key={route} type="button" onClick={() => onNavigate(route)} className="min-h-[42px] rounded-md px-3 text-right text-white/72 transition-colors hover:bg-white/10 hover:text-white">
-                  {label}
-                </button>
-              ))}
-            </nav>
-          </div>
-        </aside>
         <main className="min-w-0 lg:col-start-2">
           <header className="sticky top-0 z-30 border-b border-[#d9dfd8] bg-[#f8f7f1]/94">
-            <div className="mx-auto flex min-h-[72px] max-w-[1440px] items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto flex min-h-[60px] max-w-[1440px] items-center justify-between gap-3 px-3 sm:min-h-[72px] sm:px-6 lg:px-8">
               <div className="min-w-0">
                 {eyebrow ? <p className="text-xs font-black text-[#b45309]">{eyebrow}</p> : null}
-                <h1 className="truncate font-heading text-2xl font-black sm:text-3xl">{title}</h1>
+                <h1 className="truncate font-heading text-lg font-black sm:text-3xl">{title}</h1>
               </div>
-              {actions ? <div className="flex shrink-0 items-center gap-2">{actions}</div> : (
-                <button type="button" onClick={() => onNavigate('#/')} className="tm-admin-press min-h-[42px] rounded-md border border-[#cfd8d1] bg-white px-4 text-sm font-extrabold">فتح المتجر</button>
+              {actions ? <div className="flex min-w-0 shrink-0 items-center justify-end gap-2">{actions}</div> : (
+                <button type="button" onClick={() => onNavigate('#/')} className="tm-admin-press min-h-[42px] rounded-md border border-[#cfd8d1] bg-white px-4 text-sm font-extrabold">{'\u0641\u062a\u062d \u0627\u0644\u0645\u062a\u062c\u0631'}</button>
               )}
             </div>
           </header>
-          <div className="mx-auto grid max-w-[1440px] gap-5 px-4 py-5 sm:px-6 lg:px-8">{children}</div>
+          <div className="mx-auto grid max-w-[1440px] gap-3 px-3 py-3 sm:gap-5 sm:px-6 sm:py-5 lg:px-8">{children}</div>
         </main>
       </div>
     </div>

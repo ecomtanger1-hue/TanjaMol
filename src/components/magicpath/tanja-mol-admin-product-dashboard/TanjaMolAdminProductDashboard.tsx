@@ -206,7 +206,7 @@ export const TanjaMallAdminProductDashboard = ({
           </div>
           <div className="grid gap-2 p-3 md:hidden">
             {recentOrders.map(order => (
-              <button key={order.id} type="button" onClick={onOpenOrders} className="tm-admin-press rounded-md bg-[#fbfaf6] p-3 text-right shadow-[inset_0_0_0_1px_rgba(23,32,27,0.08)]">
+              <button key={order.id} type="button" onClick={() => navigateToRoute(`#/admin/orders/${encodeURIComponent(order.id)}`)} className="tm-admin-press rounded-md bg-[#fbfaf6] p-3 text-right shadow-[inset_0_0_0_1px_rgba(23,32,27,0.08)]">
                 <span className="flex items-start justify-between gap-3">
                   <span className="min-w-0">
                     <span className="tm-admin-num block font-heading text-base font-black">{order.id}</span>

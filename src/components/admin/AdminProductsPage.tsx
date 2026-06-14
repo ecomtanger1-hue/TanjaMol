@@ -151,22 +151,22 @@ export function AdminProductsPage({
         </>
       }
     >
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <section className="grid grid-cols-2 gap-2 sm:gap-3 xl:grid-cols-4">
         {[
           ['كل المنتجات', products.length.toLocaleString('fr-MA')],
           ['ظاهرة', visibleCount.toLocaleString('fr-MA')],
           ['مخفية', hiddenCount.toLocaleString('fr-MA')],
           ['مسودات', draftCount.toLocaleString('fr-MA')],
         ].map(([label, value]) => (
-          <article key={label} className="tm-admin-surface rounded-md bg-white p-4">
-            <p className="text-xs font-extrabold text-[#65716a]">{label}</p>
-            <p className="tm-admin-num mt-2 font-heading text-2xl font-black text-[#17201b]">{value}</p>
+          <article key={label} className="tm-admin-surface grid min-h-[86px] content-between rounded-md bg-white p-3 sm:min-h-[104px] sm:p-4">
+            <p className="text-xs font-extrabold leading-5 text-[#65716a]">{label}</p>
+            <p className="tm-admin-num mt-2 break-words font-heading text-xl font-black leading-tight text-[#17201b] sm:text-2xl">{value}</p>
           </article>
         ))}
       </section>
 
       <section className="tm-admin-surface overflow-hidden rounded-md bg-white">
-        <div className="grid gap-3 border-b border-[#dfe5df] p-4 xl:grid-cols-[minmax(280px,1fr)_210px_210px]">
+        <div className="grid gap-2 border-b border-[#dfe5df] p-3 sm:gap-3 sm:p-4 xl:grid-cols-[minmax(280px,1fr)_210px_210px]">
           <label className="relative block">
             <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#65716a]" aria-hidden="true" strokeWidth={2.35} />
             <input
@@ -206,7 +206,58 @@ export function AdminProductsPage({
           </div>
         ) : null}
 
-        <div className="overflow-x-auto">
+        <div className="grid gap-3 p-3 md:hidden">
+          {rows.map(({ product, hidden, sales }) => {
+            const status = productStatus(product, hidden);
+            const isSelected = selected.includes(product.slug);
+
+            return (
+              <article key={product.slug} className="rounded-md bg-[#fbfaf6] p-3 shadow-[inset_0_0_0_1px_rgba(23,32,27,0.08)]">
+                <div className="grid grid-cols-[auto_56px_minmax(0,1fr)] items-start gap-3">
+                  <input type="checkbox" checked={isSelected} onChange={() => toggleSelected(product.slug)} className="mt-5 h-4 w-4 accent-[#ff9900]" aria-label={product.title} />
+                  <img src={product.image} alt={product.title} className="h-14 w-14 rounded-md object-cover" loading="lazy" decoding="async" width="112" height="112" />
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <p className="min-w-0 flex-1 break-words font-heading text-sm font-black leading-5">{product.title}</p>
+                      <span className={`shrink-0 rounded-md px-2 py-1 text-[11px] font-black ${status.className}`}>{status.label}</span>
+                    </div>
+                    <p className="mt-1 truncate text-xs font-bold text-[#65716a]">{product.category}</p>
+                    <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                      <div className="rounded-md bg-white px-2 py-2 shadow-[inset_0_0_0_1px_rgba(23,32,27,0.07)]">
+                        <p className="tm-admin-num break-words text-xs font-black text-[#b45309]">{product.priceLabel}</p>
+                      </div>
+                      <div className="rounded-md bg-white px-2 py-2 shadow-[inset_0_0_0_1px_rgba(23,32,27,0.07)]">
+                        <p className="tm-admin-num text-xs font-black">{product.stock ?? 0}</p>
+                      </div>
+                      <div className="rounded-md bg-white px-2 py-2 shadow-[inset_0_0_0_1px_rgba(23,32,27,0.07)]">
+                        <p className="tm-admin-num text-xs font-black">{sales.sales}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3 grid grid-cols-4 gap-2">
+                  <button type="button" onClick={() => onNavigate(productRoute(product.slug))} className="tm-admin-press grid min-h-[40px] place-items-center rounded-md border border-[#cfd8d1] bg-white text-[#17201b]" aria-label={`Open ${product.title}`}>
+                    <Eye className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
+                  </button>
+                  <button type="button" onClick={() => onNavigate(`#/admin/products/${encodeURIComponent(product.slug)}/edit`)} className="tm-admin-press grid min-h-[40px] place-items-center rounded-md border border-[#cfd8d1] bg-white text-[#17201b]" aria-label={`Edit ${product.title}`}>
+                    <Edit className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
+                  </button>
+                  <button type="button" onClick={() => onToggleVisibility(product.slug)} className="tm-admin-press grid min-h-[40px] place-items-center rounded-md border border-[#cfd8d1] bg-white text-[#17201b]" aria-label={hidden ? `Show ${product.title}` : `Hide ${product.title}`}>
+                    {hidden ? <EyeOff className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} /> : <Eye className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />}
+                  </button>
+                  <button type="button" onClick={() => onDeleteProduct(product)} className="tm-admin-press grid min-h-[40px] place-items-center rounded-md bg-[#fff1d5] text-[#9a5a00]" aria-label={`Delete ${product.title}`}>
+                    <Trash2 className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
+                  </button>
+                </div>
+              </article>
+            );
+          })}
+          {!rows.length ? (
+            <div className="rounded-md bg-[#fbfaf6] px-4 py-8 text-center font-bold text-[#65716a]">{'\u0644\u0627 \u062a\u0648\u062c\u062f \u0645\u0646\u062a\u062c\u0627\u062a \u0645\u0637\u0627\u0628\u0642\u0629.'}</div>
+          ) : null}
+        </div>
+
+        <div className="hidden overflow-x-auto md:block">
           <table className="w-full min-w-[1180px] text-sm">
             <thead className="bg-[#f4f7f4] text-xs font-black text-[#65716a]">
               <tr>
