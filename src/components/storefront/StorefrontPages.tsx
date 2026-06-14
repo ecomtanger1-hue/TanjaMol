@@ -859,14 +859,14 @@ function OrderStatusSelect({ order, onUpdateOrderStatus, compact = false }: {
   onUpdateOrderStatus: (orderId: string, status: OrderStatus) => void;
 }) {
   return (
-    <label className={compact ? 'col-span-2 min-w-0' : 'col-span-2 min-w-0 sm:col-span-1 sm:min-w-[154px]'}>
+    <label className={compact ? 'min-w-0' : 'col-span-2 min-w-0 sm:col-span-1 sm:min-w-[154px]'}>
       <span className="sr-only">حالة الطلب</span>
       <select
         value={order.status}
         onClick={stopAction}
         onChange={event => onUpdateOrderStatus(order.id, event.target.value as OrderStatus)}
         aria-label={`تغيير حالة الطلب ${order.id}`}
-        className={`min-h-[42px] w-full rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-2 text-xs font-black text-[#17201b] outline-none focus:border-[#b45309] ${compact ? 'text-center' : ''}`}
+        className={`min-h-[42px] w-full rounded-md border border-[#cfd8d1] bg-[#fbfaf6] text-xs font-black text-[#17201b] outline-none focus:border-[#b45309] ${compact ? 'px-1 text-center text-[11px]' : 'px-2'}`}
       >
         {orderStatusOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
       </select>
@@ -891,7 +891,7 @@ function OrderQuickActions({ order, settings, onUpdateOrderStatus, onMarkCustome
   const markSentStatus = order.status === 'new' ? 'whatsapp' : order.status;
 
   return (
-    <div className={`grid min-w-0 gap-2 ${compact ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-[repeat(2,max-content)_minmax(154px,1fr)]'}`} onClick={stopAction}>
+    <div className={`grid min-w-0 gap-2 ${compact ? 'grid-cols-[44px_44px_minmax(132px,1fr)]' : 'grid-cols-2 sm:grid-cols-[repeat(2,max-content)_minmax(154px,1fr)]'}`} onClick={stopAction}>
       <a href={`tel:${order.phone}`} className={`${buttonBase} border border-[#cfd8d1] bg-white text-[#17201b]`} aria-label={`اتصال ب ${order.name}`}>
         <Phone className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
         {!compact ? 'اتصال' : null}
@@ -969,14 +969,14 @@ export function AdminOrdersPage({
       </section>
 
       <section className="tm-admin-surface overflow-hidden rounded-md bg-white">
-        <div className="grid gap-3 border-b border-[#dfe5df] p-3 sm:p-4 xl:grid-cols-[minmax(280px,1fr)_190px_190px]">
+        <div className="grid grid-cols-[minmax(0,1fr)_92px_92px] gap-2 border-b border-[#dfe5df] p-3 sm:grid-cols-[minmax(280px,1fr)_190px_190px] sm:gap-3 sm:p-4">
           <label className="relative block">
             <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#65716a]" aria-hidden="true" strokeWidth={2.35} />
             <input
               value={query}
               onChange={event => setQuery(event.target.value)}
-              placeholder="بحث بالاسم، الهاتف، العنوان أو المنتج"
-              className="min-h-[44px] w-full rounded-md border border-[#cfd8d1] bg-[#fbfaf6] pr-9 pl-3 text-base font-bold outline-none focus:border-[#b45309] sm:text-sm"
+              placeholder={'\u0628\u062d\u062b'}
+              className="min-h-[44px] w-full rounded-md border border-[#cfd8d1] bg-[#fbfaf6] pr-9 pl-2 text-sm font-bold outline-none focus:border-[#b45309] sm:pl-3"
               type="search"
             />
           </label>
@@ -1280,8 +1280,8 @@ export function AdminSettingsPage({
 
   return (
     <AdminShell title="الإعدادات" onNavigate={onNavigate}>
-      <form onSubmit={event => { event.preventDefault(); saveDraft(); }} className="grid gap-3 rounded-md bg-white p-3 shadow-[0_10px_30px_rgba(23,32,27,0.08)] sm:gap-4 sm:p-5">
-        <section className="grid gap-4 md:grid-cols-2">
+      <form onSubmit={event => { event.preventDefault(); saveDraft(); }} className="grid min-w-0 gap-3 overflow-hidden rounded-md bg-white p-3 shadow-[0_10px_30px_rgba(23,32,27,0.08)] sm:gap-4 sm:p-5">
+        <section className="grid min-w-0 grid-cols-2 gap-2 sm:gap-3 md:grid-cols-2">
           <SettingsInput label="اسم المتجر" value={draft.storeName} onChange={storeName => { setSaved(false); setDraft(current => ({ ...current, storeName })); }} />
           <SettingsInput label="رقم واتساب" value={draft.whatsappNumber} onChange={whatsappNumber => { setSaved(false); setDraft(current => ({ ...current, whatsappNumber })); }} />
           <SettingsInput label="رقم الهاتف" value={draft.phone} onChange={phone => { setSaved(false); setDraft(current => ({ ...current, phone })); }} />
@@ -1290,27 +1290,29 @@ export function AdminSettingsPage({
           <SettingsInput label="العنوان" value={draft.address} onChange={address => { setSaved(false); setDraft(current => ({ ...current, address })); }} />
         </section>
 
-        <section className="grid gap-2 rounded-md border border-[#dfe5df] bg-[#fbfaf6] p-3">
+        <section className="grid min-w-0 gap-2 rounded-md border border-[#dfe5df] bg-[#fbfaf6] p-2.5 sm:p-3">
           <label className="grid gap-1">
             <span className="text-xs font-black text-[#65716a]">منتج الهيرو في الصفحة الرئيسية</span>
-            <select value={draft.heroProductSlug || ''} onChange={event => { setSaved(false); setDraft(current => ({ ...current, heroProductSlug: event.target.value })); }} className="min-h-[44px] rounded-md border border-[#cfd8d1] bg-white px-3 text-sm font-bold outline-none focus:border-[#b45309]">
+            <select value={draft.heroProductSlug || ''} onChange={event => { setSaved(false); setDraft(current => ({ ...current, heroProductSlug: event.target.value })); }} className="min-h-[44px] w-full min-w-0 rounded-md border border-[#cfd8d1] bg-white px-3 text-sm font-bold outline-none focus:border-[#b45309]">
               <option value="">اختيار تلقائي</option>
               {heroProducts.map(product => <option key={product.slug} value={product.slug}>{product.title}</option>)}
             </select>
           </label>
         </section>
 
-        <section className="grid gap-3 rounded-md border border-[#dfe5df] bg-[#fbfaf6] p-3">
+        <section className="grid min-w-0 gap-3 rounded-md border border-[#dfe5df] bg-[#fbfaf6] p-2.5 sm:p-3">
           <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3">
             <p className="text-sm font-black text-[#17201b]">إدارة الأقسام</p>
             <button type="button" onClick={addCategory} className="tm-press min-h-[36px] rounded-md bg-[#ff9900] px-3 text-xs font-black text-[#131921]">إضافة قسم</button>
           </div>
-          <div className="grid gap-3">
+          <div className="grid min-w-0 gap-3">
             {managedCategories.map((category, index) => (
-              <article key={`${category.id}-${index}`} className="grid gap-3 rounded-md border border-[#dfe5df] bg-white p-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)_auto] md:items-end">
+              <article key={`${category.id}-${index}`} className="grid min-w-0 grid-cols-[minmax(0,1fr)_88px] gap-2 rounded-md border border-[#dfe5df] bg-white p-2.5 sm:p-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)_auto] md:items-end">
                 <SettingsInput label="اسم القسم" value={category.title} onChange={title => updateCategory(index, { title })} />
-                <SettingsInput label="رابط الصورة" value={category.image} onChange={image => updateCategory(index, { image })} />
-                <button type="button" onClick={() => removeCategory(index)} disabled={managedCategories.length <= 1} className="tm-admin-press min-h-[44px] rounded-md bg-[#fff1d5] px-3 text-xs font-black text-[#9a5a00] disabled:cursor-not-allowed disabled:opacity-45">حذف</button>
+                <button type="button" onClick={() => removeCategory(index)} disabled={managedCategories.length <= 1} className="tm-admin-press min-h-[44px] rounded-md bg-[#fff1d5] px-3 text-xs font-black text-[#9a5a00] disabled:cursor-not-allowed disabled:opacity-45 md:order-3">حذف</button>
+                <div className="col-span-2 min-w-0 md:col-span-1">
+                  <SettingsInput label="رابط الصورة" value={category.image} onChange={image => updateCategory(index, { image })} />
+                </div>
               </article>
             ))}
           </div>
@@ -1472,9 +1474,9 @@ function EmptyAdmin({ title, copy }: { title: string; copy?: string }) {
 
 function SettingsInput({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
   return (
-    <label className="grid gap-1">
+    <label className="grid min-w-0 gap-1">
       <span className="text-xs font-black text-[#65716a]">{label}</span>
-      <input value={value} onChange={event => onChange(event.target.value)} className="min-h-[44px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-3 text-sm font-bold outline-none focus:border-[#b45309]" />
+      <input value={value} onChange={event => onChange(event.target.value)} className="min-h-[44px] w-full min-w-0 rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-3 text-sm font-bold outline-none focus:border-[#b45309]" />
     </label>
   );
 }
