@@ -150,7 +150,7 @@ export const CODTangerArabicStoreLanding = ({
     offerProducts,
     newArrivalProducts,
   } = getHomepageSections(products, settings.heroProductSlug);
-  const shortcutCategories = (categories.length ? categories : defaultCategories).slice(0, 6);
+  const shortcutCategories = categories.length ? categories : defaultCategories;
   const navigate = onNavigate || navigateToRoute;
   const [heroSlide, setHeroSlide] = useState(0);
   const openCategories = () => scrollToSection('categories');
@@ -190,7 +190,7 @@ export const CODTangerArabicStoreLanding = ({
 
       <section id="categories" className="scroll-mt-20 bg-[var(--tm-surface-white)]">
         <div className="mx-auto w-full max-w-[1180px]">
-          <div className="flex gap-4 overflow-x-auto px-4 py-4 sm:px-6 lg:justify-center lg:gap-8 lg:overflow-visible lg:px-8 lg:py-6">
+          <div className="flex gap-4 overflow-x-auto px-4 py-4 sm:px-6 lg:gap-8 lg:px-8 lg:py-6">
             {shortcutCategories.map((category, index) => (
               <button key={category.id} type="button" onClick={() => navigate(categoryRoute(category.id))} className="tm-press w-[88px] shrink-0 text-center sm:w-[96px] lg:w-[116px]">
                 <span className="relative mx-auto grid h-16 w-16 place-items-center overflow-hidden rounded-full bg-[#fff7ed] shadow-[0_0_0_1px_rgba(0,0,0,0.06),0_10px_24px_rgba(23,32,27,0.08)] sm:h-20 sm:w-20 lg:h-24 lg:w-24">
