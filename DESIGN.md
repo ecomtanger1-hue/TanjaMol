@@ -15,13 +15,28 @@ Use the existing CSS variables in `src/index.css` before adding new hard-coded c
 - `--tm-ink`
 - `--tm-muted`
 - `--tm-surface`
-- `--tm-surface-warm`
-- `--tm-card`
+- `--tm-surface-soft`
+- `--tm-surface-tint`
+- `--tm-surface-white`
 - `--tm-border`
+- `--tm-border-strong`
 - `--tm-focus`
 - `--tm-warning`
-- `--tm-shadow-soft`
-- `--tm-shadow-card`
+- `--tm-warning-soft`
+- `--tm-shadow-sm`
+- `--tm-shadow-md`
+- `--tm-shadow-lg`
+- `--tm-shadow-brand`
+- `--tm-shadow-border`
+- `--tm-shadow-control`
+
+Admin and component aliases:
+
+- `--tm-selection-bg`
+- `--tm-selection-fg`
+- `--tm-admin-shadow-card`
+- `--tm-admin-image-outline`
+- `--tm-admin-press-scale`
 
 When a new repeated value appears, prefer adding a semantic token over copying another hex value. Keep token additions small and obvious.
 
