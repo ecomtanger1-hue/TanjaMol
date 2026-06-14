@@ -969,14 +969,15 @@ export function AdminOrdersPage({
       </section>
 
       <section className="tm-admin-surface overflow-hidden rounded-md bg-white">
-        <div className="grid grid-cols-[minmax(0,1fr)_92px_92px] gap-2 border-b border-[#dfe5df] p-3 sm:grid-cols-[minmax(280px,1fr)_190px_190px] sm:gap-3 sm:p-4">
-          <label className="relative block">
-            <Search className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#65716a]" aria-hidden="true" strokeWidth={2.35} />
+        <div className="grid grid-cols-[44px_minmax(0,1fr)_minmax(0,1fr)] gap-2 border-b border-[#dfe5df] p-3 sm:grid-cols-[minmax(280px,1fr)_190px_190px] sm:gap-3 sm:p-4">
+          <label className="relative block w-11 min-w-0 focus-within:col-span-3 focus-within:w-full sm:w-auto sm:focus-within:col-span-1">
+            <Search className="pointer-events-none absolute right-1/2 top-1/2 h-4 w-4 translate-x-1/2 -translate-y-1/2 text-[#65716a] sm:right-3 sm:translate-x-0" aria-hidden="true" strokeWidth={2.35} />
             <input
               value={query}
               onChange={event => setQuery(event.target.value)}
-              placeholder={'\u0628\u062d\u062b'}
-              className="min-h-[44px] w-full rounded-md border border-[#cfd8d1] bg-[#fbfaf6] pr-9 pl-2 text-sm font-bold outline-none focus:border-[#b45309] sm:pl-3"
+              placeholder=""
+              aria-label={'\u0628\u062d\u062b'}
+              className="min-h-[44px] w-full rounded-md border border-[#cfd8d1] bg-[#fbfaf6] pr-10 pl-2 text-sm font-bold text-transparent outline-none focus:border-[#b45309] focus:text-[#17201b] sm:pr-9 sm:pl-3 sm:text-[#17201b]"
               type="search"
             />
           </label>
@@ -1318,7 +1319,7 @@ export function AdminSettingsPage({
           </div>
         </section>
 
-        <button type="submit" className="sticky z-20 min-h-[48px] rounded-md bg-[#ff9900] px-5 font-black text-[#131921] shadow-[0_16px_32px_-24px_rgba(19,25,33,0.75)] sm:static sm:shadow-none" style={{ bottom: 'calc(92px + env(safe-area-inset-bottom))' }}>حفظ</button>
+        <button type="submit" className="min-h-[48px] rounded-md bg-[#ff9900] px-5 font-black text-[#131921]">حفظ</button>
         {saved ? <p className="text-sm font-black text-[#b45309]">تم الحفظ</p> : null}
       </form>
     </AdminShell>
