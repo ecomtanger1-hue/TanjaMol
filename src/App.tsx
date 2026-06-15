@@ -2,11 +2,6 @@ import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useState, type CSS
 import { CODTangerArabicStoreLanding } from './components/storefront/CODTangerArabicStoreLanding';
 import { TanjaMolArabicCODProductPage } from './components/product/TanjaMolArabicCODProductPage';
 import {
-  AdminCustomerDetailPage,
-  AdminLogin,
-  AdminOrderDetailPage,
-  AdminOrdersPage,
-  AdminSettingsPage,
   CartPopup,
   CategoryPage,
   CollectionPage,
@@ -37,16 +32,36 @@ import {
 } from './storefrontRuntime';
 import { getCurrentRoute, replaceLegacyHashRoute, routeToPath } from './lib/routing';
 
-const TanjaMallAdminProductDashboard = lazy(() => import('./components/magicpath/tanja-mol-admin-product-dashboard/TanjaMolAdminProductDashboard').then(module => ({
-  default: module.TanjaMallAdminProductDashboard,
-})));
-
 const TanjaMolAddProductPage = lazy(() => import('./components/magicpath/tanja-mol-add-product-page/TanjaMolAddProductPage').then(module => ({
   default: module.TanjaMolAddProductPage,
 })));
 
-const AdminProductsPage = lazy(() => import('./components/admin/AdminProductsPage').then(module => ({
-  default: module.AdminProductsPage,
+const ShadcnAdminDashboard = lazy(() => import('./components/admin-shadcn/ShadcnAdminDashboard').then(module => ({
+  default: module.ShadcnAdminDashboard,
+})));
+
+const ShadcnAdminProductsPage = lazy(() => import('./components/admin-shadcn/ShadcnAdminProductsPage').then(module => ({
+  default: module.ShadcnAdminProductsPage,
+})));
+
+const ShadcnAdminOrdersPage = lazy(() => import('./components/admin-shadcn/ShadcnAdminOrders').then(module => ({
+  default: module.ShadcnAdminOrdersPage,
+})));
+
+const ShadcnAdminOrderDetailPage = lazy(() => import('./components/admin-shadcn/ShadcnAdminOrders').then(module => ({
+  default: module.ShadcnAdminOrderDetailPage,
+})));
+
+const ShadcnAdminCustomerDetailPage = lazy(() => import('./components/admin-shadcn/ShadcnAdminOrders').then(module => ({
+  default: module.ShadcnAdminCustomerDetailPage,
+})));
+
+const ShadcnAdminSettingsPage = lazy(() => import('./components/admin-shadcn/ShadcnAdminSettingsPage').then(module => ({
+  default: module.ShadcnAdminSettingsPage,
+})));
+
+const ShadcnAdminLogin = lazy(() => import('./components/admin-shadcn/ShadcnAdminLogin').then(module => ({
+  default: module.ShadcnAdminLogin,
 })));
 
 const CART_KEY = 'tanjamol.cart.v1';
@@ -841,39 +856,37 @@ export function App() {
 
   const renderedPage = useMemo(() => {
     if (route === '#/admin/login') {
-      return <AdminLogin error={adminLoginError} loading={isAdminLoading} onLogin={loginAdmin} />;
+      return <ShadcnAdminLogin error={adminLoginError} loading={isAdminLoading} onLogin={loginAdmin} />;
     }
 
     if (route.startsWith('#/admin') && isAdminLoading) {
-      return <AdminLogin error="" loading onLogin={loginAdmin} />;
+      return <ShadcnAdminLogin error="" loading onLogin={loginAdmin} />;
     }
 
     if (route.startsWith('#/admin') && !isAdminLoggedIn) {
-      return <AdminLogin error={adminLoginError} loading={false} onLogin={loginAdmin} />;
+      return <ShadcnAdminLogin error={adminLoginError} loading={false} onLogin={loginAdmin} />;
     }
 
     if (route === '#/admin') {
       return (
-        <TanjaMallAdminProductDashboard
+        <ShadcnAdminDashboard
           products={adminProducts}
           orders={orders}
           hiddenSlugs={effectiveHiddenProductSlugs}
-          onAddProduct={() => navigate('#/admin/products/new')}
-          onOpenProducts={() => navigate('#/admin/products')}
-          onOpenStorefront={() => navigate('#/')}
+          route={route}
+          onNavigate={navigate}
           onOpenProduct={(slug) => navigate(productRoute(slug))}
-          onOpenOrders={() => navigate('#/admin/orders')}
-          onOpenSettings={() => navigate('#/admin/settings')}
         />
       );
     }
 
     if (route === '#/admin/products') {
       return (
-        <AdminProductsPage
+        <ShadcnAdminProductsPage
           products={adminProducts}
           orders={orders}
           hiddenSlugs={effectiveHiddenProductSlugs}
+          route={route}
           onNavigate={navigate}
           onDeleteProduct={deleteProduct}
           onDeleteProducts={deleteProducts}
@@ -890,10 +903,11 @@ export function App() {
       const editProduct = adminProducts.find(product => product.slug === slug);
       if (!editProduct) {
         return (
-          <AdminProductsPage
+          <ShadcnAdminProductsPage
             products={adminProducts}
             orders={orders}
             hiddenSlugs={effectiveHiddenProductSlugs}
+            route="#/admin/products"
             onNavigate={navigate}
             onDeleteProduct={deleteProduct}
             onDeleteProducts={deleteProducts}
@@ -933,20 +947,47 @@ export function App() {
       );
     }
 
-    if (route === '#/admin/orders') return <AdminOrdersPage orders={orders} settings={settings} onNavigate={navigate} onUpdateOrderStatus={updateOrderStatus} onMarkCustomerMessageSent={markOrderCustomerMessageSent} />;
+    if (route === '#/admin/orders') {
+      return (
+        <ShadcnAdminOrdersPage
+          orders={orders}
+          settings={settings}
+          route={route}
+          onNavigate={navigate}
+          onUpdateOrderStatus={updateOrderStatus}
+          onMarkCustomerMessageSent={markOrderCustomerMessageSent}
+        />
+      );
+    }
 
     if (route.startsWith('#/admin/orders/')) {
-      const id = decodeURIComponent(route.replace('#/admin/orders/', ''));
-      return <AdminOrderDetailPage order={orders.find(order => order.id === id)} settings={settings} onNavigate={navigate} onUpdateOrderStatus={updateOrderStatus} onMarkCustomerMessageSent={markOrderCustomerMessageSent} />;
+      return (
+        <ShadcnAdminOrderDetailPage
+          orders={orders}
+          settings={settings}
+          route={route}
+          onNavigate={navigate}
+          onUpdateOrderStatus={updateOrderStatus}
+          onMarkCustomerMessageSent={markOrderCustomerMessageSent}
+        />
+      );
     }
 
     if (route.startsWith('#/admin/customers/')) {
-      const phone = decodeURIComponent(route.replace('#/admin/customers/', ''));
-      return <AdminCustomerDetailPage phone={phone} orders={orders} settings={settings} onNavigate={navigate} onUpdateOrderStatus={updateOrderStatus} onMarkCustomerMessageSent={markOrderCustomerMessageSent} />;
+      return (
+        <ShadcnAdminCustomerDetailPage
+          orders={orders}
+          settings={settings}
+          route={route}
+          onNavigate={navigate}
+          onUpdateOrderStatus={updateOrderStatus}
+          onMarkCustomerMessageSent={markOrderCustomerMessageSent}
+        />
+      );
     }
 
     if (route === '#/admin/settings') {
-      return <AdminSettingsPage settings={settings} products={adminProducts} onSave={saveStoreSettings} onNavigate={navigate} />;
+      return <ShadcnAdminSettingsPage settings={settings} products={adminProducts} route={route} onSave={saveStoreSettings} onNavigate={navigate} />;
     }
 
     if (productSlug) {

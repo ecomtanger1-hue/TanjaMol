@@ -792,7 +792,7 @@ export const TanjaMolAddProductPage = ({
   };
 
   return (
-    <form dir="rtl" onSubmit={submitProduct} onKeyDown={handleFormKeyDown} className="min-h-screen w-full bg-[#f4f2eb] text-[#17201b]">
+    <form dir="rtl" onSubmit={submitProduct} onKeyDown={handleFormKeyDown} className="tm-shadcn-product-editor min-h-screen w-full bg-[#f4f2eb] text-[#17201b]">
       <div className="grid min-h-screen lg:grid-cols-[76px_minmax(0,1fr)]">
         <AdminRail onOpenDashboard={onOpenDashboard} />
 

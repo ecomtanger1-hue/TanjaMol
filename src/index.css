@@ -1,4 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Tajawal:wght@400;500;700;800&display=swap');
+@import "@fontsource-variable/noto-sans-arabic";
+@import "tw-animate-css";
 @import 'tailwindcss';
 
 @plugin "tailwindcss-animate";
@@ -19,10 +21,10 @@ body {
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: "Noto Sans Arabic Variable", var(--font-body);
   --font-body: var(--font-body);
   --font-heading: var(--font-heading);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -1293,6 +1295,190 @@ body {
 .tm-admin-flat-stat {
   border-top: 1px solid var(--tm-border);
   padding-top: 0.625rem;
+}
+
+.tm-shadcn-product-editor {
+  background: #09090b !important;
+  color: #f4f4f5 !important;
+  font-family: var(--font-sans);
+}
+
+.tm-shadcn-product-editor main {
+  background: #09090b;
+}
+
+.tm-shadcn-product-editor header {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  background: rgba(9, 9, 11, 0.88) !important;
+  color: #fafafa !important;
+  backdrop-filter: blur(16px);
+}
+
+.tm-shadcn-product-editor header h1,
+.tm-shadcn-product-editor .font-heading {
+  color: #fafafa;
+  letter-spacing: 0;
+}
+
+.tm-shadcn-product-editor header > div:last-child,
+.tm-shadcn-product-editor .border-t {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.tm-shadcn-product-editor header > div:last-child {
+  background: rgba(24, 24, 27, 0.72) !important;
+}
+
+.tm-shadcn-product-editor .tm-admin-surface,
+.tm-shadcn-product-editor section.tm-admin-surface,
+.tm-shadcn-product-editor .rounded-md.bg-white,
+.tm-shadcn-product-editor .bg-white {
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: rgba(24, 24, 27, 0.72) !important;
+  color: #f4f4f5 !important;
+  box-shadow: none !important;
+}
+
+.tm-shadcn-product-editor section.tm-admin-surface {
+  border-radius: 0.75rem !important;
+}
+
+.tm-shadcn-product-editor section.tm-admin-surface > div:first-child {
+  min-height: 64px;
+}
+
+.tm-shadcn-product-editor section.tm-admin-surface > div:last-child {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.tm-shadcn-product-editor label > span,
+.tm-shadcn-product-editor .text-\[\#65716a\],
+.tm-shadcn-product-editor .text-\[\#5f6861\] {
+  color: #a1a1aa !important;
+}
+
+.tm-shadcn-product-editor .tm-admin-field,
+.tm-shadcn-product-editor input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]),
+.tm-shadcn-product-editor textarea,
+.tm-shadcn-product-editor select {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  background: #09090b !important;
+  color: #f4f4f5 !important;
+  box-shadow: none !important;
+}
+
+.tm-shadcn-product-editor .tm-admin-field:focus,
+.tm-shadcn-product-editor .tm-admin-field:focus-visible,
+.tm-shadcn-product-editor input:focus,
+.tm-shadcn-product-editor input:focus-visible,
+.tm-shadcn-product-editor textarea:focus,
+.tm-shadcn-product-editor textarea:focus-visible,
+.tm-shadcn-product-editor select:focus,
+.tm-shadcn-product-editor select:focus-visible {
+  border-color: #fb923c !important;
+  box-shadow: 0 0 0 3px rgba(251, 146, 60, 0.28) !important;
+}
+
+.tm-shadcn-product-editor input::placeholder,
+.tm-shadcn-product-editor textarea::placeholder {
+  color: #71717a !important;
+}
+
+.tm-shadcn-product-editor button,
+.tm-shadcn-product-editor label[for] {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.tm-shadcn-product-editor button.bg-\[\#ff9900\],
+.tm-shadcn-product-editor .bg-\[\#ff9900\] {
+  background: #f97316 !important;
+  color: #09090b !important;
+  box-shadow: none !important;
+}
+
+.tm-shadcn-product-editor button.bg-\[\#131921\],
+.tm-shadcn-product-editor label.bg-\[\#131921\],
+.tm-shadcn-product-editor .bg-\[\#131921\] {
+  background: #18181b !important;
+  color: #fafafa !important;
+}
+
+.tm-shadcn-product-editor button.bg-white,
+.tm-shadcn-product-editor .bg-\[\#fbfaf6\],
+.tm-shadcn-product-editor .bg-\[\#eef3ef\] {
+  background: #18181b !important;
+  color: #f4f4f5 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.tm-shadcn-product-editor .bg-\[\#fff3df\],
+.tm-shadcn-product-editor .bg-\[\#fff1d5\],
+.tm-shadcn-product-editor .tm-admin-chip-brand,
+.tm-shadcn-product-editor .tm-admin-chip-warning {
+  background: rgba(249, 115, 22, 0.16) !important;
+  color: #fed7aa !important;
+  border-color: rgba(249, 115, 22, 0.28) !important;
+}
+
+.tm-shadcn-product-editor .tm-admin-chip-muted,
+.tm-shadcn-product-editor .bg-\[\#eef3ef\].text-\[\#65716a\] {
+  background: rgba(113, 113, 122, 0.18) !important;
+  color: #d4d4d8 !important;
+}
+
+.tm-shadcn-product-editor .text-\[\#b45309\],
+.tm-shadcn-product-editor .text-\[\#9a5a00\] {
+  color: #fb923c !important;
+}
+
+.tm-shadcn-product-editor .text-\[\#131921\],
+.tm-shadcn-product-editor .text-\[\#17201b\] {
+  color: #fafafa !important;
+}
+
+.tm-shadcn-product-editor .border-\[\#e3e6df\],
+.tm-shadcn-product-editor .border-\[\#e4e9e4\],
+.tm-shadcn-product-editor .border-\[\#dfe5df\],
+.tm-shadcn-product-editor .border-\[\#cfd8d1\],
+.tm-shadcn-product-editor .border-\[\#bfcac1\] {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.tm-shadcn-product-editor table {
+  color: #f4f4f5;
+}
+
+.tm-shadcn-product-editor th {
+  color: #a1a1aa !important;
+}
+
+.tm-shadcn-product-editor td,
+.tm-shadcn-product-editor tr {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.tm-shadcn-product-editor img {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.tm-shadcn-product-editor .jodit-container,
+.tm-shadcn-product-editor .jodit-toolbar__box,
+.tm-shadcn-product-editor .jodit-workplace {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.tm-shadcn-product-editor .jodit-container {
+  background: #18181b !important;
+}
+
+.tm-shadcn-product-editor .jodit-wysiwyg,
+.tm-shadcn-product-editor .jodit-source {
+  background: #09090b !important;
+  color: #f4f4f5 !important;
+}
+
+.tm-shadcn-product-editor .jodit-toolbar__box {
+  background: #18181b !important;
 }
 
 .tm-rich-editor-body h1,
