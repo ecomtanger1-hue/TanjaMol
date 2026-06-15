@@ -282,7 +282,7 @@ export function ShadcnAdminOrdersPage({ orders, settings, route, onNavigate, onU
               <TableRow key={order.id} className="border-white/10 hover:bg-white/5">
                 <TableCell>
                   <button type="button" onClick={() => onNavigate(`#/admin/orders/${encodeURIComponent(order.id)}`)} className="flex items-center gap-3 text-right">
-                    {order.items[0]?.image ? (
+                    {order.items?.[0]?.image ? (
                       <img
                         src={order.items[0].image}
                         alt=""
