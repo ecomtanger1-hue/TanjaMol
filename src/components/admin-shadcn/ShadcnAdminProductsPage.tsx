@@ -116,6 +116,7 @@ export function ShadcnAdminProductsPage({
   }, [filter, hiddenSet, orders, products, query, sort]);
 
   const selectedProducts = products.filter(product => selected.includes(product.slug));
+  const selectionMode = selected.length > 0;
   const allCurrentSelected = rows.length > 0 && rows.every(row => selected.includes(row.product.slug));
   const visibleCount = products.filter(product => !product.isDraft && !hiddenSet.has(product.slug)).length;
   const draftCount = products.filter(product => product.isDraft).length;
@@ -126,6 +127,7 @@ export function ShadcnAdminProductsPage({
   };
 
   const startLongPressSelection = (slug: string) => {
+    if (selectionMode) return;
     window.clearTimeout(longPressTimers.current[slug]);
     longPressTimers.current[slug] = window.setTimeout(() => {
       toggleSelected(slug);
@@ -142,6 +144,13 @@ export function ShadcnAdminProductsPage({
   const openProductEditor = (slug: string) => {
     if (longPressHandled.current.delete(slug)) return;
     onNavigate(`#/admin/products/${encodeURIComponent(slug)}/edit`);
+  };
+
+  const handleMobileCardClick = (slug: string) => {
+    if (longPressHandled.current.delete(slug)) return;
+    if (selectionMode) {
+      toggleSelected(slug);
+    }
   };
 
   const toggleAllCurrent = () => {
@@ -169,22 +178,33 @@ export function ShadcnAdminProductsPage({
     clearSelection();
   };
 
-  const productActions = (product: Product, hidden: boolean, mobile = false) => (
-    <div className={mobile ? 'grid grid-cols-4 gap-2' : 'inline-flex items-center gap-1'}>
-      <Button type="button" variant="ghost" size="icon" className={mobile ? 'h-9 w-full text-zinc-200 hover:bg-white/10' : 'size-9 text-zinc-200 hover:bg-white/10'} onClick={() => onNavigate(productRoute(product.slug))} aria-label="فتح في المتجر" title="فتح في المتجر">
+  const productActions = (product: Product, hidden: boolean, mobile = false) => {
+    const disabledForSelection = mobile && selectionMode;
+    const buttonClassName = mobile ? 'h-9 w-full text-zinc-200 hover:bg-white/10 disabled:pointer-events-none disabled:opacity-35' : 'size-9 text-zinc-200 hover:bg-white/10';
+    const dangerClassName = mobile ? 'h-9 w-full text-red-300 hover:bg-red-500/10 hover:text-red-200 disabled:pointer-events-none disabled:opacity-35' : 'size-9 text-red-300 hover:bg-red-500/10 hover:text-red-200';
+
+    return (
+      <div
+        className={mobile ? 'grid grid-cols-4 gap-2' : 'inline-flex items-center gap-1'}
+      onClick={mobile && !selectionMode ? event => event.stopPropagation() : undefined}
+      onPointerDown={mobile && !selectionMode ? event => event.stopPropagation() : undefined}
+      onContextMenu={mobile ? event => event.preventDefault() : undefined}
+    >
+      <Button type="button" variant="ghost" size="icon" disabled={disabledForSelection} className={buttonClassName} onClick={() => onNavigate(productRoute(product.slug))} aria-label="فتح في المتجر" title="فتح في المتجر">
         <ArrowUpLeft className="size-4" />
       </Button>
-      <Button type="button" variant="ghost" size="icon" className={mobile ? 'h-9 w-full text-zinc-200 hover:bg-white/10' : 'size-9 text-zinc-200 hover:bg-white/10'} onClick={() => onNavigate(`#/admin/products/${encodeURIComponent(product.slug)}/edit`)} aria-label="تعديل" title="تعديل">
+      <Button type="button" variant="ghost" size="icon" disabled={disabledForSelection} className={buttonClassName} onClick={() => onNavigate(`#/admin/products/${encodeURIComponent(product.slug)}/edit`)} aria-label="تعديل" title="تعديل">
         <Edit className="size-4" />
       </Button>
-      <Button type="button" variant="ghost" size="icon" className={mobile ? 'h-9 w-full text-zinc-200 hover:bg-white/10' : 'size-9 text-zinc-200 hover:bg-white/10'} onClick={() => onToggleVisibility(product.slug)} aria-label={hidden ? 'إظهار' : 'إخفاء'} title={hidden ? 'إظهار' : 'إخفاء'}>
+      <Button type="button" variant="ghost" size="icon" disabled={disabledForSelection} className={buttonClassName} onClick={() => onToggleVisibility(product.slug)} aria-label={hidden ? 'إظهار' : 'إخفاء'} title={hidden ? 'إظهار' : 'إخفاء'}>
         {hidden ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
       </Button>
-      <Button type="button" variant="ghost" size="icon" className={mobile ? 'h-9 w-full text-red-300 hover:bg-red-500/10 hover:text-red-200' : 'size-9 text-red-300 hover:bg-red-500/10 hover:text-red-200'} onClick={() => onDeleteProduct(product)} aria-label="حذف" title="حذف">
+      <Button type="button" variant="ghost" size="icon" disabled={disabledForSelection} className={dangerClassName} onClick={() => onDeleteProduct(product)} aria-label="حذف" title="حذف">
         <Trash2 className="size-4" />
       </Button>
     </div>
-  );
+    );
+  };
 
   return (
     <ShadcnAdminShell
@@ -279,6 +299,14 @@ export function ShadcnAdminProductsPage({
             <article
               key={product.slug}
               aria-selected={checked}
+              onClick={() => handleMobileCardClick(product.slug)}
+              onPointerDown={() => startLongPressSelection(product.slug)}
+              onPointerUp={() => cancelLongPressSelection(product.slug)}
+              onPointerLeave={() => cancelLongPressSelection(product.slug)}
+              onPointerCancel={() => cancelLongPressSelection(product.slug)}
+              onContextMenu={event => {
+                event.preventDefault();
+              }}
               className={cn(
                 'rounded-lg border border-white/10 bg-zinc-900/70 p-3 transition-colors',
                 checked && 'border-orange-400/50 bg-orange-500/10 ring-1 ring-orange-400/30',
@@ -287,15 +315,12 @@ export function ShadcnAdminProductsPage({
               <div className="grid grid-cols-[72px_minmax(0,1fr)] gap-3">
                 <button
                   type="button"
-                  onClick={() => openProductEditor(product.slug)}
-                  onPointerDown={() => startLongPressSelection(product.slug)}
-                  onPointerUp={() => cancelLongPressSelection(product.slug)}
-                  onPointerLeave={() => cancelLongPressSelection(product.slug)}
-                  onPointerCancel={() => cancelLongPressSelection(product.slug)}
-                  onContextMenu={event => {
-                    event.preventDefault();
+                  disabled={selectionMode}
+                  onClick={event => {
+                    event.stopPropagation();
+                    openProductEditor(product.slug);
                   }}
-                  className="grid min-w-0 gap-1 text-center"
+                  className="grid min-w-0 gap-1 text-center disabled:pointer-events-none"
                   aria-label={`تعديل ${product.title}`}
                 >
                   <img
@@ -312,15 +337,12 @@ export function ShadcnAdminProductsPage({
                 <div className="grid min-w-0 grid-rows-[auto_auto] content-start gap-2">
                   <button
                     type="button"
-                    onClick={() => openProductEditor(product.slug)}
-                    onPointerDown={() => startLongPressSelection(product.slug)}
-                    onPointerUp={() => cancelLongPressSelection(product.slug)}
-                    onPointerLeave={() => cancelLongPressSelection(product.slug)}
-                    onPointerCancel={() => cancelLongPressSelection(product.slug)}
-                    onContextMenu={event => {
-                      event.preventDefault();
+                    disabled={selectionMode}
+                    onClick={event => {
+                      event.stopPropagation();
+                      openProductEditor(product.slug);
                     }}
-                    className="min-w-0 truncate text-right text-sm font-black text-zinc-50"
+                    className="min-w-0 truncate text-right text-sm font-black text-zinc-50 disabled:pointer-events-none"
                   >
                     {product.title}
                   </button>
