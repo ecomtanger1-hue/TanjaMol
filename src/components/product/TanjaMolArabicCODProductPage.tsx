@@ -115,7 +115,7 @@ export const TanjaMolArabicCODProductPage = ({
   }];
   const variantOptions = product?.variantOptions?.filter(option => option.label.trim() && option.values.some(value => value.label.trim())) ?? [];
   const enabledProductVariants = product?.variants?.filter(variant => variant.enabled) ?? [];
-  const hasRealVariants = Boolean(product && variantOptions.length && enabledProductVariants.length);
+  const hasRealVariants = Boolean(product && product.variantsEnabled !== false && variantOptions.length && enabledProductVariants.length);
   const visibleVariantOptions = hasRealVariants ? variantOptions : product ? [] : fallbackVariantOptions;
   const productVariants = hasRealVariants ? enabledProductVariants : product ? [] : fallbackVariants;
   const activeVariantGroups = visibleVariantOptions.map(group => ({
