@@ -59,6 +59,37 @@ function whatsappUrl(order: StoredOrder, settings: StoreSettings) {
   return `https://wa.me/${cleanPhone(order.phone)}?text=${encodeURIComponent(orderMessage(order, settings))}`;
 }
 
+function orderCopyText(order: StoredOrder, settings: StoreSettings) {
+  const products = order.items
+    .map((item, index) => [
+      `${index + 1}. ${item.title}`,
+      item.variant ? `الاختيار: ${item.variant}` : null,
+      `الكمية: ${item.quantity}`,
+      `السعر: ${formatMoney(item.price)}`,
+      `المبلغ: ${formatMoney(item.price * item.quantity)}`,
+    ].filter(Boolean).join('\n'))
+    .join('\n\n');
+
+  return [
+    `${settings.storeName || 'TanjaMall'} - تفاصيل الطلب`,
+    `رقم الطلب: ${order.id}`,
+    `الحالة: ${statusLabels[order.status]}`,
+    `التاريخ: ${formatDate(order.createdAt)}`,
+    '',
+    'العميل',
+    `الاسم: ${order.name || 'غير محدد'}`,
+    `الهاتف: ${order.phone}`,
+    `العنوان: ${order.address}`,
+    order.note ? `الملاحظة: ${order.note}` : null,
+    '',
+    'المنتجات',
+    products,
+    '',
+    `المجموع: ${formatMoney(order.total)}`,
+    `المصدر: ${order.source}`,
+  ].filter(Boolean).join('\n');
+}
+
 function OrderStatusSelect({
   value,
   onChange,
@@ -313,6 +344,9 @@ export function ShadcnAdminOrderDetailPage({ orders, settings, route, onNavigate
   }
 
   const customerOrders = orders.filter(item => item.phone === order.phone);
+  const copyOrderDetails = () => {
+    void navigator.clipboard?.writeText(orderCopyText(order, settings));
+  };
 
   return (
     <ShadcnAdminShell
@@ -323,7 +357,7 @@ export function ShadcnAdminOrderDetailPage({ orders, settings, route, onNavigate
       actions={<Button type="button" variant="outline" className="border-white/10 bg-white/5 text-zinc-100 hover:bg-white/10" onClick={() => onNavigate('#/admin/orders')}><ArrowRight className="size-4" /> رجوع</Button>}
     >
       <div className="grid gap-5 xl:grid-cols-[1.35fr_0.75fr]">
-        <section className="order-2 grid gap-5 xl:order-1">
+        <section className="order-1 grid gap-5 xl:order-1">
           <Card className="hidden border-white/10 bg-zinc-900/70 text-zinc-50 shadow-none sm:block">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg font-black">الملخص</CardTitle>
@@ -357,12 +391,22 @@ export function ShadcnAdminOrderDetailPage({ orders, settings, route, onNavigate
             <CardHeader><CardTitle className="text-lg font-black">المنتجات</CardTitle></CardHeader>
             <CardContent className="grid gap-3">
               {order.items.map(item => (
-                <div key={`${item.id}-${item.variant || 'default'}`} className="flex gap-3 rounded-lg border border-white/10 bg-zinc-950/70 p-3">
+                <div key={`${item.id}-${item.variant || 'default'}`} className="grid grid-cols-[76px_minmax(0,1fr)] gap-3 rounded-lg border border-white/10 bg-zinc-950/70 p-3">
                   <img src={item.image} alt="" width={76} height={76} loading="lazy" decoding="async" className="size-[76px] rounded-md object-cover" />
                   <div className="min-w-0 flex-1">
                     <p className="line-clamp-2 text-sm font-black">{item.title}</p>
                     {item.variant ? <p className="mt-1 text-xs text-zinc-500">{item.variant}</p> : null}
-                    <p className="mt-2 text-sm font-black text-orange-300">{item.quantity} × {formatMoney(item.price)}</p>
+                    <div className="mt-2 grid grid-cols-2 gap-2 rounded-md bg-zinc-900/70 p-2 text-xs">
+                      <span>
+                        <b className="block font-bold text-zinc-500">الكمية</b>
+                        <span className="font-black text-zinc-100">{item.quantity.toLocaleString('ar-MA')}</span>
+                      </span>
+                      <span>
+                        <b className="block font-bold text-zinc-500">المبلغ</b>
+                        <span className="font-black text-orange-300">{formatMoney(item.price * item.quantity)}</span>
+                      </span>
+                    </div>
+                    <p className="mt-1 text-xs font-bold text-zinc-500">السعر: {formatMoney(item.price)}</p>
                   </div>
                 </div>
               ))}
@@ -370,15 +414,28 @@ export function ShadcnAdminOrderDetailPage({ orders, settings, route, onNavigate
           </Card>
         </section>
 
-        <aside className="order-1 grid gap-5 content-start xl:order-2">
+        <aside className="order-2 grid gap-5 content-start xl:order-2">
           <Card className="border-white/10 bg-zinc-900/70 text-zinc-50 shadow-none">
             <CardHeader><CardTitle className="flex items-center gap-2 text-lg font-black"><UserRound className="size-4" /> العميل</CardTitle></CardHeader>
             <CardContent className="grid gap-3 text-sm">
-              <div className="rounded-lg bg-zinc-950/70 p-3">
-                <p className="truncate font-black text-zinc-100">{order.name || 'غير محدد'} · {order.address} · {order.phone}</p>
+              <div className="grid gap-2 rounded-lg bg-zinc-950/70 p-3">
+                <p>
+                  <b className="block text-xs text-zinc-500">الاسم</b>
+                  <span className="block truncate font-black text-zinc-100">{order.name || 'غير محدد'}</span>
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <p className="min-w-0">
+                    <b className="block text-xs text-zinc-500">الهاتف</b>
+                    <span className="block truncate font-black text-zinc-100">{order.phone}</span>
+                  </p>
+                  <p className="min-w-0">
+                    <b className="block text-xs text-zinc-500">العنوان</b>
+                    <span className="block truncate font-black text-zinc-100">{order.address}</span>
+                  </p>
+                </div>
                 {order.note ? <p className="mt-2 text-xs text-zinc-400">{order.note}</p> : null}
               </div>
-              <div className="grid grid-cols-[minmax(0,1fr)_44px_44px] gap-2 sm:hidden">
+              <div className="grid grid-cols-[minmax(128px,1fr)_44px_44px_44px] gap-2 sm:hidden">
                 <OrderStatusSelect value={order.status} onChange={status => onUpdateOrderStatus(order.id, status)} />
                 <Button asChild type="button" size="icon" variant="outline" className="h-10 border-white/10 bg-white/5 text-zinc-100 hover:bg-white/10">
                   <a href={`tel:${order.phone}`} aria-label="اتصال"><Phone className="size-4" /></a>
@@ -392,9 +449,12 @@ export function ShadcnAdminOrderDetailPage({ orders, settings, route, onNavigate
                 >
                   <a href={whatsappUrl(order, settings)} target="_blank" rel="noreferrer" aria-label="واتساب"><MessageCircle className="size-4" /></a>
                 </Button>
+                <Button type="button" size="icon" variant="secondary" className="h-10 bg-white/10 text-zinc-100 hover:bg-white/15" onClick={copyOrderDetails} aria-label="نسخ تفاصيل الطلب">
+                  <Copy className="size-4" />
+                </Button>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <Button type="button" variant="secondary" className="bg-white/10 text-zinc-100 hover:bg-white/15" onClick={() => navigator.clipboard?.writeText(`${order.name}\n${order.phone}\n${order.address}`)}>
+              <div className="hidden grid-cols-2 gap-2 sm:grid">
+                <Button type="button" variant="secondary" className="bg-white/10 text-zinc-100 hover:bg-white/15" onClick={copyOrderDetails}>
                   <Copy className="size-4" />
                   نسخ
                 </Button>
