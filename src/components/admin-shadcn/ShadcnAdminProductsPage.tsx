@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { ArrowUpLeft, Edit, Eye, EyeOff, PackagePlus, Search, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -47,6 +47,10 @@ function productDateValue(product: Product) {
   return Number.isFinite(value) ? value : 0;
 }
 
+function formatCompactMoney(value: number) {
+  return `${value.toLocaleString('ar-MA')} د.م.`;
+}
+
 function productStatus(product: Product, hidden: boolean) {
   if (product.isDraft) return { label: 'مسودة', className: 'border-zinc-500/30 bg-zinc-500/15 text-zinc-200' };
   if (hidden) return { label: 'مخفي', className: 'border-amber-400/30 bg-amber-500/15 text-amber-200' };
@@ -75,6 +79,8 @@ export function ShadcnAdminProductsPage({
   const [filter, setFilter] = useState<ProductFilter>('all');
   const [sort, setSort] = useState<ProductSort>('newest');
   const [selected, setSelected] = useState<string[]>([]);
+  const longPressTimers = useRef<Record<string, number>>({});
+  const longPressHandled = useRef<Set<string>>(new Set());
   const hiddenSet = useMemo(() => new Set(hiddenSlugs), [hiddenSlugs]);
 
   const rows = useMemo(() => {
@@ -119,6 +125,25 @@ export function ShadcnAdminProductsPage({
     setSelected(current => current.includes(slug) ? current.filter(item => item !== slug) : [...current, slug]);
   };
 
+  const startLongPressSelection = (slug: string) => {
+    window.clearTimeout(longPressTimers.current[slug]);
+    longPressTimers.current[slug] = window.setTimeout(() => {
+      toggleSelected(slug);
+      longPressHandled.current.add(slug);
+      delete longPressTimers.current[slug];
+    }, 450);
+  };
+
+  const cancelLongPressSelection = (slug: string) => {
+    window.clearTimeout(longPressTimers.current[slug]);
+    delete longPressTimers.current[slug];
+  };
+
+  const openProductEditor = (slug: string) => {
+    if (longPressHandled.current.delete(slug)) return;
+    onNavigate(`#/admin/products/${encodeURIComponent(slug)}/edit`);
+  };
+
   const toggleAllCurrent = () => {
     setSelected(current => {
       if (allCurrentSelected) return current.filter(slug => !rows.some(row => row.product.slug === slug));
@@ -144,18 +169,18 @@ export function ShadcnAdminProductsPage({
     clearSelection();
   };
 
-  const productActions = (product: Product, hidden: boolean) => (
-    <div className="inline-flex items-center gap-1">
-      <Button type="button" variant="ghost" size="icon" className="size-9 text-zinc-200 hover:bg-white/10" onClick={() => onNavigate(productRoute(product.slug))} aria-label="فتح في المتجر" title="فتح في المتجر">
+  const productActions = (product: Product, hidden: boolean, mobile = false) => (
+    <div className={mobile ? 'grid grid-cols-4 gap-2' : 'inline-flex items-center gap-1'}>
+      <Button type="button" variant="ghost" size="icon" className={mobile ? 'h-9 w-full text-zinc-200 hover:bg-white/10' : 'size-9 text-zinc-200 hover:bg-white/10'} onClick={() => onNavigate(productRoute(product.slug))} aria-label="فتح في المتجر" title="فتح في المتجر">
         <ArrowUpLeft className="size-4" />
       </Button>
-      <Button type="button" variant="ghost" size="icon" className="size-9 text-zinc-200 hover:bg-white/10" onClick={() => onNavigate(`#/admin/products/${encodeURIComponent(product.slug)}/edit`)} aria-label="تعديل" title="تعديل">
+      <Button type="button" variant="ghost" size="icon" className={mobile ? 'h-9 w-full text-zinc-200 hover:bg-white/10' : 'size-9 text-zinc-200 hover:bg-white/10'} onClick={() => onNavigate(`#/admin/products/${encodeURIComponent(product.slug)}/edit`)} aria-label="تعديل" title="تعديل">
         <Edit className="size-4" />
       </Button>
-      <Button type="button" variant="ghost" size="icon" className="size-9 text-zinc-200 hover:bg-white/10" onClick={() => onToggleVisibility(product.slug)} aria-label={hidden ? 'إظهار' : 'إخفاء'} title={hidden ? 'إظهار' : 'إخفاء'}>
+      <Button type="button" variant="ghost" size="icon" className={mobile ? 'h-9 w-full text-zinc-200 hover:bg-white/10' : 'size-9 text-zinc-200 hover:bg-white/10'} onClick={() => onToggleVisibility(product.slug)} aria-label={hidden ? 'إظهار' : 'إخفاء'} title={hidden ? 'إظهار' : 'إخفاء'}>
         {hidden ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
       </Button>
-      <Button type="button" variant="ghost" size="icon" className="size-9 text-red-300 hover:bg-red-500/10 hover:text-red-200" onClick={() => onDeleteProduct(product)} aria-label="حذف" title="حذف">
+      <Button type="button" variant="ghost" size="icon" className={mobile ? 'h-9 w-full text-red-300 hover:bg-red-500/10 hover:text-red-200' : 'size-9 text-red-300 hover:bg-red-500/10 hover:text-red-200'} onClick={() => onDeleteProduct(product)} aria-label="حذف" title="حذف">
         <Trash2 className="size-4" />
       </Button>
     </div>
@@ -193,7 +218,7 @@ export function ShadcnAdminProductsPage({
         </Card>
       </section>
 
-      <div className="mt-5 grid grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] items-center gap-2 lg:flex lg:flex-wrap">
+      <div className="mt-5 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_44px] items-center gap-2 lg:flex lg:flex-wrap">
         <NativeSelect value={filter} onChange={event => setFilter(event.target.value as ProductFilter)} className="h-11 w-full border-white/10 bg-zinc-950 text-zinc-100 lg:w-[190px]">
           <NativeSelectOption value="all">كل الحالات</NativeSelectOption>
           <NativeSelectOption value="visible">ظاهر</NativeSelectOption>
@@ -202,6 +227,14 @@ export function ShadcnAdminProductsPage({
           <NativeSelectOption value="low-stock">مخزون منخفض</NativeSelectOption>
           <NativeSelectOption value="needs-images">صور ناقصة</NativeSelectOption>
           <NativeSelectOption value="needs-details">تفاصيل ناقصة</NativeSelectOption>
+        </NativeSelect>
+        <NativeSelect value={sort} onChange={event => setSort(event.target.value as ProductSort)} className="h-11 w-full border-white/10 bg-zinc-950 text-zinc-100 lg:w-[190px]">
+          <NativeSelectOption value="newest">الأحدث</NativeSelectOption>
+          <NativeSelectOption value="stock">المخزون</NativeSelectOption>
+          <NativeSelectOption value="price-low">السعر الأقل</NativeSelectOption>
+          <NativeSelectOption value="price-high">السعر الأعلى</NativeSelectOption>
+          <NativeSelectOption value="orders">الأكثر طلبا</NativeSelectOption>
+          <NativeSelectOption value="revenue">الأعلى مداخيل</NativeSelectOption>
         </NativeSelect>
         <div className="relative">
           <Button
@@ -227,14 +260,6 @@ export function ShadcnAdminProductsPage({
             </div>
           ) : null}
         </div>
-        <NativeSelect value={sort} onChange={event => setSort(event.target.value as ProductSort)} className="h-11 w-full border-white/10 bg-zinc-950 text-zinc-100 lg:w-[190px]">
-          <NativeSelectOption value="newest">الأحدث</NativeSelectOption>
-          <NativeSelectOption value="stock">المخزون</NativeSelectOption>
-          <NativeSelectOption value="price-low">السعر الأقل</NativeSelectOption>
-          <NativeSelectOption value="price-high">السعر الأعلى</NativeSelectOption>
-          <NativeSelectOption value="orders">الأكثر طلبا</NativeSelectOption>
-          <NativeSelectOption value="revenue">الأعلى مداخيل</NativeSelectOption>
-        </NativeSelect>
       </div>
 
       {selected.length ? (
@@ -249,19 +274,30 @@ export function ShadcnAdminProductsPage({
 
       <section className="mt-4 grid gap-3 lg:hidden">
         {rows.map(({ product, hidden, sales }) => {
-          const status = productStatus(product, hidden);
           const checked = selected.includes(product.slug);
           return (
-            <article key={product.slug} className="rounded-lg border border-white/10 bg-zinc-900/70 p-3">
-              <div className="flex gap-3">
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={() => toggleSelected(product.slug)}
-                  className="mt-4 size-5 accent-orange-500"
-                  aria-label={`تحديد ${product.title}`}
-                />
-                <button type="button" onClick={() => onNavigate(`#/admin/products/${encodeURIComponent(product.slug)}/edit`)} className="flex min-w-0 flex-1 gap-3 text-right">
+            <article
+              key={product.slug}
+              aria-selected={checked}
+              className={cn(
+                'rounded-lg border border-white/10 bg-zinc-900/70 p-3 transition-colors',
+                checked && 'border-orange-400/50 bg-orange-500/10 ring-1 ring-orange-400/30',
+              )}
+            >
+              <div className="grid grid-cols-[72px_minmax(0,1fr)] gap-3">
+                <button
+                  type="button"
+                  onClick={() => openProductEditor(product.slug)}
+                  onPointerDown={() => startLongPressSelection(product.slug)}
+                  onPointerUp={() => cancelLongPressSelection(product.slug)}
+                  onPointerLeave={() => cancelLongPressSelection(product.slug)}
+                  onPointerCancel={() => cancelLongPressSelection(product.slug)}
+                  onContextMenu={event => {
+                    event.preventDefault();
+                  }}
+                  className="grid min-w-0 gap-1 text-center"
+                  aria-label={`تعديل ${product.title}`}
+                >
                   <img
                     src={product.image}
                     alt=""
@@ -271,21 +307,30 @@ export function ShadcnAdminProductsPage({
                     decoding="async"
                     className="size-[72px] rounded-md object-cover"
                   />
-                  <span className="min-w-0 flex-1">
-                    <span className="line-clamp-2 text-sm font-black text-zinc-50">{product.title}</span>
-                    <span className="mt-1 block text-xs text-zinc-500">{product.category}</span>
-                    <span className="mt-2 flex flex-wrap items-center gap-2">
-                      <Badge variant="outline" className={status.className}>{status.label}</Badge>
-                      <span className="text-xs font-bold text-orange-300">{product.priceLabel || `${product.price} درهم`}</span>
-                    </span>
-                  </span>
+                  <span className="truncate text-xs font-black text-orange-300">{formatCompactMoney(product.price)}</span>
                 </button>
-                {productActions(product, hidden)}
+                <div className="grid min-w-0 grid-rows-[auto_auto] content-start gap-2">
+                  <button
+                    type="button"
+                    onClick={() => openProductEditor(product.slug)}
+                    onPointerDown={() => startLongPressSelection(product.slug)}
+                    onPointerUp={() => cancelLongPressSelection(product.slug)}
+                    onPointerLeave={() => cancelLongPressSelection(product.slug)}
+                    onPointerCancel={() => cancelLongPressSelection(product.slug)}
+                    onContextMenu={event => {
+                      event.preventDefault();
+                    }}
+                    className="min-w-0 truncate text-right text-sm font-black text-zinc-50"
+                  >
+                    {product.title}
+                  </button>
+                  {productActions(product, hidden, true)}
+                </div>
               </div>
               <div className="mt-3 grid grid-cols-3 gap-2 rounded-md bg-zinc-950/80 p-2 text-center text-xs">
                 <span><b className="block text-zinc-100">{(product.stock ?? 0).toLocaleString('ar-MA')}</b><span className="text-zinc-500">مخزون</span></span>
                 <span><b className="block text-zinc-100">{sales.sales.toLocaleString('ar-MA')}</b><span className="text-zinc-500">طلبات</span></span>
-                <span><b className="block text-zinc-100">{sales.revenue.toLocaleString('ar-MA')}</b><span className="text-zinc-500">درهم</span></span>
+                <span><b className="block text-zinc-100">{formatCompactMoney(sales.revenue)}</b><span className="text-zinc-500">مداخيل</span></span>
               </div>
             </article>
           );

@@ -91,7 +91,7 @@ function OrderActions({
   const sentForCurrentStatus = order.customerMessageStatus === order.status;
 
   return (
-    <div className="grid grid-cols-[1fr_44px_44px] gap-2">
+    <div className="grid grid-cols-[minmax(0,1fr)_44px_44px] items-center gap-3">
       <OrderStatusSelect value={order.status} onChange={status => onUpdateOrderStatus(order.id, status)} />
       <Button asChild type="button" size="icon" variant="outline" className="h-10 border-white/10 bg-white/5 text-zinc-100 hover:bg-white/10" title="اتصال">
         <a href={`tel:${order.phone}`} aria-label="اتصال بالعميل"><Phone className="size-4" /></a>
@@ -282,11 +282,13 @@ export function ShadcnAdminOrdersPage({ orders, settings, route, onNavigate, onU
                 <div className="mb-2 grid grid-cols-3 items-center gap-2">
                   <span className="min-w-0 truncate text-right font-black text-zinc-50">{order.id}</span>
                   <span className="min-w-0 truncate text-center text-xs text-zinc-500">{formatDate(order.createdAt)}</span>
-                  <span className="min-w-0 truncate text-left text-lg font-black text-orange-300">{formatMoney(order.total)}</span>
+                  <span className="min-w-0 truncate text-left text-base font-black text-orange-300">{formatMoney(order.total)}</span>
                 </div>
-                <p className="truncate text-sm font-black text-zinc-100">
-                  {order.name || 'عميل بدون اسم'} · {order.address} · {order.phone}
-                </p>
+                <div className="grid grid-cols-3 items-center gap-2 text-sm font-black text-zinc-100">
+                  <span className="min-w-0 truncate text-right">{order.name || 'عميل بدون اسم'}</span>
+                  <span className="min-w-0 truncate text-center">{order.address}</span>
+                  <span className="min-w-0 truncate text-left">{order.phone}</span>
+                </div>
               </button>
               <OrderActions order={order} settings={settings} onUpdateOrderStatus={onUpdateOrderStatus} onMarkCustomerMessageSent={onMarkCustomerMessageSent} />
             </div>
