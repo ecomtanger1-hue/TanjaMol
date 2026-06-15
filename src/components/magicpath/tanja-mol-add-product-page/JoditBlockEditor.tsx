@@ -1,38 +1,31 @@
-import { useMemo, useRef, useState } from 'react';
-import { Jodit } from 'jodit';
-import JoditEditor from 'jodit-react';
-import type { IJodit } from 'jodit/esm/types/jodit';
-import 'jodit/es2021/jodit.min.css';
+import { useRef, useState } from 'react';
 import type { ProductDetailBlock } from '../../../storefrontRuntime';
 
-const joditButtons = [
-  'undo', 'redo', '|',
-  'paragraph', 'font', 'fontsize', '|',
-  'bold', 'italic', 'underline', 'strikethrough', 'brush', 'eraser', '|',
-  'ul', 'ol', 'outdent', 'indent', 'align', '|',
-  'link', 'uploadInlineImage', 'image', 'video', 'table', 'hr', '|',
-  'source', 'fullsize',
+type ToolbarButton = {
+  label: string;
+  title: string;
+  command: string;
+  value?: string;
+};
+
+const blockButtons: ToolbarButton[] = [
+  { label: 'P', title: 'فقرة', command: 'formatBlock', value: 'p' },
+  { label: 'H2', title: 'عنوان كبير', command: 'formatBlock', value: 'h2' },
+  { label: 'H3', title: 'عنوان متوسط', command: 'formatBlock', value: 'h3' },
 ];
 
-const unorderedListOptions = {
-  disc: '•',
-  circle: '◦',
-  square: '▪',
-} as const;
-
-const orderedListOptions = {
-  decimal: '1 2 3',
-  'decimal-leading-zero': '01 02 03',
-  'lower-alpha': 'a b c',
-  'upper-alpha': 'A B C',
-  'lower-roman': 'i ii iii',
-  'upper-roman': 'I II III',
-} as const;
+const inlineButtons: ToolbarButton[] = [
+  { label: 'B', title: 'غامق', command: 'bold' },
+  { label: 'I', title: 'مائل', command: 'italic' },
+  { label: 'U', title: 'تحته خط', command: 'underline' },
+  { label: '•', title: 'قائمة نقطية', command: 'insertUnorderedList' },
+  { label: '1.', title: 'قائمة مرقمة', command: 'insertOrderedList' },
+];
 
 function plainTextToHtml(text: string) {
   return text
     .split('\n')
-    .map(line => line.trim() ? `<p>${line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>` : '<p><br></p>')
+    .map(line => line.trim() ? `<p>${escapeHtml(line)}</p>` : '<p><br></p>')
     .join('');
 }
 
@@ -43,42 +36,20 @@ function htmlToPlainText(html: string) {
   return element.innerText.trim();
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
 function safeAttribute(value: string) {
-  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return escapeHtml(value).replace(/"/g, '&quot;');
 }
 
 function readableUploadError(error: unknown) {
   const message = error instanceof Error ? error.message : String(error || '');
   return message || 'Unknown upload error';
-}
-
-function getCurrentFontSize(editor: IJodit) {
-  const anyEditor = editor as any;
-  const current = editor.s.current();
-  const ownerWindow = anyEditor.ow || window;
-  let element = current?.nodeType === Node.ELEMENT_NODE
-    ? current as HTMLElement
-    : current?.parentElement;
-
-  while (element && element !== editor.editor && ownerWindow.getComputedStyle(element).fontSize === '') {
-    element = element.parentElement;
-  }
-
-  const rawSize = ownerWindow.getComputedStyle(element || editor.editor).fontSize || '16px';
-  const parsed = Number.parseFloat(rawSize);
-  return Number.isFinite(parsed) ? Math.round(parsed) : 16;
-}
-
-function applyListStyle(editor: IJodit, element: 'ul' | 'ol', listStyleType: string) {
-  (editor.s as any).commitStyle({
-    element,
-    attributes: {
-      style: {
-        listStyleType: listStyleType === 'default' ? null : listStyleType,
-      },
-    },
-  });
-  editor.synchronizeValues();
 }
 
 export function JoditBlockEditor({
@@ -90,17 +61,44 @@ export function JoditBlockEditor({
   folder: string;
   onChange: (html: string, text: string) => void;
 }) {
-  const editorRef = useRef<IJodit | null>(null);
+  const editorRef = useRef<HTMLDivElement | null>(null);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const value = detail.richTextHtml || plainTextToHtml(detail.text);
+  const initialHtml = detail.richTextHtml || plainTextToHtml(detail.text);
 
-  const syncValue = (html: string) => {
+  const syncValue = () => {
+    const html = editorRef.current?.innerHTML || '';
     onChange(html, htmlToPlainText(html));
   };
 
+  const focusEditor = () => editorRef.current?.focus();
+
+  const runCommand = (command: string, value?: string) => {
+    focusEditor();
+    document.execCommand(command, false, value);
+    syncValue();
+  };
+
+  const insertHtml = (html: string) => {
+    focusEditor();
+    document.execCommand('insertHTML', false, html);
+    syncValue();
+  };
+
+  const insertLink = () => {
+    const url = window.prompt('Link URL');
+    if (!url) return;
+    runCommand('createLink', url);
+  };
+
+  const insertVideo = () => {
+    const url = window.prompt('Video URL');
+    if (!url) return;
+    insertHtml(`<p><video src="${safeAttribute(url)}" controls playsinline preload="metadata"></video></p>`);
+  };
+
   const insertInlineImages = async (files: FileList | null) => {
-    if (!files?.length || !editorRef.current) return;
+    if (!files?.length) return;
     setIsUploading(true);
     try {
       const { uploadProductImages } = await import('../../../lib/supabaseStorage');
@@ -111,9 +109,8 @@ export function JoditBlockEditor({
       }
 
       urls.forEach(url => {
-        editorRef.current?.s.insertHTML(`<p><img src="${safeAttribute(url)}" alt="" /></p>`);
+        insertHtml(`<p><img src="${safeAttribute(url)}" alt="" loading="lazy" decoding="async" /></p>`);
       });
-      syncValue(editorRef.current.value);
     } catch (error) {
       console.error('Failed to upload editor image', error);
       window.alert(`تعذر رفع الصورة: ${readableUploadError(error)}`);
@@ -123,92 +120,44 @@ export function JoditBlockEditor({
     }
   };
 
-  const config = useMemo(() => ({
-    readonly: false,
-    direction: 'rtl',
-    language: 'en',
-    height: 340,
-    minHeight: 280,
-    toolbarSticky: false,
-    toolbarAdaptive: false,
-    textIcons: false,
-    showTooltip: true,
-    useNativeTooltip: false,
-    showCharsCounter: false,
-    showWordsCounter: false,
-    showXPathInStatusbar: false,
-    askBeforePasteHTML: false,
-    askBeforePasteFromWord: false,
-    defaultActionOnPaste: 'insert_as_html',
-    enter: 'P',
-    spellcheck: true,
-    placeholder: 'اكتب تفاصيل المنتج هنا...',
-    toolbarButtonSize: 'large',
-    buttons: joditButtons,
-    buttonsMD: joditButtons,
-    buttonsSM: ['undo', 'redo', '|', 'paragraph', 'font', 'fontsize', '|', 'bold', 'italic', 'underline', 'brush', 'eraser', '|', 'ul', 'ol', 'align', '|', 'link', 'uploadInlineImage', 'table', 'source'],
-    buttonsXS: ['undo', 'redo', '|', 'bold', 'italic', 'underline', 'brush', '|', 'ul', 'ol', '|', 'link', 'uploadInlineImage', 'source'],
-    uploader: {
-      insertImageAsBase64URI: false,
-    },
-    style: {
-      fontFamily: 'Cairo, Arial, sans-serif',
-      fontSize: '16px',
-      lineHeight: '1.9',
-      textAlign: 'right',
-    },
-    controls: {
-      fontsize: {
-        icon: 'tm-fontsize-text',
-        text: '16px',
-        list: [12, 14, 16, 18, 20, 24, 28, 32, 36, 44, 52],
-        textTemplate: (_editor: IJodit, value: string) => `${value || 16}px`,
-        childTemplate: (_editor: IJodit, _key: string, value: string) => `<span style="font-size:${value}px;line-height:1.4">${value}px</span>`,
-        update: (editor: IJodit, button: any) => {
-          button.state.text = `${getCurrentFontSize(editor)}px`;
-          return false;
-        },
-      },
-      ul: {
-        list: Jodit.atom(unorderedListOptions),
-        childTemplate: (_editor: IJodit, _key: string, value: string) => `<span style="display:block;min-width:54px;text-align:center;font-size:24px;line-height:1">${value}</span>`,
-        exec: (editor: IJodit) => applyListStyle(editor, 'ul', 'disc'),
-        childExec: (editor: IJodit, _current: unknown, options: any) => applyListStyle(editor, 'ul', String(options.control?.args?.[0] || 'disc')),
-      },
-      ol: {
-        list: Jodit.atom(orderedListOptions),
-        childTemplate: (_editor: IJodit, _key: string, value: string) => `<span style="display:block;min-width:72px;text-align:center;font-weight:800">${value}</span>`,
-        exec: (editor: IJodit) => applyListStyle(editor, 'ol', 'decimal'),
-        childExec: (editor: IJodit, _current: unknown, options: any) => applyListStyle(editor, 'ol', String(options.control?.args?.[0] || 'decimal')),
-      },
-      uploadInlineImage: {
-        name: 'Upload image',
-        tooltip: 'Upload image',
-        icon: 'image',
-        exec: () => uploadInputRef.current?.click(),
-      },
-      video: {
-        popup: (_editor: IJodit, _current: unknown, close: () => void) => {
-          const url = window.prompt('Video URL');
-          if (url) {
-            editorRef.current?.s.insertHTML(`<p><video src="${safeAttribute(url)}" controls playsinline></video></p>`);
-            if (editorRef.current) syncValue(editorRef.current.value);
-          }
-          close?.();
-        },
-      },
-    },
-  } as any), [folder]);
-
   return (
-    <div className="tm-jodit-editor relative rounded-md border border-[#dfe5df] bg-white shadow-[0_10px_30px_-26px_rgba(19,25,33,0.35)] [&_.jodit-container]:!border-0 [&_.jodit-container]:!rounded-md [&_.jodit-icon]:!h-[18px] [&_.jodit-icon]:!w-[18px] [&_.jodit-status-bar]:!hidden [&_.jodit-toolbar-editor-collection]:!flex-wrap [&_.jodit-toolbar__box]:!overflow-visible [&_.jodit-toolbar__box]:!border-[#dfe5df] [&_.jodit-toolbar__box]:!bg-[#fbfaf6] [&_.jodit-ui-button]:!min-h-[44px] [&_.jodit-ui-button]:!min-w-[44px] [&_.jodit-ui-button]:!px-2 [&_.jodit-ui-button__text]:!hidden [&_.jodit-toolbar-button_fontsize_.jodit-ui-button__text]:!inline-flex [&_.jodit-toolbar-button_fontsize_.jodit-ui-button__text]:!min-w-[44px] [&_.jodit-toolbar-button_fontsize_.jodit-ui-button__text]:!text-[13px] [&_.jodit-toolbar-button_fontsize_.jodit-ui-button__text]:!font-black [&_.jodit-wysiwyg]:!bg-[#fbfaf6] [&_.jodit-wysiwyg]:!px-4 [&_.jodit-wysiwyg]:!py-4 [&_.jodit-wysiwyg_h1]:!my-4 [&_.jodit-wysiwyg_h1]:!text-4xl [&_.jodit-wysiwyg_h1]:!font-black [&_.jodit-wysiwyg_h1]:!leading-tight [&_.jodit-wysiwyg_h2]:!my-3 [&_.jodit-wysiwyg_h2]:!text-3xl [&_.jodit-wysiwyg_h2]:!font-black [&_.jodit-wysiwyg_h2]:!leading-tight [&_.jodit-wysiwyg_h3]:!my-3 [&_.jodit-wysiwyg_h3]:!text-2xl [&_.jodit-wysiwyg_h3]:!font-extrabold [&_.jodit-wysiwyg_h4]:!my-2 [&_.jodit-wysiwyg_h4]:!text-xl [&_.jodit-wysiwyg_h4]:!font-extrabold [&_.jodit-wysiwyg_blockquote]:!rounded-md [&_.jodit-wysiwyg_blockquote]:!border [&_.jodit-wysiwyg_blockquote]:!border-[#f0d8b4] [&_.jodit-wysiwyg_blockquote]:!bg-[#fff7e8] [&_.jodit-wysiwyg_blockquote]:!px-4 [&_.jodit-wysiwyg_blockquote]:!py-3 [&_.jodit-wysiwyg_blockquote]:!font-bold [&_.jodit-wysiwyg_img]:!max-w-full [&_.jodit-wysiwyg_li]:!my-1 [&_.jodit-wysiwyg_ol]:!pr-6 [&_.jodit-wysiwyg_ul]:!pr-6">
-      <JoditEditor
+    <div className="tm-rich-editor relative overflow-hidden rounded-md border border-[var(--tm-border)] bg-[var(--tm-surface-white)] shadow-[var(--tm-shadow-control)]">
+      <div className="flex flex-wrap gap-1 border-b border-[var(--tm-border)] bg-[var(--tm-surface-soft)] p-2" role="toolbar" aria-label="محرر تفاصيل المنتج">
+        {[...blockButtons, ...inlineButtons].map(button => (
+          <button
+            key={`${button.command}-${button.value || ''}`}
+            type="button"
+            title={button.title}
+            aria-label={button.title}
+            onClick={() => runCommand(button.command, button.value)}
+            className="tm-admin-press grid min-h-[44px] min-w-[44px] place-items-center rounded-md border border-[var(--tm-border-strong)] bg-[var(--tm-surface-white)] px-2 text-sm font-black text-[var(--tm-ink)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus)]"
+          >
+            {button.label}
+          </button>
+        ))}
+        <button type="button" onClick={insertLink} className="tm-admin-press min-h-[44px] rounded-md border border-[var(--tm-border-strong)] bg-[var(--tm-surface-white)] px-3 text-xs font-black text-[var(--tm-ink)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus)]">
+          رابط
+        </button>
+        <button type="button" onClick={() => uploadInputRef.current?.click()} className="tm-admin-press min-h-[44px] rounded-md border border-[var(--tm-border-strong)] bg-[var(--tm-surface-white)] px-3 text-xs font-black text-[var(--tm-ink)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus)]">
+          صورة
+        </button>
+        <button type="button" onClick={insertVideo} className="tm-admin-press min-h-[44px] rounded-md border border-[var(--tm-border-strong)] bg-[var(--tm-surface-white)] px-3 text-xs font-black text-[var(--tm-ink)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--tm-focus)]">
+          فيديو
+        </button>
+      </div>
+
+      <div
+        key={detail.id}
         ref={editorRef}
-        value={value}
-        config={config}
-        tabIndex={1}
+        contentEditable
+        role="textbox"
+        aria-multiline="true"
+        aria-label="تفاصيل المنتج"
+        className="tm-rich-editor-body min-h-[280px] bg-[var(--tm-surface-soft)] px-4 py-4 text-right text-base font-semibold leading-8 text-[var(--tm-ink)] outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--tm-focus)]"
+        onInput={syncValue}
         onBlur={syncValue}
-        onChange={syncValue}
+        suppressContentEditableWarning
+        dangerouslySetInnerHTML={{ __html: initialHtml }}
       />
       <input
         ref={uploadInputRef}
@@ -219,7 +168,7 @@ export function JoditBlockEditor({
         onChange={event => void insertInlineImages(event.target.files)}
       />
       {isUploading ? (
-        <div className="absolute inset-x-3 top-3 z-10 rounded-md bg-[#131921] px-3 py-2 text-xs font-black text-white shadow-[0_16px_35px_-22px_rgba(19,25,33,0.65)]">
+        <div className="absolute inset-x-3 top-3 z-10 rounded-md bg-[var(--tm-header)] px-3 py-2 text-xs font-black text-white shadow-[var(--tm-shadow-md)]" role="status">
           جار رفع الصورة...
         </div>
       ) : null}

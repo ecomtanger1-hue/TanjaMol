@@ -718,8 +718,14 @@ export function AdminLogin({
       <form onSubmit={submit} className="w-full max-w-[420px] rounded-lg bg-[#fffdf8] p-5 shadow-[0_34px_90px_rgba(0,0,0,0.34)]">
         <p className="font-heading text-3xl font-black">دخول الإدارة</p>
         <div className="mt-5 grid gap-3">
-          <input className="min-h-[48px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-4 font-bold outline-none focus:border-[#b45309]" placeholder="البريد الإلكتروني" type="email" value={email} onChange={event => setEmail(event.target.value)} required disabled={loading || submitting} />
-          <input className="min-h-[48px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-4 font-bold outline-none focus:border-[#b45309]" placeholder="كلمة المرور" type="password" value={password} onChange={event => setPassword(event.target.value)} required disabled={loading || submitting} />
+          <label className="grid gap-1">
+            <span className="text-xs font-black text-[#65716a]">البريد الإلكتروني</span>
+            <input className="tm-admin-field px-4 font-bold" type="email" value={email} onChange={event => setEmail(event.target.value)} required disabled={loading || submitting} autoComplete="email" />
+          </label>
+          <label className="grid gap-1">
+            <span className="text-xs font-black text-[#65716a]">كلمة المرور</span>
+            <input className="tm-admin-field px-4 font-bold" type="password" value={password} onChange={event => setPassword(event.target.value)} required disabled={loading || submitting} autoComplete="current-password" />
+          </label>
           <button className="min-h-[50px] rounded-md bg-[#ff9900] px-5 font-black text-[#131921] disabled:opacity-60" type="submit" disabled={loading || submitting}>{loading || submitting ? 'جار التحقق' : 'دخول'}</button>
           {error ? <p className="rounded-md bg-[#fff1d5] px-3 py-2 text-sm font-black text-[#9a5a00]">{error}</p> : null}
         </div>
@@ -866,7 +872,7 @@ function OrderStatusSelect({ order, onUpdateOrderStatus, compact = false }: {
         onClick={stopAction}
         onChange={event => onUpdateOrderStatus(order.id, event.target.value as OrderStatus)}
         aria-label={`تغيير حالة الطلب ${order.id}`}
-        className={`min-h-[44px] w-full rounded-md border border-[#cfd8d1] bg-[#fbfaf6] text-xs font-black text-[#17201b] outline-none focus:border-[#b45309] focus-visible:ring-2 focus-visible:ring-[#ff9900]/30 ${compact ? 'px-1 text-center text-[11px]' : 'px-2'}`}
+        className={`tm-admin-field w-full text-xs font-black ${compact ? 'px-1 text-center text-[11px]' : 'px-2'}`}
       >
         {orderStatusOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
       </select>
@@ -981,10 +987,10 @@ export function AdminOrdersPage({
               type="search"
             />
           </label>
-          <select value={filter} onChange={event => setFilter(event.target.value as OrderFilter)} className="min-h-[44px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-3 text-sm font-black outline-none focus:border-[#b45309]">
+          <select value={filter} onChange={event => setFilter(event.target.value as OrderFilter)} className="tm-admin-field px-3 text-sm font-black" aria-label="تصفية الطلبات">
             {orderFilters.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
-          <select value={sort} onChange={event => setSort(event.target.value as OrderSort)} className="min-h-[44px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-3 text-sm font-black outline-none focus:border-[#b45309]">
+          <select value={sort} onChange={event => setSort(event.target.value as OrderSort)} className="tm-admin-field px-3 text-sm font-black" aria-label="ترتيب الطلبات">
             <option value="newest">الأحدث أولا</option>
             <option value="oldest">الأقدم أولا</option>
             <option value="total-high">الأعلى قيمة</option>
@@ -1294,7 +1300,7 @@ export function AdminSettingsPage({
         <section className="grid min-w-0 gap-2 rounded-md border border-[#dfe5df] bg-[#fbfaf6] p-2.5 sm:p-3">
           <label className="grid gap-1">
             <span className="text-xs font-black text-[#65716a]">منتج الهيرو في الصفحة الرئيسية</span>
-            <select value={draft.heroProductSlug || ''} onChange={event => { setSaved(false); setDraft(current => ({ ...current, heroProductSlug: event.target.value })); }} className="min-h-[44px] w-full min-w-0 rounded-md border border-[#cfd8d1] bg-white px-3 text-sm font-bold outline-none focus:border-[#b45309]">
+            <select value={draft.heroProductSlug || ''} onChange={event => { setSaved(false); setDraft(current => ({ ...current, heroProductSlug: event.target.value })); }} className="tm-admin-field w-full min-w-0 bg-white px-3 text-sm font-bold">
               <option value="">اختيار تلقائي</option>
               {heroProducts.map(product => <option key={product.slug} value={product.slug}>{product.title}</option>)}
             </select>
@@ -1477,7 +1483,7 @@ function SettingsInput({ label, value, onChange }: { label: string; value: strin
   return (
     <label className="grid min-w-0 gap-1">
       <span className="text-xs font-black text-[#65716a]">{label}</span>
-      <input value={value} onChange={event => onChange(event.target.value)} className="min-h-[44px] w-full min-w-0 rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-3 text-sm font-bold outline-none focus:border-[#b45309]" />
+      <input value={value} onChange={event => onChange(event.target.value)} className="tm-admin-field w-full min-w-0 px-3 text-sm font-bold" />
     </label>
   );
 }

@@ -36,13 +36,13 @@ function needsDetails(product: Product) {
 }
 
 function productStatus(product: Product, hidden: boolean) {
-  if (product.isDraft) return { label: 'مسودة', className: 'bg-[#eef3ef] text-[#65716a]' };
-  if (hidden) return { label: 'مخفي', className: 'bg-[#fff1d5] text-[#9a5a00]' };
-  if ((product.stock ?? 0) <= 0) return { label: 'نفد المخزون', className: 'bg-[#fff1d5] text-[#9a5a00]' };
-  if ((product.stock ?? 0) < 10) return { label: 'مخزون منخفض', className: 'bg-[#fff1d5] text-[#9a5a00]' };
-  if (needsImages(product)) return { label: 'صور ناقصة', className: 'bg-[#fff1d5] text-[#9a5a00]' };
-  if (needsDetails(product)) return { label: 'تفاصيل ناقصة', className: 'bg-[#fff1d5] text-[#9a5a00]' };
-  return { label: 'ظاهر', className: 'bg-[#fff3df] text-[#b45309]' };
+  if (product.isDraft) return { label: 'مسودة', className: 'tm-admin-chip-muted' };
+  if (hidden) return { label: 'مخفي', className: 'tm-admin-chip-warning' };
+  if ((product.stock ?? 0) <= 0) return { label: 'نفد المخزون', className: 'tm-admin-chip-warning' };
+  if ((product.stock ?? 0) < 10) return { label: 'مخزون منخفض', className: 'tm-admin-chip-warning' };
+  if (needsImages(product)) return { label: 'صور ناقصة', className: 'tm-admin-chip-warning' };
+  if (needsDetails(product)) return { label: 'تفاصيل ناقصة', className: 'tm-admin-chip-warning' };
+  return { label: 'ظاهر', className: 'tm-admin-chip-brand' };
 }
 
 function productDateValue(product: Product) {
@@ -177,7 +177,7 @@ export function AdminProductsPage({
               className="min-h-[44px] w-full rounded-md border border-[#cfd8d1] bg-[#fbfaf6] pr-10 pl-2 text-sm font-bold text-transparent outline-none transition-colors focus:border-[#b45309] focus:text-[#17201b] focus-visible:ring-2 focus-visible:ring-[#ff9900]/30 sm:pr-9 sm:pl-3 sm:text-[#17201b]"
             />
           </label>
-          <select value={filter} onChange={event => setFilter(event.target.value as ProductFilter)} className="min-h-[44px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-3 text-sm font-black outline-none focus:border-[#b45309] focus-visible:ring-2 focus-visible:ring-[#ff9900]/30">
+          <select value={filter} onChange={event => setFilter(event.target.value as ProductFilter)} className="tm-admin-field px-3 text-sm font-black" aria-label="تصفية المنتجات">
             <option value="all">كل الحالات</option>
             <option value="visible">ظاهر</option>
             <option value="hidden">مخفي</option>
@@ -186,7 +186,7 @@ export function AdminProductsPage({
             <option value="needs-images">صور ناقصة</option>
             <option value="needs-details">تفاصيل ناقصة</option>
           </select>
-          <select value={sort} onChange={event => setSort(event.target.value as ProductSort)} className="min-h-[44px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-3 text-sm font-black outline-none focus:border-[#b45309] focus-visible:ring-2 focus-visible:ring-[#ff9900]/30">
+          <select value={sort} onChange={event => setSort(event.target.value as ProductSort)} className="tm-admin-field px-3 text-sm font-black" aria-label="ترتيب المنتجات">
             <option value="newest">الأحدث</option>
             <option value="stock">المخزون</option>
             <option value="price-low">السعر الأقل</option>
@@ -223,16 +223,19 @@ export function AdminProductsPage({
                       <span className={`shrink-0 rounded-md px-2 py-1 text-[11px] font-black ${status.className}`}>{status.label}</span>
                     </div>
                     <p className="mt-1 truncate text-xs font-bold text-[#65716a]">{product.category}</p>
-                    <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-                      <div className="rounded-md bg-white px-2 py-2 shadow-[inset_0_0_0_1px_rgba(23,32,27,0.07)]">
-                        <p className="tm-admin-num break-words text-xs font-black text-[#b45309]">{product.priceLabel}</p>
-                      </div>
-                      <div className="rounded-md bg-white px-2 py-2 shadow-[inset_0_0_0_1px_rgba(23,32,27,0.07)]">
-                        <p className="tm-admin-num text-xs font-black">{product.stock ?? 0}</p>
-                      </div>
-                      <div className="rounded-md bg-white px-2 py-2 shadow-[inset_0_0_0_1px_rgba(23,32,27,0.07)]">
-                        <p className="tm-admin-num text-xs font-black">{sales.sales}</p>
-                      </div>
+                    <div className="tm-admin-flat-stat mt-3 grid grid-cols-3 gap-2 text-xs font-black">
+                      <p className="grid gap-0.5">
+                        <span className="text-[#65716a]">السعر</span>
+                        <span className="tm-admin-num break-words text-[#b45309]">{product.priceLabel}</span>
+                      </p>
+                      <p className="grid gap-0.5">
+                        <span className="text-[#65716a]">المخزون</span>
+                        <span className="tm-admin-num">{product.stock ?? 0}</span>
+                      </p>
+                      <p className="grid gap-0.5">
+                        <span className="text-[#65716a]">الطلبات</span>
+                        <span className="tm-admin-num">{sales.sales}</span>
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -268,6 +271,7 @@ export function AdminProductsPage({
                     checked={allCurrentSelected}
                     onChange={event => setSelected(event.target.checked ? rows.map(row => row.product.slug) : [])}
                     className="h-4 w-4 accent-[#ff9900]"
+                    aria-label="تحديد كل المنتجات الظاهرة"
                   />
                 </th>
                 <th className="px-4 py-3 text-right">المنتج</th>
@@ -289,7 +293,7 @@ export function AdminProductsPage({
                 return (
                   <tr key={product.slug} className="border-t border-[#e4e9e4] align-middle">
                     <td className="px-4 py-3">
-                      <input type="checkbox" checked={selected.includes(product.slug)} onChange={() => toggleSelected(product.slug)} className="h-4 w-4 accent-[#ff9900]" />
+                      <input type="checkbox" checked={selected.includes(product.slug)} onChange={() => toggleSelected(product.slug)} className="h-4 w-4 accent-[#ff9900]" aria-label={`تحديد ${product.title}`} />
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
