@@ -164,7 +164,6 @@ export function ShadcnAdminProductsPage({
   return (
     <ShadcnAdminShell
       title="المنتجات"
-      description="بحث وتصفية واتخاذ إجراءات سريعة بدون جدول واسع على الهاتف."
       route={route}
       onNavigate={onNavigate}
       actions={
@@ -194,8 +193,8 @@ export function ShadcnAdminProductsPage({
         </Card>
       </section>
 
-      <div className="mt-5 flex flex-wrap items-center gap-2">
-        <NativeSelect value={filter} onChange={event => setFilter(event.target.value as ProductFilter)} className="h-11 w-[190px] border-white/10 bg-zinc-950 text-zinc-100">
+      <div className="mt-5 grid grid-cols-[minmax(0,1fr)_44px_minmax(0,1fr)] items-center gap-2 lg:flex lg:flex-wrap">
+        <NativeSelect value={filter} onChange={event => setFilter(event.target.value as ProductFilter)} className="h-11 w-full border-white/10 bg-zinc-950 text-zinc-100 lg:w-[190px]">
           <NativeSelectOption value="all">كل الحالات</NativeSelectOption>
           <NativeSelectOption value="visible">ظاهر</NativeSelectOption>
           <NativeSelectOption value="hidden">مخفي</NativeSelectOption>
@@ -228,7 +227,7 @@ export function ShadcnAdminProductsPage({
             </div>
           ) : null}
         </div>
-        <NativeSelect value={sort} onChange={event => setSort(event.target.value as ProductSort)} className="h-11 w-[190px] border-white/10 bg-zinc-950 text-zinc-100">
+        <NativeSelect value={sort} onChange={event => setSort(event.target.value as ProductSort)} className="h-11 w-full border-white/10 bg-zinc-950 text-zinc-100 lg:w-[190px]">
           <NativeSelectOption value="newest">الأحدث</NativeSelectOption>
           <NativeSelectOption value="stock">المخزون</NativeSelectOption>
           <NativeSelectOption value="price-low">السعر الأقل</NativeSelectOption>

@@ -279,10 +279,10 @@ export function ShadcnAdminOrdersPage({ orders, settings, route, onNavigate, onU
           <article key={order.id} className="rounded-lg border border-white/10 bg-zinc-900/70 p-3">
             <div className="grid gap-3 lg:grid-cols-[1fr_360px]">
               <button type="button" onClick={() => onNavigate(`#/admin/orders/${encodeURIComponent(order.id)}`)} className="min-w-0 text-right">
-                <div className="mb-2 flex items-center gap-2">
-                  <span className="shrink-0 font-black text-zinc-50">{order.id}</span>
-                  <span className="min-w-0 truncate text-xs text-zinc-500">{formatDate(order.createdAt)}</span>
-                  <span className="ms-auto shrink-0 text-lg font-black text-orange-300">{formatMoney(order.total)}</span>
+                <div className="mb-2 grid grid-cols-3 items-center gap-2">
+                  <span className="min-w-0 truncate text-right font-black text-zinc-50">{order.id}</span>
+                  <span className="min-w-0 truncate text-center text-xs text-zinc-500">{formatDate(order.createdAt)}</span>
+                  <span className="min-w-0 truncate text-left text-lg font-black text-orange-300">{formatMoney(order.total)}</span>
                 </div>
                 <p className="truncate text-sm font-black text-zinc-100">
                   {order.name || 'عميل بدون اسم'} · {order.address} · {order.phone}
