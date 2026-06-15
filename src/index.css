@@ -1390,10 +1390,20 @@ body {
 }
 
 .tm-shadcn-product-editor button.bg-\[\#ff9900\],
-.tm-shadcn-product-editor .bg-\[\#ff9900\] {
-  background: #f97316 !important;
-  color: #09090b !important;
+.tm-shadcn-product-editor label.bg-\[\#ff9900\] {
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: #27272a !important;
+  color: #fafafa !important;
   box-shadow: none !important;
+}
+
+.tm-shadcn-product-editor button.bg-\[\#ff9900\]:hover,
+.tm-shadcn-product-editor label.bg-\[\#ff9900\]:hover {
+  background: #3f3f46 !important;
+}
+
+.tm-shadcn-product-editor .bg-\[\#ff9900\]:not(button):not(label) {
+  background: #d4d4d8 !important;
 }
 
 .tm-shadcn-product-editor button.bg-\[\#131921\],
@@ -1479,6 +1489,70 @@ body {
 
 .tm-shadcn-product-editor .jodit-toolbar__box {
   background: #18181b !important;
+}
+
+.tm-shadcn-product-editor .tm-jodit-editor {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  background: #09090b !important;
+  box-shadow: none !important;
+}
+
+.tm-shadcn-product-editor .tm-jodit-editor .jodit-container,
+.tm-shadcn-product-editor .tm-jodit-editor .jodit-workplace,
+.tm-shadcn-product-editor .tm-jodit-editor .jodit-wysiwyg,
+.tm-shadcn-product-editor .tm-jodit-editor .jodit-source,
+.tm-shadcn-product-editor .tm-jodit-editor iframe {
+  background: #09090b !important;
+  color: #f4f4f5 !important;
+}
+
+.tm-shadcn-product-editor .tm-jodit-editor .jodit-toolbar__box,
+.tm-shadcn-product-editor .tm-jodit-editor .jodit-toolbar-editor-collection,
+.tm-shadcn-product-editor .tm-jodit-editor .jodit-ui-group,
+.tm-shadcn-product-editor .tm-jodit-editor .jodit-ui-button,
+.tm-shadcn-product-editor .tm-jodit-editor .jodit-toolbar-button__button {
+  background: #18181b !important;
+  color: #d4d4d8 !important;
+}
+
+.tm-shadcn-product-editor .tm-jodit-editor .jodit-ui-button:hover,
+.tm-shadcn-product-editor .tm-jodit-editor .jodit-toolbar-button__button:hover,
+.tm-shadcn-product-editor .tm-jodit-editor .jodit-toolbar-button_active_true .jodit-toolbar-button__button {
+  background: #27272a !important;
+  color: #fafafa !important;
+}
+
+.tm-shadcn-product-editor .tm-jodit-editor .jodit-ui-separator,
+.tm-shadcn-product-editor .tm-jodit-editor .jodit-ui-group:before,
+.tm-shadcn-product-editor .tm-jodit-editor .jodit-toolbar__box:not(:empty) {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.tm-shadcn-product-editor .tm-jodit-editor .jodit-icon,
+.tm-shadcn-product-editor .tm-jodit-editor .jodit-icon svg,
+.tm-shadcn-product-editor .tm-jodit-editor .jodit-toolbar-button__trigger svg {
+  color: #d4d4d8 !important;
+  fill: #d4d4d8 !important;
+  stroke: #d4d4d8 !important;
+}
+
+.tm-shadcn-product-editor .tm-jodit-editor .jodit-placeholder,
+.tm-shadcn-product-editor .tm-jodit-editor .jodit-wysiwyg:empty:before {
+  color: #71717a !important;
+}
+
+.tm-shadcn-product-editor .tm-jodit-editor .jodit-popup,
+.tm-shadcn-product-editor .tm-jodit-editor .jodit-dialog,
+.tm-shadcn-product-editor .tm-jodit-editor .jodit-ui-list {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  background: #18181b !important;
+  color: #f4f4f5 !important;
+}
+
+.tm-shadcn-product-editor .tm-jodit-editor blockquote {
+  border-color: rgba(255, 255, 255, 0.14) !important;
+  background: #18181b !important;
+  color: #f4f4f5 !important;
 }
 
 .tm-rich-editor-body h1,
