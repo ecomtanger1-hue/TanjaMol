@@ -815,13 +815,13 @@ export const TanjaMolAddProductPage = ({
                     {autoSaveStatus === 'saving' ? 'حفظ تلقائي...' : autoSaveStatus === 'error' ? 'تعذر الحفظ التلقائي' : `حفظ تلقائي ${lastAutoSavedAt}`}
                   </span>
                 ) : null}
-                <button type="button" onClick={onBack} className="tm-admin-press min-h-[38px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">
+                <button type="button" onClick={onBack} className="tm-admin-press min-h-[44px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">
                   رجوع
                 </button>
-                <button type="button" onClick={() => void saveDraft()} disabled={publishing || uploadingImages} className="tm-admin-press min-h-[38px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black disabled:cursor-not-allowed disabled:opacity-60">
+                <button type="button" onClick={() => void saveDraft()} disabled={publishing || uploadingImages} className="tm-admin-press min-h-[44px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black disabled:cursor-not-allowed disabled:opacity-60">
                   حفظ مسودة
                 </button>
-                <button type="submit" disabled={publishing || uploadingImages} className="tm-admin-press min-h-[38px] rounded-md bg-[#ff9900] px-3 text-xs font-black text-[#131921] shadow-[0_14px_30px_-22px_rgba(255,153,0,0.9)] disabled:cursor-not-allowed disabled:opacity-60">
+                <button type="submit" disabled={publishing || uploadingImages} className="tm-admin-press min-h-[44px] rounded-md bg-[#ff9900] px-3 text-xs font-black text-[#131921] shadow-[0_14px_30px_-22px_rgba(255,153,0,0.9)] disabled:cursor-not-allowed disabled:opacity-60">
                   نشر المنتج
                 </button>
               </div>
@@ -848,7 +848,7 @@ export const TanjaMolAddProductPage = ({
                   <TextField label="الرابط المختصر" value={slug} onChange={value => setSlug(makeSlug(value))} required />
                   <label className="grid gap-1">
                     <span className="text-xs font-black text-[#65716a]">القسم</span>
-                    <select value={category} onChange={event => setCategory(event.target.value)} className="min-h-[42px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-3 text-sm font-bold outline-none focus:border-[#b45309]">
+                    <select value={category} onChange={event => setCategory(event.target.value)} className="min-h-[44px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-3 text-sm font-bold outline-none focus:border-[#b45309]">
                       {categoryOptions.map(item => <option key={item.id} value={item.title}>{item.title}</option>)}
                     </select>
                   </label>
@@ -871,7 +871,7 @@ export const TanjaMolAddProductPage = ({
             <AdminSection title="معرض المنتج" summary={gallerySummary} status={cleanGallery.length ? 'done' : 'missing'} defaultOpen={false} action={
               <>
                 <input id={uploadInputId} ref={uploadInputRef} type="file" accept="image/*" multiple disabled={uploadingImages || publishing} className="sr-only" onChange={event => void handleImageUpload(event.target.files)} />
-                <label htmlFor={uploadInputId} aria-disabled={uploadingImages || publishing} className={`tm-admin-press inline-grid min-h-[36px] place-items-center rounded-md bg-[#131921] px-3 text-xs font-black text-white ${uploadingImages || publishing ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
+                <label htmlFor={uploadInputId} aria-disabled={uploadingImages || publishing} className={`tm-admin-press inline-grid min-h-[44px] place-items-center rounded-md bg-[#131921] px-3 text-xs font-black text-white ${uploadingImages || publishing ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
                   رفع صور
                 </label>
               </>
@@ -889,16 +889,16 @@ export const TanjaMolAddProductPage = ({
                     </div>
                     <div className="mt-3 flex items-center justify-between gap-2">
                       <p className="text-sm font-black">{index === 0 ? 'الصورة الرئيسية' : `صورة ${index + 1}`}</p>
-                      <button type="button" onClick={() => removeGalleryImage(index)} className="tm-admin-press min-h-[30px] rounded-md bg-[#fff1d5] px-2 text-xs font-black text-[#9a5a00]">
+                      <button type="button" onClick={() => removeGalleryImage(index)} className="tm-admin-press min-h-[44px] rounded-md bg-[#fff1d5] px-2 text-xs font-black text-[#9a5a00]">
                         حذف
                       </button>
                     </div>
                     {index > 0 ? (
-                      <button type="button" onClick={() => setPrimaryImage(index)} className="tm-admin-press mt-2 min-h-[32px] w-full rounded-md border border-[#cfd8d1] bg-white px-2 text-xs font-black text-[#17201b]">
+                      <button type="button" onClick={() => setPrimaryImage(index)} className="tm-admin-press mt-2 min-h-[44px] w-full rounded-md border border-[#cfd8d1] bg-white px-2 text-xs font-black text-[#17201b]">
                         اجعلها الرئيسية
                       </button>
                     ) : (
-                      <span className="mt-2 grid min-h-[32px] place-items-center rounded-md bg-[#fff3df] px-2 text-xs font-black text-[#b45309]">الرئيسية حاليا</span>
+                      <span className="mt-2 grid min-h-[44px] place-items-center rounded-md bg-[#fff3df] px-2 text-xs font-black text-[#b45309]">الرئيسية حاليا</span>
                     )}
                   </div>
                 ))}
@@ -921,7 +921,7 @@ export const TanjaMolAddProductPage = ({
                     addVariantOptionType(event.target.value);
                     event.currentTarget.value = '';
                   }}
-                  className="min-h-[36px] rounded-md bg-[#ff9900] px-3 text-xs font-black text-[#131921] outline-none"
+                  className="min-h-[44px] rounded-md bg-[#ff9900] px-3 text-xs font-black text-[#131921] outline-none"
                   aria-label="إضافة نوع متغير"
                 >
                   <option value="">إضافة نوع</option>
@@ -991,8 +991,8 @@ export const TanjaMolAddProductPage = ({
                                           onChange={event => updateVariantOption(group.id, { label: event.target.value })}
                                           className="w-[130px] rounded-md bg-[#fbfaf6] px-3 py-2 text-sm font-black text-[#17201b] outline-none focus:ring-1 focus:ring-[#b45309]"
                                         />
-                                        <button type="button" onClick={() => addVariantOptionValue(group.id)} className="tm-admin-press min-h-[32px] rounded-md bg-[#131921] px-3 text-xs font-black text-white">إضافة قيمة</button>
-                                        <button type="button" onClick={() => removeVariantOption(group.id)} className="tm-admin-press min-h-[32px] rounded-md bg-[#fff1d5] px-3 text-xs font-black text-[#9a5a00]">حذف النوع</button>
+                                        <button type="button" onClick={() => addVariantOptionValue(group.id)} className="tm-admin-press min-h-[44px] rounded-md bg-[#131921] px-3 text-xs font-black text-white">إضافة قيمة</button>
+                                        <button type="button" onClick={() => removeVariantOption(group.id)} className="tm-admin-press min-h-[44px] rounded-md bg-[#fff1d5] px-3 text-xs font-black text-[#9a5a00]">حذف النوع</button>
                                       </div>
                                     </td>
                                   ) : null}
@@ -1065,13 +1065,13 @@ export const TanjaMolAddProductPage = ({
                                     <input value={row.variant?.image || ''} disabled={!row.variant} onChange={event => row.variant ? updateVariant(row.variant.id, { image: event.target.value }) : undefined} placeholder="رابط الصورة" className="w-full rounded-md bg-[#fbfaf6] px-3 py-2 text-sm font-bold text-[#17201b] outline-none focus:ring-1 focus:ring-[#b45309] disabled:text-[#9aa39c]" />
                                   </td>
                                   <td className="w-[96px] px-3 py-3">
-                                    <label className={`flex min-h-[38px] w-[82px] items-center justify-center gap-2 rounded-md px-2.5 text-xs font-black ${row.variant?.enabled ? 'bg-[#fff3df] text-[#b45309]' : 'bg-[#eef3ef] text-[#65716a]'}`}>
+                                    <label className={`flex min-h-[44px] w-[82px] items-center justify-center gap-2 rounded-md px-2.5 text-xs font-black ${row.variant?.enabled ? 'bg-[#fff3df] text-[#b45309]' : 'bg-[#eef3ef] text-[#65716a]'}`}>
                                       <input type="checkbox" checked={row.variant?.enabled ?? false} disabled={!row.variant} onChange={event => row.variant ? updateVariant(row.variant.id, { enabled: event.target.checked }) : undefined} className="h-4 w-4 accent-[#ff9900]" />
                                       مفعل
                                     </label>
                                   </td>
                                   <td className="w-[76px] px-3 py-3">
-                                    <button type="button" onClick={() => row.value ? removeVariantOptionValue(group.id, row.value.id) : row.variant ? removeVariant(row.variant.id) : undefined} className="tm-admin-press min-h-[34px] rounded-md bg-[#fff1d5] px-3 text-xs font-black text-[#9a5a00]">
+                                    <button type="button" onClick={() => row.value ? removeVariantOptionValue(group.id, row.value.id) : row.variant ? removeVariant(row.variant.id) : undefined} className="tm-admin-press min-h-[44px] rounded-md bg-[#fff1d5] px-3 text-xs font-black text-[#9a5a00]">
                                       حذف
                                     </button>
                                   </td>
@@ -1086,12 +1086,12 @@ export const TanjaMolAddProductPage = ({
                                       onChange={event => updateVariantOption(group.id, { label: event.target.value })}
                                       className="w-[130px] rounded-md bg-[#fbfaf6] px-3 py-2 text-sm font-black text-[#17201b] outline-none focus:ring-1 focus:ring-[#b45309]"
                                     />
-                                    <button type="button" onClick={() => addVariantOptionValue(group.id)} className="tm-admin-press min-h-[32px] rounded-md bg-[#131921] px-3 text-xs font-black text-white">إضافة قيمة</button>
-                                    <button type="button" onClick={() => removeVariantOption(group.id)} className="tm-admin-press min-h-[32px] rounded-md bg-[#fff1d5] px-3 text-xs font-black text-[#9a5a00]">حذف النوع</button>
+                                    <button type="button" onClick={() => addVariantOptionValue(group.id)} className="tm-admin-press min-h-[44px] rounded-md bg-[#131921] px-3 text-xs font-black text-white">إضافة قيمة</button>
+                                    <button type="button" onClick={() => removeVariantOption(group.id)} className="tm-admin-press min-h-[44px] rounded-md bg-[#fff1d5] px-3 text-xs font-black text-[#9a5a00]">حذف النوع</button>
                                   </div>
                                 </td>
                                 <td colSpan={supportsColor ? 8 : 7} className="px-3 py-3">
-                                  <button type="button" onClick={() => addVariantOptionValue(group.id)} className="tm-admin-press min-h-[42px] w-full rounded-md border border-dashed border-[#bfcac1] bg-[#fbfaf6] px-3 text-sm font-black text-[#65716a]">
+                                  <button type="button" onClick={() => addVariantOptionValue(group.id)} className="tm-admin-press min-h-[44px] w-full rounded-md border border-dashed border-[#bfcac1] bg-[#fbfaf6] px-3 text-sm font-black text-[#65716a]">
                                     أضف أول قيمة
                                   </button>
                                 </td>
@@ -1106,7 +1106,7 @@ export const TanjaMolAddProductPage = ({
               </div>
             </AdminSection>
 
-            <AdminSection title="تفاصيل المنتج المصورة" summary={detailsSummary} status={details.some(detail => detail.text.trim()) ? 'done' : 'missing'} defaultOpen={false} onOpen={() => setDetailsEditorReady(true)} action={<button type="button" onClick={addDetailBlock} className="tm-admin-press min-h-[36px] rounded-md bg-[#ff9900] px-3 text-xs font-black text-[#131921]">إضافة بلوك</button>}>
+            <AdminSection title="تفاصيل المنتج المصورة" summary={detailsSummary} status={details.some(detail => detail.text.trim()) ? 'done' : 'missing'} defaultOpen={false} onOpen={() => setDetailsEditorReady(true)} action={<button type="button" onClick={addDetailBlock} className="tm-admin-press min-h-[44px] rounded-md bg-[#ff9900] px-3 text-xs font-black text-[#131921]">إضافة بلوك</button>}>
               <div className="rounded-md border border-[#dfe5df] bg-[#fbfaf6] p-3">
                 <div className="grid gap-4">
                   {details.map((detail, index) => (
@@ -1117,11 +1117,11 @@ export const TanjaMolAddProductPage = ({
                           <span className="rounded-md bg-[#fff3df] px-2 py-1 text-xs font-black text-[#b45309]">{detail.reverse ? 'نص يسار، صورة يمين' : 'صورة يسار، نص يمين'}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <button type="button" onClick={() => updateDetail(detail.id, { reverse: !detail.reverse })} className="tm-admin-press min-h-[32px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">تبديل</button>
-                          <button type="button" onClick={() => moveDetail(detail.id, -1)} className="tm-admin-press min-h-[32px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">فوق</button>
-                          <button type="button" onClick={() => moveDetail(detail.id, 1)} className="tm-admin-press min-h-[32px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">تحت</button>
-                          <button type="button" onClick={() => duplicateDetail(detail)} className="tm-admin-press min-h-[32px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">نسخ</button>
-                          <button type="button" onClick={() => deleteDetail(detail.id)} className="tm-admin-press min-h-[32px] rounded-md bg-[#fff1d5] px-3 text-xs font-black text-[#9a5a00]">حذف</button>
+                          <button type="button" onClick={() => updateDetail(detail.id, { reverse: !detail.reverse })} className="tm-admin-press min-h-[44px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">تبديل</button>
+                          <button type="button" onClick={() => moveDetail(detail.id, -1)} className="tm-admin-press min-h-[44px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">فوق</button>
+                          <button type="button" onClick={() => moveDetail(detail.id, 1)} className="tm-admin-press min-h-[44px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">تحت</button>
+                          <button type="button" onClick={() => duplicateDetail(detail)} className="tm-admin-press min-h-[44px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">نسخ</button>
+                          <button type="button" onClick={() => deleteDetail(detail.id)} className="tm-admin-press min-h-[44px] rounded-md bg-[#fff1d5] px-3 text-xs font-black text-[#9a5a00]">حذف</button>
                         </div>
                       </div>
 
@@ -1163,13 +1163,13 @@ export const TanjaMolAddProductPage = ({
               </div>
             </AdminSection>
 
-            <AdminSection title="المواصفات" summary={specsSummary} status={specs.some(spec => spec.label.trim() && spec.value.trim()) ? 'done' : 'missing'} defaultOpen={false} action={<button type="button" onClick={addSpec} className="tm-admin-press min-h-[36px] rounded-md bg-[#ff9900] px-3 text-xs font-black text-[#131921]">إضافة مواصفة</button>}>
+            <AdminSection title="المواصفات" summary={specsSummary} status={specs.some(spec => spec.label.trim() && spec.value.trim()) ? 'done' : 'missing'} defaultOpen={false} action={<button type="button" onClick={addSpec} className="tm-admin-press min-h-[44px] rounded-md bg-[#ff9900] px-3 text-xs font-black text-[#131921]">إضافة مواصفة</button>}>
               <div className="grid gap-3">
                 {specs.map(spec => (
                   <div key={spec.id} className="grid gap-3 sm:grid-cols-[160px_minmax(0,1fr)_80px]">
-                    <input value={spec.label} onChange={event => updateSpec(spec.id, { label: event.target.value })} className="min-h-[40px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-3 text-sm font-bold outline-none focus:border-[#b45309]" placeholder="العنوان" />
-                    <input value={spec.value} onChange={event => updateSpec(spec.id, { value: event.target.value })} className="min-h-[40px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-3 text-sm font-semibold outline-none focus:border-[#b45309]" placeholder="القيمة" />
-                    <button type="button" onClick={() => removeSpec(spec.id)} className="tm-admin-press min-h-[40px] rounded-md bg-[#fff1d5] px-3 text-xs font-black text-[#9a5a00]">حذف</button>
+                    <input value={spec.label} onChange={event => updateSpec(spec.id, { label: event.target.value })} className="min-h-[44px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-3 text-sm font-bold outline-none focus:border-[#b45309]" placeholder="العنوان" />
+                    <input value={spec.value} onChange={event => updateSpec(spec.id, { value: event.target.value })} className="min-h-[44px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-3 text-sm font-semibold outline-none focus:border-[#b45309]" placeholder="القيمة" />
+                    <button type="button" onClick={() => removeSpec(spec.id)} className="tm-admin-press min-h-[44px] rounded-md bg-[#fff1d5] px-3 text-xs font-black text-[#9a5a00]">حذف</button>
                   </div>
                 ))}
               </div>
@@ -1212,7 +1212,7 @@ export const TanjaMolAddProductPage = ({
                   <p className="mt-2 max-w-[62ch] text-sm font-semibold leading-7 text-[#65716a]">{shortDescription}</p>
                   <div className="mt-4 flex flex-wrap items-center gap-4">
                     <p className="tm-admin-num font-heading text-2xl font-black text-[#b45309]">{priceLabel(price)}</p>
-                    <button type="submit" disabled={publishing || uploadingImages} className="tm-admin-press min-h-[40px] rounded-md bg-[#ff9900] px-4 text-sm font-black text-[#131921] disabled:cursor-not-allowed disabled:opacity-60">اطلب الآن</button>
+                    <button type="submit" disabled={publishing || uploadingImages} className="tm-admin-press min-h-[44px] rounded-md bg-[#ff9900] px-4 text-sm font-black text-[#131921] disabled:cursor-not-allowed disabled:opacity-60">اطلب الآن</button>
                   </div>
                   <p className="mt-3 text-xs font-bold leading-5 text-[#65716a]">المنتجات الحالية في المتجر: {products.length}</p>
                 </div>
@@ -1307,7 +1307,7 @@ function DetailColorTemplatePicker({
           </div>
 
           <div className="mt-3 grid gap-2 rounded-md bg-[#f8fafc] p-2 sm:grid-cols-[1fr_1fr_auto]">
-            <label className="flex min-h-[40px] items-center justify-between gap-3 rounded-md bg-white px-3 text-xs font-black text-[#17201b]">
+            <label className="flex min-h-[44px] items-center justify-between gap-3 rounded-md bg-white px-3 text-xs font-black text-[#17201b]">
               خلفية النص
               <input
                 type="color"
@@ -1316,7 +1316,7 @@ function DetailColorTemplatePicker({
                 className="h-7 w-10 cursor-pointer rounded border border-[#dfe5df] bg-white"
               />
             </label>
-            <label className="flex min-h-[40px] items-center justify-between gap-3 rounded-md bg-white px-3 text-xs font-black text-[#17201b]">
+            <label className="flex min-h-[44px] items-center justify-between gap-3 rounded-md bg-white px-3 text-xs font-black text-[#17201b]">
               لون النص
               <input
                 type="color"
@@ -1328,7 +1328,7 @@ function DetailColorTemplatePicker({
             <button
               type="button"
               onClick={() => onChange({ backgroundColor: '', textColor: '' })}
-              className="tm-admin-press min-h-[40px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black text-[#65716a]"
+              className="tm-admin-press min-h-[44px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black text-[#65716a]"
             >
               افتراضي
             </button>
@@ -1373,7 +1373,7 @@ function AdminSection({
   return (
     <section className={`tm-admin-surface rounded-md bg-white transition-shadow ${isOpen ? 'overflow-visible shadow-[0_16px_44px_-32px_rgba(19,25,33,0.45)]' : 'overflow-hidden'}`}>
       <div className="flex flex-wrap items-center gap-3 p-3 sm:p-4">
-        <button type="button" aria-expanded={isOpen} onClick={toggleOpen} className="tm-admin-press flex min-h-[42px] min-w-0 items-center gap-3 rounded-md px-1 text-right">
+        <button type="button" aria-expanded={isOpen} onClick={toggleOpen} className="tm-admin-press flex min-h-[44px] min-w-0 items-center gap-3 rounded-md px-1 text-right">
           <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-md bg-[#eef3ef] text-[#131921] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
             <AdminIcon name="chevron" />
           </span>
@@ -1408,7 +1408,7 @@ function TextField({
   return (
     <label className="grid gap-1">
       <span className="text-xs font-black text-[#65716a]">{label}</span>
-      <input required={required} value={value} onChange={event => onChange(event.target.value)} className={`${numeric ? 'tm-admin-num' : ''} min-h-[42px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-3 text-sm font-bold outline-none focus:border-[#b45309]`} />
+      <input required={required} value={value} onChange={event => onChange(event.target.value)} className={`${numeric ? 'tm-admin-num' : ''} min-h-[44px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-3 text-sm font-bold outline-none focus:border-[#b45309]`} />
     </label>
   );
 }
@@ -1479,7 +1479,7 @@ function BlockMediaPicker({
               onFocus();
               setIsOpen(current => !current);
             }}
-            className="tm-admin-press flex min-h-[36px] items-center justify-between gap-2 rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-2 text-right text-xs font-bold outline-none focus:border-[#b45309]"
+            className="tm-admin-press flex min-h-[44px] items-center justify-between gap-2 rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-2 text-right text-xs font-bold outline-none focus:border-[#b45309]"
           >
             <span>{selectedIndex >= 0 ? `صورة ${selectedIndex + 1}` : 'اختر صورة'}</span>
             <span className={`transition-transform ${isOpen ? 'rotate-180' : ''}`}><AdminIcon name="chevron" /></span>
@@ -1507,7 +1507,7 @@ function BlockMediaPicker({
           ) : null}
         </div>
 
-        <label htmlFor={inputId} aria-disabled={uploadDisabled} className={`tm-admin-press mt-[17px] grid min-h-[36px] place-items-center rounded-md bg-[#131921] px-3 text-xs font-black text-white ${uploadDisabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
+        <label htmlFor={inputId} aria-disabled={uploadDisabled} className={`tm-admin-press mt-[17px] grid min-h-[44px] place-items-center rounded-md bg-[#131921] px-3 text-xs font-black text-white ${uploadDisabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
           رفع جديد
         </label>
         <input id={inputId} type="file" accept="image/*" disabled={uploadDisabled} className="sr-only" onChange={event => {
@@ -1523,7 +1523,7 @@ function BlockMediaPicker({
         onFocus={onFocus}
         onChange={event => onUrlChange(event.target.value)}
         placeholder="رابط صورة أو فيديو"
-        className="min-h-[36px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-2 text-xs font-bold outline-none focus:border-[#b45309]"
+        className="min-h-[44px] rounded-md border border-[#cfd8d1] bg-[#fbfaf6] px-2 text-xs font-bold outline-none focus:border-[#b45309]"
       />
     </div>
   );
