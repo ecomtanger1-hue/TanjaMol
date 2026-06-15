@@ -281,9 +281,8 @@ export function ShadcnAdminOrdersPage({ orders, settings, route, onNavigate, onU
               <button type="button" onClick={() => onNavigate(`#/admin/orders/${encodeURIComponent(order.id)}`)} className="min-w-0 text-right">
                 <div className="mb-2 flex items-center gap-2">
                   <span className="shrink-0 font-black text-zinc-50">{order.id}</span>
-                  <Badge variant="outline" className={statusStyles[order.status]}>{statusLabels[order.status]}</Badge>
                   <span className="min-w-0 truncate text-xs text-zinc-500">{formatDate(order.createdAt)}</span>
-                  <span className="ms-auto shrink-0 text-xl font-black text-orange-300">{formatMoney(order.total)}</span>
+                  <span className="ms-auto shrink-0 text-lg font-black text-orange-300">{formatMoney(order.total)}</span>
                 </div>
                 <p className="truncate text-sm font-black text-zinc-100">
                   {order.name || 'عميل بدون اسم'} · {order.address} · {order.phone}
