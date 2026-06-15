@@ -281,9 +281,22 @@ export function ShadcnAdminOrdersPage({ orders, settings, route, onNavigate, onU
             {filteredOrders.map(order => (
               <TableRow key={order.id} className="border-white/10 hover:bg-white/5">
                 <TableCell>
-                  <button type="button" onClick={() => onNavigate(`#/admin/orders/${encodeURIComponent(order.id)}`)} className="text-right">
-                    <span className="block font-black text-zinc-50">{order.id}</span>
-                    <span className="block text-xs text-zinc-500">{formatDate(order.createdAt)}</span>
+                  <button type="button" onClick={() => onNavigate(`#/admin/orders/${encodeURIComponent(order.id)}`)} className="flex items-center gap-3 text-right">
+                    {order.items[0]?.image ? (
+                      <img
+                        src={order.items[0].image}
+                        alt=""
+                        width={46}
+                        height={46}
+                        loading="lazy"
+                        decoding="async"
+                        className="size-[46px] shrink-0 rounded-md border border-white/10 object-cover"
+                      />
+                    ) : null}
+                    <span className="min-w-0">
+                      <span className="block font-black text-zinc-50">{order.id}</span>
+                      <span className="block text-xs text-zinc-500">{formatDate(order.createdAt)}</span>
+                    </span>
                   </button>
                 </TableCell>
                 <TableCell>
