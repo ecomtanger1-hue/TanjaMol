@@ -389,24 +389,32 @@ export function ShadcnAdminOrderDetailPage({ orders, settings, route, onNavigate
 
           <Card className="border-white/10 bg-zinc-900/70 text-zinc-50 shadow-none">
             <CardHeader><CardTitle className="text-lg font-black">المنتجات</CardTitle></CardHeader>
-            <CardContent className="grid gap-3">
+            <CardContent className="grid gap-4">
               {order.items.map(item => (
-                <div key={`${item.id}-${item.variant || 'default'}`} className="grid grid-cols-[76px_minmax(0,1fr)] gap-3 rounded-lg border border-white/10 bg-zinc-950/70 p-3">
-                  <img src={item.image} alt="" width={76} height={76} loading="lazy" decoding="async" className="size-[76px] rounded-md object-cover" />
-                  <div className="min-w-0 flex-1">
-                    <p className="line-clamp-2 text-sm font-black">{item.title}</p>
-                    {item.variant ? <p className="mt-1 text-xs text-zinc-500">{item.variant}</p> : null}
-                    <div className="mt-2 grid grid-cols-2 gap-2 rounded-md bg-zinc-900/70 p-2 text-xs">
+                <div key={`${item.id}-${item.variant || 'default'}`} className="grid gap-3 border-b border-white/10 pb-4 last:border-b-0 last:pb-0">
+                  <p className="text-base font-black leading-6 text-zinc-50 break-words">{item.title}</p>
+                  {item.variant ? (
+                    <p className="text-sm leading-5 text-zinc-300 break-words">
+                      <span className="font-bold text-zinc-500">الاختيار: </span>
+                      {item.variant}
+                    </p>
+                  ) : null}
+                  <div className="grid grid-cols-[88px_minmax(0,1fr)] gap-3">
+                    <img src={item.image} alt="" width={88} height={88} loading="lazy" decoding="async" className="size-[88px] rounded-md object-cover" />
+                    <div className="grid content-start grid-cols-2 gap-2 text-xs">
                       <span>
                         <b className="block font-bold text-zinc-500">الكمية</b>
-                        <span className="font-black text-zinc-100">{item.quantity.toLocaleString('ar-MA')}</span>
+                        <span className="text-base font-black text-zinc-100">{item.quantity.toLocaleString('ar-MA')}</span>
                       </span>
                       <span>
                         <b className="block font-bold text-zinc-500">المبلغ</b>
-                        <span className="font-black text-orange-300">{formatMoney(item.price * item.quantity)}</span>
+                        <span className="text-base font-black text-orange-300">{formatMoney(item.price * item.quantity)}</span>
+                      </span>
+                      <span className="col-span-2">
+                        <b className="block font-bold text-zinc-500">السعر</b>
+                        <span className="font-black text-zinc-300">{formatMoney(item.price)}</span>
                       </span>
                     </div>
-                    <p className="mt-1 text-xs font-bold text-zinc-500">السعر: {formatMoney(item.price)}</p>
                   </div>
                 </div>
               ))}
@@ -418,22 +426,31 @@ export function ShadcnAdminOrderDetailPage({ orders, settings, route, onNavigate
           <Card className="border-white/10 bg-zinc-900/70 text-zinc-50 shadow-none">
             <CardHeader><CardTitle className="flex items-center gap-2 text-lg font-black"><UserRound className="size-4" /> العميل</CardTitle></CardHeader>
             <CardContent className="grid gap-3 text-sm">
-              <div className="grid gap-2 rounded-lg bg-zinc-950/70 p-3">
+              <div className="grid gap-3">
                 <p>
                   <b className="block text-xs text-zinc-500">الاسم</b>
-                  <span className="block truncate font-black text-zinc-100">{order.name || 'غير محدد'}</span>
+                  <span className="block text-base font-black leading-6 text-zinc-100 break-words">{order.name || 'غير محدد'}</span>
                 </p>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-3">
                   <p className="min-w-0">
                     <b className="block text-xs text-zinc-500">الهاتف</b>
-                    <span className="block truncate font-black text-zinc-100">{order.phone}</span>
+                    <span className="block font-black text-zinc-100 break-all">{order.phone}</span>
                   </p>
                   <p className="min-w-0">
-                    <b className="block text-xs text-zinc-500">العنوان</b>
-                    <span className="block truncate font-black text-zinc-100">{order.address}</span>
+                    <b className="block text-xs text-zinc-500">الطلبات</b>
+                    <span className="block font-black text-zinc-100">{customerOrders.length.toLocaleString('ar-MA')}</span>
                   </p>
                 </div>
-                {order.note ? <p className="mt-2 text-xs text-zinc-400">{order.note}</p> : null}
+                <p>
+                  <b className="block text-xs text-zinc-500">العنوان</b>
+                  <span className="block text-base font-black leading-6 text-zinc-100 break-words">{order.address}</span>
+                </p>
+                {order.note ? (
+                  <p>
+                    <b className="block text-xs text-zinc-500">ملاحظة</b>
+                    <span className="block leading-5 text-zinc-300 break-words">{order.note}</span>
+                  </p>
+                ) : null}
               </div>
               <div className="grid grid-cols-[minmax(128px,1fr)_44px_44px_44px] gap-2 sm:hidden">
                 <OrderStatusSelect value={order.status} onChange={status => onUpdateOrderStatus(order.id, status)} />
