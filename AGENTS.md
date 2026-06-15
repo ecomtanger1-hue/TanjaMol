@@ -6,6 +6,7 @@
 - Prefer one or two focused patches over broad rewrites. If a change starts expanding, pause and re-check the simpler path.
 - For UI/copy fixes, avoid touching unrelated JSX blocks. Patch exact lines or small components only.
 - Run fast checks early after risky edits, not only at the end. For this project that usually means `npm.cmd run encoding:check`, then `npm.cmd run build` before publishing.
+- On Windows/PowerShell, prefer command shims such as `npm.cmd`, `npx.cmd`, and `node.exe` over PowerShell script shims like `npm` or `npx`; the `.ps1` shims may be blocked by execution policy.
 - If a tool or patch fails twice because of encoding or matching issues, stop using that approach and switch to a safer narrow edit. Do not keep retrying broad replacements.
 - Review `git diff --stat` and the focused diff before committing. A small request should not produce a surprisingly large diff.
 - Leave unrelated untracked files alone unless the user explicitly asks to include them.
