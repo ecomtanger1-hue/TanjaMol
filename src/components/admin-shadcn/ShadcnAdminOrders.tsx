@@ -393,10 +393,14 @@ export function ShadcnAdminOrderDetailPage({ orders, settings, route, onNavigate
   return (
     <ShadcnAdminShell
       title={`طلب ${order.id}`}
-      description={formatDate(order.createdAt)}
       route={route}
       onNavigate={onNavigate}
-      actions={<Button type="button" variant="outline" className="border-white/10 bg-white/5 text-zinc-100 hover:bg-white/10" onClick={() => onNavigate('#/admin/orders')}><ArrowRight className="size-4" /> رجوع</Button>}
+      actions={
+        <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-start">
+          <span className="text-sm font-bold text-zinc-400">{formatDate(order.createdAt)}</span>
+          <Button type="button" variant="outline" className="border-white/10 bg-white/5 text-zinc-100 hover:bg-white/10" onClick={() => onNavigate('#/admin/orders')}><ArrowRight className="size-4" /> رجوع</Button>
+        </div>
+      }
     >
       <section className="grid gap-4 sm:hidden">
         {order.items.map(item => {
@@ -406,22 +410,13 @@ export function ShadcnAdminOrderDetailPage({ orders, settings, route, onNavigate
               <p className="mb-3 rounded-md border border-white/10 bg-zinc-950/80 px-3 py-3 text-center text-sm font-black leading-6 break-words">
                 {item.title}
               </p>
-              <div className="grid grid-cols-[minmax(112px,0.8fr)_minmax(176px,1fr)] gap-3 [direction:ltr]">
-                <div className="grid min-h-[236px] place-items-center overflow-hidden rounded-md border border-white/10 bg-zinc-950/70">
-                  {item.image ? (
-                    <img src={item.image} alt="" width={360} height={360} loading="lazy" decoding="async" className="h-full w-full object-cover" />
-                  ) : (
-                    <span className="text-xs font-bold text-zinc-500">صورة المنتج</span>
-                  )}
-                </div>
-                <div className="grid content-start gap-2 [direction:rtl]">
-                  <MobileSheetField label="طلب" value={order.id} />
-                  {variants.map((variant, index) => (
-                    <MobileSheetField key={`${variant.label}-${variant.value}-${index}`} label={variant.label} value={variant.value} />
-                  ))}
-                  <MobileSheetField label="الكمية" value={item.quantity.toLocaleString('ar-MA')} />
-                  <MobileSheetField label="المجموع" value={formatMoney(item.price * item.quantity)} valueClassName="text-orange-300" />
-                </div>
+              <div className="grid content-start gap-2">
+                <MobileSheetField label="طلب" value={order.id} />
+                {variants.map((variant, index) => (
+                  <MobileSheetField key={`${variant.label}-${variant.value}-${index}`} label={variant.label} value={variant.value} />
+                ))}
+                <MobileSheetField label="الكمية" value={item.quantity.toLocaleString('ar-MA')} />
+                <MobileSheetField label="المجموع" value={formatMoney(item.price * item.quantity)} valueClassName="text-orange-300" />
               </div>
             </article>
           );
