@@ -90,6 +90,35 @@ function orderCopyText(order: StoredOrder, settings: StoreSettings) {
   ].filter(Boolean).join('\n');
 }
 
+function variantRows(variant?: string) {
+  if (!variant?.trim()) return [];
+
+  return variant
+    .split(/\s*(?:،|,|\/|\|)\s*/)
+    .map(part => part.trim())
+    .filter(Boolean)
+    .map(part => {
+      const [rawLabel, ...rest] = part.split(/[:：]/);
+      const value = rest.join(':').trim();
+      return value
+        ? { label: rawLabel.trim() || 'الاختيار', value }
+        : { label: 'الاختيار', value: part };
+    });
+}
+
+function MobileSheetField({ label, value, valueClassName = '' }: { label: string; value: string; valueClassName?: string }) {
+  return (
+    <div className="grid grid-cols-[76px_minmax(0,1fr)] gap-2">
+      <span className="grid min-h-11 place-items-center rounded-md border border-white/10 bg-zinc-950/60 px-2 text-xs font-bold text-zinc-400">
+        {label}
+      </span>
+      <span className={`grid min-h-11 items-center rounded-md border border-white/10 bg-zinc-950/80 px-3 text-sm font-black text-zinc-50 ${valueClassName}`}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
 function OrderStatusSelect({
   value,
   onChange,
@@ -369,7 +398,85 @@ export function ShadcnAdminOrderDetailPage({ orders, settings, route, onNavigate
       onNavigate={onNavigate}
       actions={<Button type="button" variant="outline" className="border-white/10 bg-white/5 text-zinc-100 hover:bg-white/10" onClick={() => onNavigate('#/admin/orders')}><ArrowRight className="size-4" /> رجوع</Button>}
     >
-      <div className="grid gap-5 xl:grid-cols-[1.35fr_0.75fr]">
+      <section className="grid gap-4 sm:hidden">
+        {order.items.map(item => {
+          const variants = variantRows(item.variant);
+          return (
+            <article key={`${item.id}-${item.variant || 'default'}`} className="rounded-lg border border-white/10 bg-zinc-900/70 p-3 text-zinc-50 shadow-none">
+              <p className="mb-3 rounded-md border border-white/10 bg-zinc-950/80 px-3 py-3 text-center text-sm font-black leading-6 break-words">
+                {item.title}
+              </p>
+              <div className="grid grid-cols-[minmax(112px,0.8fr)_minmax(176px,1fr)] gap-3 [direction:ltr]">
+                <div className="grid min-h-[236px] place-items-center overflow-hidden rounded-md border border-white/10 bg-zinc-950/70">
+                  {item.image ? (
+                    <img src={item.image} alt="" width={360} height={360} loading="lazy" decoding="async" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-xs font-bold text-zinc-500">صورة المنتج</span>
+                  )}
+                </div>
+                <div className="grid content-start gap-2 [direction:rtl]">
+                  <MobileSheetField label="طلب" value={order.id} />
+                  {variants.map((variant, index) => (
+                    <MobileSheetField key={`${variant.label}-${variant.value}-${index}`} label={variant.label} value={variant.value} />
+                  ))}
+                  <MobileSheetField label="الكمية" value={item.quantity.toLocaleString('ar-MA')} />
+                  <MobileSheetField label="المجموع" value={formatMoney(item.price * item.quantity)} valueClassName="text-orange-300" />
+                </div>
+              </div>
+            </article>
+          );
+        })}
+
+        <article className="rounded-lg border border-white/10 bg-zinc-900/70 p-3 text-zinc-50 shadow-none">
+          <div className="grid gap-3">
+            <MobileSheetField label="الاسم" value={order.name || 'غير محدد'} valueClassName="break-words" />
+            <MobileSheetField label="الهاتف" value={order.phone} valueClassName="break-all" />
+            <MobileSheetField label="العنوان" value={order.address} valueClassName="break-words leading-6" />
+            {order.note ? <MobileSheetField label="ملاحظة" value={order.note} valueClassName="break-words leading-6" /> : null}
+          </div>
+
+          <div className="mt-4 grid grid-cols-[minmax(0,1fr)_56px_44px_44px] gap-2">
+            <OrderStatusSelect value={order.status} onChange={status => onUpdateOrderStatus(order.id, status)} />
+            <Button type="button" variant="secondary" className="h-10 bg-white/10 px-2 text-xs font-black text-zinc-100 hover:bg-white/15" onClick={copyOrderDetails}>
+              نسخ
+            </Button>
+            <Button asChild type="button" size="icon" variant="outline" className="h-10 border-white/10 bg-white/5 text-zinc-100 hover:bg-white/10">
+              <a href={`tel:${order.phone}`} aria-label="اتصال"><Phone className="size-4" /></a>
+            </Button>
+            <Button
+              asChild
+              type="button"
+              size="icon"
+              className={(order.customerMessageStatus === order.status ? 'h-10 bg-emerald-500 text-zinc-950 hover:bg-emerald-400' : 'h-10 bg-orange-500 text-zinc-950 hover:bg-orange-400')}
+              onClick={() => onMarkCustomerMessageSent(order.id, order.status)}
+            >
+              <a href={whatsappUrl(order, settings)} target="_blank" rel="noreferrer" aria-label="واتساب"><MessageCircle className="size-4" /></a>
+            </Button>
+          </div>
+        </article>
+
+        <article className="rounded-lg border border-white/10 bg-zinc-900/70 p-3 text-zinc-50 shadow-none">
+          <p className="mb-3 text-base font-black">سجل العميل</p>
+          <div className="grid gap-3">
+            {customerOrders.slice(0, 5).map((item, index) => (
+              <div key={item.id}>
+                <button type="button" onClick={() => onNavigate(`#/admin/orders/${encodeURIComponent(item.id)}`)} className="w-full text-right text-sm">
+                  <span className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+                    <span className="min-w-0">
+                      <span className="block truncate font-black">{item.id}</span>
+                      <span className="block truncate text-xs text-zinc-500">{formatDate(item.createdAt)}</span>
+                    </span>
+                    <span className="shrink-0 font-black text-orange-300">{formatMoney(item.total)}</span>
+                  </span>
+                </button>
+                {index < Math.min(customerOrders.length, 5) - 1 ? <Separator className="mt-3 bg-white/10" /> : null}
+              </div>
+            ))}
+          </div>
+        </article>
+      </section>
+
+      <div className="hidden gap-5 sm:grid xl:grid-cols-[1.35fr_0.75fr]">
         <section className="order-1 grid gap-5 xl:order-1">
           <Card className="hidden border-white/10 bg-zinc-900/70 text-zinc-50 shadow-none sm:block">
             <CardHeader className="pb-3">
