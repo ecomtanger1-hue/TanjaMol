@@ -342,7 +342,7 @@ export const TanjaMolArabicCODProductPage = ({
         </section>
 
         <section className="bg-[#131921] text-white">
-          <div className="mx-auto grid w-full max-w-[1400px] grid-cols-1 gap-5 px-4 pb-8 sm:px-6 lg:grid-cols-[minmax(0,1.12fr)_500px] lg:gap-7 lg:px-8 lg:pb-14">
+          <div className="mx-auto grid w-full max-w-[1400px] grid-cols-1 gap-3 px-4 pb-8 sm:px-6 md:gap-5 lg:grid-cols-[minmax(0,1.12fr)_500px] lg:gap-7 lg:px-8 lg:pb-14">
             <div className="min-w-0">
               <div className="md:hidden">
                 <div id="tm-product-mobile-gallery" ref={mobileGalleryRef} className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-4" onScroll={event => {
@@ -370,12 +370,6 @@ export const TanjaMolArabicCODProductPage = ({
                     </button>)}
                 </div>
                 <img src={productGallery[selectedImage]?.src ?? productGallery[0].src} alt={productGallery[selectedImage]?.alt ?? productGallery[0].alt} className="tm-image h-[600px] w-full rounded-lg object-cover" fetchPriority="high" loading="eager" decoding="sync" width="1040" height="1200" sizes="58vw" />
-              </div>
-
-              <div className="mt-5 grid grid-cols-3 gap-2 text-center text-xs font-extrabold text-white md:text-sm">
-                <div className="rounded-md bg-white/10 px-3 py-3">تأكيد بالهاتف</div>
-                <div className="rounded-md bg-white/10 px-3 py-3">الدفع عند الاستلام</div>
-                <div className="rounded-md bg-white/10 px-3 py-3">توصيل سريع</div>
               </div>
 
               <div className="mt-4 hidden max-w-[680px] gap-2 md:grid md:grid-cols-1">
