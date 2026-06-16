@@ -18,7 +18,7 @@ const navItems: NavItem[] = [
 
 type ShadcnAdminShellProps = {
   title: string;
-  description?: string;
+  description?: ReactNode;
   route: string;
   children: ReactNode;
   actions?: ReactNode;

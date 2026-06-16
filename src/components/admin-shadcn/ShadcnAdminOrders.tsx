@@ -39,6 +39,30 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat('ar-MA', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
 }
 
+function orderTimestamp(order: StoredOrder) {
+  const time = new Date(order.createdAt).getTime();
+  return Number.isFinite(time) ? time : 0;
+}
+
+function dateKey(value: string) {
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return 'unknown';
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}/${month}/${day}`;
+}
+
+function isTodayKey(key: string) {
+  return key === dateKey(new Date().toISOString());
+}
+
+function orderDateLabel(order: StoredOrder) {
+  const key = dateKey(order.createdAt);
+  if (key === 'unknown') return 'بدون تاريخ';
+  return isTodayKey(key) ? 'Today' : key;
+}
+
 function formatMoney(value: number) {
   return `${value.toLocaleString('ar-MA')} د.م.`;
 }
@@ -212,6 +236,68 @@ type OrdersProps = {
   onMarkCustomerMessageSent: (orderId: string, status: OrderStatus) => void;
 };
 
+function groupOrdersByDate(orders: StoredOrder[]) {
+  return orders.reduce<Array<{ key: string; label: string; orders: StoredOrder[] }>>((groups, order) => {
+    const key = dateKey(order.createdAt);
+    const current = groups.at(-1);
+    if (current?.key === key) {
+      current.orders.push(order);
+      return groups;
+    }
+
+    groups.push({ key, label: orderDateLabel(order), orders: [order] });
+    return groups;
+  }, []);
+}
+
+function MobileOrderCard({ order, onNavigate }: { order: StoredOrder; onNavigate: (route: string) => void }) {
+  const firstItem = order.items?.[0];
+
+  return (
+    <article className="rounded-lg border border-white/10 bg-zinc-900/70 p-3 text-zinc-50">
+      <button
+        type="button"
+        onClick={() => onNavigate(`#/admin/orders/${encodeURIComponent(order.id)}`)}
+        className="grid w-full grid-cols-[112px_minmax(0,1fr)] gap-3 text-right"
+      >
+        <span className="grid aspect-square min-h-[112px] place-items-center overflow-hidden rounded-md border border-white/10 bg-zinc-950/80 text-center text-sm font-black leading-6 text-zinc-400">
+          {firstItem?.image ? (
+            <img
+              src={firstItem.image}
+              alt=""
+              width={112}
+              height={112}
+              loading="lazy"
+              decoding="async"
+              className="size-full object-cover"
+            />
+          ) : (
+            <span className="px-2">صورة المنتج</span>
+          )}
+        </span>
+
+        <span className="grid min-w-0 grid-rows-[auto_1fr] gap-3">
+          <span className="grid grid-cols-[minmax(0,1fr)_88px_92px] items-center gap-2">
+            <span className="min-w-0 truncate rounded-md border border-white/10 bg-zinc-950/80 px-3 py-2 text-center text-sm font-black text-zinc-50">
+              {order.name || 'الاسم'}
+            </span>
+            <span className="truncate rounded-md border border-white/10 bg-zinc-950/80 px-2 py-2 text-center text-sm font-black text-orange-300">
+              {formatMoney(order.total)}
+            </span>
+            <span className="truncate rounded-md border border-white/10 bg-zinc-950/80 px-2 py-2 text-center text-sm font-black text-zinc-100">
+              {statusLabels[order.status]}
+            </span>
+          </span>
+
+          <span className="grid min-h-[52px] items-center rounded-md border border-white/10 bg-zinc-950/80 px-3 py-2 text-center text-sm font-black leading-6 text-zinc-100">
+            <span className="line-clamp-2 break-words">{order.address || 'العنوان'}</span>
+          </span>
+        </span>
+      </button>
+    </article>
+  );
+}
+
 export function ShadcnAdminOrdersPage({ orders, settings, route, onNavigate, onUpdateOrderStatus, onMarkCustomerMessageSent }: OrdersProps) {
   const [query, setQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
@@ -225,8 +311,11 @@ export function ShadcnAdminOrdersPage({ orders, settings, route, onNavigate, onU
         if (!normalizedQuery) return true;
         const haystack = `${order.id} ${order.name} ${order.phone} ${order.address}`.toLowerCase();
         return haystack.includes(normalizedQuery);
-      });
+      })
+      .sort((a, b) => orderTimestamp(b) - orderTimestamp(a));
   }, [normalizedQuery, orders, status]);
+
+  const mobileOrderGroups = useMemo(() => groupOrdersByDate(filteredOrders), [filteredOrders]);
 
   const pendingCount = orders.filter(order => order.status === 'new' || order.status === 'whatsapp').length;
   const deliveryCount = orders.filter(order => order.status === 'delivery').length;
@@ -347,25 +436,14 @@ export function ShadcnAdminOrdersPage({ orders, settings, route, onNavigate, onU
         {!filteredOrders.length ? <div className="p-8 text-center text-sm text-zinc-400">لا توجد طلبات مطابقة.</div> : null}
       </Card>
 
-      <section className="mt-4 grid gap-3 lg:hidden">
-        {filteredOrders.map(order => (
-          <article key={order.id} className="rounded-lg border border-white/10 bg-zinc-900/70 p-3">
-            <div className="grid gap-3 lg:grid-cols-[1fr_360px]">
-              <button type="button" onClick={() => onNavigate(`#/admin/orders/${encodeURIComponent(order.id)}`)} className="min-w-0 text-right">
-                <div className="mb-2 grid grid-cols-3 items-center gap-2">
-                  <span className="min-w-0 truncate text-right font-black text-zinc-50">{order.id}</span>
-                  <span className="min-w-0 truncate text-center text-xs text-zinc-500">{formatDate(order.createdAt)}</span>
-                  <span className="min-w-0 truncate text-left text-base font-black text-orange-300">{formatMoney(order.total)}</span>
-                </div>
-                <div className="grid grid-cols-3 items-center gap-2 text-sm font-black text-zinc-100">
-                  <span className="min-w-0 truncate text-right">{order.name || 'عميل بدون اسم'}</span>
-                  <span className="min-w-0 truncate text-center">{order.address}</span>
-                  <span className="min-w-0 truncate text-left">{order.phone}</span>
-                </div>
-              </button>
-              <OrderActions order={order} settings={settings} onUpdateOrderStatus={onUpdateOrderStatus} onMarkCustomerMessageSent={onMarkCustomerMessageSent} />
-            </div>
-          </article>
+      <section className="mt-4 grid gap-4 lg:hidden">
+        {mobileOrderGroups.map(group => (
+          <div key={group.key} className="grid gap-3">
+            <p className="px-2 text-left text-sm font-black text-zinc-300">{group.label}</p>
+            {group.orders.map(order => (
+              <MobileOrderCard key={order.id} order={order} onNavigate={onNavigate} />
+            ))}
+          </div>
         ))}
         {!filteredOrders.length ? <div className="rounded-lg border border-dashed border-white/10 p-8 text-center text-sm text-zinc-400">لا توجد طلبات مطابقة.</div> : null}
       </section>
@@ -386,6 +464,7 @@ export function ShadcnAdminOrderDetailPage({ orders, settings, route, onNavigate
   }
 
   const customerOrders = orders.filter(item => item.phone === order.phone);
+  const orderItems = Array.isArray(order.items) ? order.items : [];
   const copyOrderDetails = () => {
     void navigator.clipboard?.writeText(orderCopyText(order, settings));
   };
@@ -393,17 +472,18 @@ export function ShadcnAdminOrderDetailPage({ orders, settings, route, onNavigate
   return (
     <ShadcnAdminShell
       title={`طلب ${order.id}`}
+      description={<span className="hidden sm:inline">{formatDate(order.createdAt)}</span>}
       route={route}
       onNavigate={onNavigate}
       actions={
         <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-start">
-          <span className="text-sm font-bold text-zinc-400">{formatDate(order.createdAt)}</span>
+          <span className="text-sm font-bold text-zinc-400 sm:hidden">{formatDate(order.createdAt)}</span>
           <Button type="button" variant="outline" className="border-white/10 bg-white/5 text-zinc-100 hover:bg-white/10" onClick={() => onNavigate('#/admin/orders')}><ArrowRight className="size-4" /> رجوع</Button>
         </div>
       }
     >
       <section className="grid gap-4 sm:hidden">
-        {order.items.map(item => {
+        {orderItems.map(item => {
           const variants = variantRows(item.variant);
           return (
             <article key={`${item.id}-${item.variant || 'default'}`} className="rounded-lg border border-white/10 bg-zinc-900/70 p-3 text-zinc-50 shadow-none">
@@ -471,107 +551,94 @@ export function ShadcnAdminOrderDetailPage({ orders, settings, route, onNavigate
         </article>
       </section>
 
-      <div className="hidden gap-5 sm:grid xl:grid-cols-[1.35fr_0.75fr]">
-        <section className="order-1 grid gap-5 xl:order-1">
-          <Card className="hidden border-white/10 bg-zinc-900/70 text-zinc-50 shadow-none sm:block">
+      <div className="hidden gap-5 sm:grid lg:grid-cols-[minmax(280px,0.35fr)_minmax(0,0.65fr)] [direction:ltr]">
+        <aside className="grid content-start gap-5 [direction:rtl]">
+          <Card className="border-white/10 bg-zinc-900/70 text-zinc-50 shadow-none">
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg font-black">الملخص</CardTitle>
+              <CardTitle className="flex items-center justify-end gap-2 text-lg font-black">
+                العميل <UserRound className="size-4 text-zinc-300" />
+              </CardTitle>
             </CardHeader>
-            <CardContent className="grid gap-3">
-              <div className="rounded-lg border border-white/10 bg-zinc-950/70 p-3">
-                <div className="flex items-center gap-2">
-                  <span className="shrink-0 font-black text-zinc-50">{order.id}</span>
-                  <Badge variant="outline" className={statusStyles[order.status]}>{statusLabels[order.status]}</Badge>
-                  <span className="min-w-0 truncate text-xs text-zinc-500">{formatDate(order.createdAt)}</span>
-                  <span className="ms-auto shrink-0 text-xl font-black text-orange-300 sm:text-2xl">{formatMoney(order.total)}</span>
+            <CardContent className="grid gap-3 text-sm">
+              <div className="grid gap-3">
+                <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-3">
+                  <span className="text-xs font-bold text-zinc-500">الاسم</span>
+                  <span className="min-w-0 border-b border-dashed border-white/15 pb-2 font-black leading-6 text-zinc-100 break-words">{order.name || 'غير محدد'}</span>
                 </div>
-                <p className="mt-2 truncate text-sm font-black text-zinc-100">
-                  {order.name || 'عميل بدون اسم'} · {order.address} · {order.phone}
-                </p>
+                <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-3">
+                  <span className="text-xs font-bold text-zinc-500">الهاتف</span>
+                  <span className="min-w-0 border-b border-dashed border-white/15 pb-2 font-black text-zinc-100 break-all">{order.phone}</span>
+                </div>
+                <div className="grid grid-cols-[92px_minmax(0,1fr)] items-center gap-3">
+                  <span className="text-xs font-bold text-zinc-500">الطلبات</span>
+                  <span className="min-w-0 border-b border-dashed border-white/15 pb-2 font-black text-zinc-100">{customerOrders.length.toLocaleString('ar-MA')}</span>
+                </div>
+                <div className="grid grid-cols-[92px_minmax(0,1fr)] items-start gap-3">
+                  <span className="pt-1 text-xs font-bold text-zinc-500">العنوان</span>
+                  <span className="min-w-0 border-b border-dashed border-white/15 pb-2 font-black leading-6 text-zinc-100 break-words">{order.address}</span>
+                </div>
+                {order.note ? (
+                  <div className="grid grid-cols-[92px_minmax(0,1fr)] items-start gap-3">
+                    <span className="pt-1 text-xs font-bold text-zinc-500">ملاحظة</span>
+                    <span className="min-w-0 border-b border-dashed border-white/15 pb-2 leading-5 text-zinc-300 break-words">{order.note}</span>
+                  </div>
+                ) : null}
               </div>
-              <div className="grid gap-2 sm:grid-cols-[minmax(180px,1fr)_44px_44px]">
-                <OrderStatusSelect value={order.status} onChange={status => onUpdateOrderStatus(order.id, status)} />
-                <Button asChild type="button" size="icon" variant="outline" className="h-10 border-white/10 bg-white/5 text-zinc-100 hover:bg-white/10"><a href={`tel:${order.phone}`} aria-label="اتصال"><Phone className="size-4" /></a></Button>
-                <Button asChild type="button" size="icon" className={(order.customerMessageStatus === order.status ? 'h-10 bg-emerald-500 text-zinc-950 hover:bg-emerald-400' : 'h-10 bg-orange-500 text-zinc-950 hover:bg-orange-400')} onClick={() => onMarkCustomerMessageSent(order.id, order.status)}><a href={whatsappUrl(order, settings)} target="_blank" rel="noreferrer" aria-label="واتساب"><MessageCircle className="size-4" /></a></Button>
-              </div>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                <span className="rounded-lg bg-zinc-950/70 p-3"><b className="block text-xs text-zinc-500">المنتجات</b><span className="font-black">{order.items.length.toLocaleString('ar-MA')}</span></span>
-                <span className="rounded-lg bg-zinc-950/70 p-3"><b className="block text-xs text-zinc-500">المصدر</b><span className="font-black">{order.source}</span></span>
-                <span className="col-span-2 rounded-lg bg-zinc-950/70 p-3 sm:col-span-1"><b className="block text-xs text-zinc-500">رسالة العميل</b><span className="font-black">{order.customerMessageStatus === order.status ? 'تم إرسالها' : 'لم ترسل'}</span></span>
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <Button type="button" variant="outline" className="border-white/10 bg-white/5 text-zinc-100 hover:bg-white/10" onClick={() => onNavigate(`#/admin/customers/${encodeURIComponent(order.phone)}`)}>
+                  طلبات العميل
+                </Button>
+                <Button type="button" variant="secondary" className="bg-white/10 text-zinc-100 hover:bg-white/15" onClick={copyOrderDetails}>
+                  نسخ
+                  <Copy className="size-4" />
+                </Button>
               </div>
             </CardContent>
           </Card>
 
           <Card className="border-white/10 bg-zinc-900/70 text-zinc-50 shadow-none">
-            <CardHeader><CardTitle className="text-lg font-black">المنتجات</CardTitle></CardHeader>
-            <CardContent className="grid gap-4">
-              {order.items.map(item => (
-                <div key={`${item.id}-${item.variant || 'default'}`} className="grid gap-3 border-b border-white/10 pb-4 last:border-b-0 last:pb-0">
-                  <p className="text-base font-black leading-6 text-zinc-50 break-words">{item.title}</p>
-                  {item.variant ? (
-                    <p className="text-sm leading-5 text-zinc-300 break-words">
-                      <span className="font-bold text-zinc-500">الاختيار: </span>
-                      {item.variant}
-                    </p>
-                  ) : null}
-                  <div className="grid grid-cols-[88px_minmax(0,1fr)] gap-3">
-                    <img src={item.image} alt="" width={88} height={88} loading="lazy" decoding="async" className="size-[88px] rounded-md object-cover" />
-                    <div className="grid content-start grid-cols-2 gap-2 text-xs">
-                      <span>
-                        <b className="block font-bold text-zinc-500">الكمية</b>
-                        <span className="text-base font-black text-zinc-100">{item.quantity.toLocaleString('ar-MA')}</span>
-                      </span>
-                      <span>
-                        <b className="block font-bold text-zinc-500">المبلغ</b>
-                        <span className="text-base font-black text-orange-300">{formatMoney(item.price * item.quantity)}</span>
-                      </span>
-                      <span className="col-span-2">
-                        <b className="block font-bold text-zinc-500">السعر</b>
-                        <span className="font-black text-zinc-300">{formatMoney(item.price)}</span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg font-black">سجل العميل</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-3">
+              {customerOrders.slice(0, 5).map(item => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => onNavigate(`#/admin/orders/${encodeURIComponent(item.id)}`)}
+                  className="w-full rounded-md border border-white/10 bg-zinc-950/60 px-3 py-3 text-right text-sm transition hover:bg-white/5"
+                >
+                  <span className="grid grid-cols-[auto_auto_auto_minmax(0,1fr)] items-center gap-3">
+                    <span className="shrink-0 font-black text-orange-300">{formatMoney(item.total)}</span>
+                    <span className="shrink-0 text-xs text-zinc-500">{formatDate(item.createdAt)}</span>
+                    <Badge variant="outline" className={statusStyles[item.status]}>{statusLabels[item.status]}</Badge>
+                    <span className="min-w-0 truncate font-black text-zinc-100">{item.id}</span>
+                  </span>
+                </button>
               ))}
             </CardContent>
           </Card>
-        </section>
+        </aside>
 
-        <aside className="order-2 grid gap-5 content-start xl:order-2">
+        <section className="grid gap-5 [direction:rtl]">
           <Card className="border-white/10 bg-zinc-900/70 text-zinc-50 shadow-none">
-            <CardHeader><CardTitle className="flex items-center gap-2 text-lg font-black"><UserRound className="size-4" /> العميل</CardTitle></CardHeader>
-            <CardContent className="grid gap-3 text-sm">
-              <div className="grid gap-3">
-                <p>
-                  <b className="block text-xs text-zinc-500">الاسم</b>
-                  <span className="block text-base font-black leading-6 text-zinc-100 break-words">{order.name || 'غير محدد'}</span>
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <p className="min-w-0">
-                    <b className="block text-xs text-zinc-500">الهاتف</b>
-                    <span className="block font-black text-zinc-100 break-all">{order.phone}</span>
-                  </p>
-                  <p className="min-w-0">
-                    <b className="block text-xs text-zinc-500">الطلبات</b>
-                    <span className="block font-black text-zinc-100">{customerOrders.length.toLocaleString('ar-MA')}</span>
-                  </p>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg font-black">الملخص</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4">
+              <div className="rounded-lg border border-white/10 bg-zinc-950/70 p-4">
+                <div className="grid grid-cols-[auto_auto_auto_minmax(0,1fr)] items-center gap-3">
+                  <span className="shrink-0 font-black text-zinc-50">{order.id}</span>
+                  <Badge variant="outline" className={statusStyles[order.status]}>{statusLabels[order.status]}</Badge>
+                  <span className="shrink-0 text-sm text-zinc-500">{formatDate(order.createdAt)}</span>
+                  <span className="min-w-0 text-left text-2xl font-black text-orange-300">{formatMoney(order.total)}</span>
                 </div>
-                <p>
-                  <b className="block text-xs text-zinc-500">العنوان</b>
-                  <span className="block text-base font-black leading-6 text-zinc-100 break-words">{order.address}</span>
+                <p className="mt-3 truncate text-center text-sm font-bold text-zinc-100">
+                  {order.name || 'عميل بدون اسم'} - {order.address} - {order.phone}
                 </p>
-                {order.note ? (
-                  <p>
-                    <b className="block text-xs text-zinc-500">ملاحظة</b>
-                    <span className="block leading-5 text-zinc-300 break-words">{order.note}</span>
-                  </p>
-                ) : null}
               </div>
-              <div className="grid grid-cols-[minmax(128px,1fr)_44px_44px_44px] gap-2 sm:hidden">
-                <OrderStatusSelect value={order.status} onChange={status => onUpdateOrderStatus(order.id, status)} />
-                <Button asChild type="button" size="icon" variant="outline" className="h-10 border-white/10 bg-white/5 text-zinc-100 hover:bg-white/10">
-                  <a href={`tel:${order.phone}`} aria-label="اتصال"><Phone className="size-4" /></a>
-                </Button>
+
+              <div className="grid grid-cols-[44px_44px_minmax(180px,1fr)] items-center gap-2 [direction:ltr]">
                 <Button
                   asChild
                   type="button"
@@ -581,41 +648,56 @@ export function ShadcnAdminOrderDetailPage({ orders, settings, route, onNavigate
                 >
                   <a href={whatsappUrl(order, settings)} target="_blank" rel="noreferrer" aria-label="واتساب"><MessageCircle className="size-4" /></a>
                 </Button>
-                <Button type="button" size="icon" variant="secondary" className="h-10 bg-white/10 text-zinc-100 hover:bg-white/15" onClick={copyOrderDetails} aria-label="نسخ تفاصيل الطلب">
-                  <Copy className="size-4" />
+                <Button asChild type="button" size="icon" variant="outline" className="h-10 border-white/10 bg-white/5 text-zinc-100 hover:bg-white/10">
+                  <a href={`tel:${order.phone}`} aria-label="اتصال"><Phone className="size-4" /></a>
                 </Button>
+                <div className="w-full max-w-[240px] justify-self-end [direction:rtl]">
+                  <OrderStatusSelect value={order.status} onChange={status => onUpdateOrderStatus(order.id, status)} />
+                </div>
               </div>
-              <div className="hidden grid-cols-2 gap-2 sm:grid">
-                <Button type="button" variant="secondary" className="bg-white/10 text-zinc-100 hover:bg-white/15" onClick={copyOrderDetails}>
-                  <Copy className="size-4" />
-                  نسخ
-                </Button>
-                <Button type="button" variant="outline" className="border-white/10 bg-white/5 text-zinc-100 hover:bg-white/10" onClick={() => onNavigate(`#/admin/customers/${encodeURIComponent(order.phone)}`)}>
-                  طلبات العميل
-                </Button>
+
+              <div className="grid grid-cols-3 gap-3">
+                <span className="rounded-lg border border-white/10 bg-zinc-950/60 p-4 text-center">
+                  <b className="block text-xs text-zinc-500">المنتجات</b>
+                  <span className="mt-1 block font-black">{orderItems.length.toLocaleString('ar-MA')}</span>
+                </span>
+                <span className="rounded-lg border border-white/10 bg-zinc-950/60 p-4 text-center">
+                  <b className="block text-xs text-zinc-500">المصدر</b>
+                  <span className="mt-1 block truncate font-black">{order.source}</span>
+                </span>
+                <span className="rounded-lg border border-white/10 bg-zinc-950/60 p-4 text-center">
+                  <b className="block text-xs text-zinc-500">رسالة العميل</b>
+                  <span className="mt-1 block font-black">{order.customerMessageStatus === order.status ? 'تم إرسالها' : 'لم ترسل'}</span>
+                </span>
               </div>
             </CardContent>
           </Card>
 
           <Card className="border-white/10 bg-zinc-900/70 text-zinc-50 shadow-none">
-            <CardHeader><CardTitle className="text-lg font-black">سجل العميل</CardTitle></CardHeader>
-            <CardContent className="grid gap-3">
-              {customerOrders.slice(0, 5).map((item, index) => (
-                <div key={item.id}>
-                  <button type="button" onClick={() => onNavigate(`#/admin/orders/${encodeURIComponent(item.id)}`)} className="w-full text-right text-sm">
-                    <span className="flex items-center gap-2">
-                      <span className="shrink-0 font-black">{item.id}</span>
-                      <Badge variant="outline" className={statusStyles[item.status]}>{statusLabels[item.status]}</Badge>
-                      <span className="min-w-0 truncate text-xs text-zinc-500">{formatDate(item.createdAt)}</span>
-                      <span className="ms-auto shrink-0 font-black text-orange-300">{formatMoney(item.total)}</span>
-                    </span>
-                  </button>
-                  {index < Math.min(customerOrders.length, 5) - 1 ? <Separator className="mt-3 bg-white/10" /> : null}
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg font-black">المنتجات</CardTitle>
+            </CardHeader>
+            <CardContent className="grid gap-4">
+              {orderItems.map(item => (
+                <div key={`${item.id}-${item.variant || 'default'}`} className="grid items-center gap-5 rounded-lg border border-white/10 bg-zinc-950/60 p-4 md:grid-cols-[128px_minmax(0,1fr)] xl:grid-cols-[150px_minmax(0,1fr)]">
+                  <img src={item.image} alt="" width={150} height={150} loading="lazy" decoding="async" className="size-32 rounded-lg object-cover xl:size-[150px]" />
+                  <div className="grid gap-3 text-center">
+                    <p className="text-base font-black leading-6 text-zinc-50 break-words">{item.title}</p>
+                    {item.variant ? (
+                      <p className="text-sm leading-5 text-zinc-400 break-words">
+                        الاختيار: {item.variant}
+                      </p>
+                    ) : null}
+                    <div className="mt-2 flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-sm text-zinc-300">
+                      <span>الكمية: <b className="text-zinc-50">{item.quantity.toLocaleString('ar-MA')}</b></span>
+                      <span>المجموع: <b className="text-orange-300">{formatMoney(item.price * item.quantity)}</b></span>
+                    </div>
+                  </div>
                 </div>
               ))}
             </CardContent>
           </Card>
-        </aside>
+        </section>
       </div>
     </ShadcnAdminShell>
   );
