@@ -1,4 +1,4 @@
-import { ArrowUpLeft, Banknote, Boxes, Clock3, PackagePlus, ShoppingBag, Store } from 'lucide-react';
+import { ArrowUpLeft, PackagePlus, Store } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -61,10 +61,10 @@ export function ShadcnAdminDashboard({
   const recentOrders = orders.slice(0, 6);
 
   const metrics = [
-    { label: 'طلبات اليوم', value: todayOrders.length.toLocaleString('ar-MA'), icon: ShoppingBag },
-    { label: 'قيد المتابعة', value: activeOrders.length.toLocaleString('ar-MA'), icon: Clock3 },
-    { label: 'منتجات ظاهرة', value: visibleProducts.length.toLocaleString('ar-MA'), icon: Boxes },
-    { label: 'مداخيل اليوم', value: formatMoney(todayRevenue), icon: Banknote },
+    { label: 'طلبات اليوم', value: todayOrders.length.toLocaleString('ar-MA') },
+    { label: 'قيد المتابعة', value: activeOrders.length.toLocaleString('ar-MA') },
+    { label: 'منتجات ظاهرة', value: visibleProducts.length.toLocaleString('ar-MA') },
+    { label: 'مداخيل اليوم', value: formatMoney(todayRevenue), emphasis: true },
   ];
 
   return (
@@ -86,23 +86,13 @@ export function ShadcnAdminDashboard({
         </>
       }
     >
-      <section className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
-        {metrics.map(metric => {
-          const Icon = metric.icon;
-          return (
-            <Card key={metric.label} className="border-white/10 bg-zinc-900/70 text-zinc-50 shadow-none">
-              <CardHeader className="flex-row items-center justify-between gap-2 px-3 pb-1.5 pt-3 sm:gap-3 sm:px-6 sm:pb-2 sm:pt-6">
-                <CardTitle className="text-xs font-bold text-zinc-400 sm:text-sm">{metric.label}</CardTitle>
-                <span className="grid size-7 place-items-center rounded-md bg-white/10 text-orange-300 sm:size-9">
-                  <Icon className="size-3.5 sm:size-4" />
-                </span>
-              </CardHeader>
-              <CardContent className="px-3 pb-3 sm:px-6 sm:pb-6">
-                <p className="text-lg font-black tracking-normal sm:text-2xl">{metric.value}</p>
-              </CardContent>
-            </Card>
-          );
-        })}
+      <section className="grid grid-cols-2 overflow-hidden rounded-lg border border-white/10 bg-zinc-900/70 text-zinc-50 sm:grid-cols-4">
+        {metrics.map((metric, index) => (
+          <div key={metric.label} className={`min-w-0 px-3 py-2.5 ${index % 2 ? 'border-r border-white/10' : ''} ${index > 1 ? 'border-t border-white/10 sm:border-t-0' : ''} sm:border-r sm:border-white/10 sm:last:border-r-0`}>
+            <p className="truncate text-[11px] font-bold text-zinc-500 sm:text-xs">{metric.label}</p>
+            <p className={`mt-0.5 truncate text-base font-black tracking-normal sm:text-lg ${metric.emphasis ? 'text-orange-300' : 'text-zinc-50'}`}>{metric.value}</p>
+          </div>
+        ))}
       </section>
 
       <section className="mt-5 grid gap-5 xl:grid-cols-[1.5fr_1fr]">

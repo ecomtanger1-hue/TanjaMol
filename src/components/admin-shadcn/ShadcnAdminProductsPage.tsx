@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { ArrowUpLeft, Edit, Eye, EyeOff, PackagePlus, Search, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -223,19 +223,17 @@ export function ShadcnAdminProductsPage({
         </>
       }
     >
-      <section className="grid grid-cols-3 gap-2.5 sm:gap-3">
-        <Card className="border-white/10 bg-zinc-900/70 text-zinc-50 shadow-none">
-          <CardHeader className="px-3 pb-1.5 pt-3 sm:px-6 sm:pb-2 sm:pt-6"><CardTitle className="text-xs text-zinc-400">ظاهر</CardTitle></CardHeader>
-          <CardContent className="px-3 pb-3 sm:px-6 sm:pb-6"><p className="text-lg font-black sm:text-2xl">{visibleCount.toLocaleString('ar-MA')}</p></CardContent>
-        </Card>
-        <Card className="border-white/10 bg-zinc-900/70 text-zinc-50 shadow-none">
-          <CardHeader className="px-3 pb-1.5 pt-3 sm:px-6 sm:pb-2 sm:pt-6"><CardTitle className="text-xs text-zinc-400">مسودات</CardTitle></CardHeader>
-          <CardContent className="px-3 pb-3 sm:px-6 sm:pb-6"><p className="text-lg font-black sm:text-2xl">{draftCount.toLocaleString('ar-MA')}</p></CardContent>
-        </Card>
-        <Card className="border-white/10 bg-zinc-900/70 text-zinc-50 shadow-none">
-          <CardHeader className="px-3 pb-1.5 pt-3 sm:px-6 sm:pb-2 sm:pt-6"><CardTitle className="text-xs text-zinc-400">انتباه</CardTitle></CardHeader>
-          <CardContent className="px-3 pb-3 sm:px-6 sm:pb-6"><p className="text-lg font-black text-orange-300 sm:text-2xl">{attentionCount.toLocaleString('ar-MA')}</p></CardContent>
-        </Card>
+      <section className="grid grid-cols-3 overflow-hidden rounded-lg border border-white/10 bg-zinc-900/70 text-zinc-50">
+        {[
+          { label: 'ظاهر', value: visibleCount.toLocaleString('ar-MA') },
+          { label: 'مسودات', value: draftCount.toLocaleString('ar-MA') },
+          { label: 'انتباه', value: attentionCount.toLocaleString('ar-MA'), emphasis: true },
+        ].map((metric, index) => (
+          <div key={metric.label} className={`min-w-0 px-3 py-2.5 ${index > 0 ? 'border-r border-white/10' : ''}`}>
+            <p className="truncate text-[11px] font-bold text-zinc-500 sm:text-xs">{metric.label}</p>
+            <p className={`mt-0.5 truncate text-base font-black tracking-normal sm:text-lg ${metric.emphasis ? 'text-orange-300' : 'text-zinc-50'}`}>{metric.value}</p>
+          </div>
+        ))}
       </section>
 
       <div className="mt-5 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)_44px] items-center gap-2 lg:flex lg:flex-wrap">

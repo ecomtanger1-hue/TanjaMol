@@ -329,23 +329,18 @@ export function ShadcnAdminOrdersPage({ orders, settings, route, onNavigate, onU
       route={route}
       onNavigate={onNavigate}
     >
-      <section className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
-        <Card className="border-white/10 bg-zinc-900/70 text-zinc-50 shadow-none">
-          <CardHeader className="px-3 pb-1.5 pt-3 sm:px-6 sm:pb-2 sm:pt-6"><CardTitle className="text-xs text-zinc-400">قيد التأكيد</CardTitle></CardHeader>
-          <CardContent className="px-3 pb-3 sm:px-6 sm:pb-6"><p className="text-lg font-black text-orange-300 sm:text-2xl">{pendingCount.toLocaleString('ar-MA')}</p></CardContent>
-        </Card>
-        <Card className="border-white/10 bg-zinc-900/70 text-zinc-50 shadow-none">
-          <CardHeader className="px-3 pb-1.5 pt-3 sm:px-6 sm:pb-2 sm:pt-6"><CardTitle className="text-xs text-zinc-400">في التوصيل</CardTitle></CardHeader>
-          <CardContent className="px-3 pb-3 sm:px-6 sm:pb-6"><p className="text-lg font-black sm:text-2xl">{deliveryCount.toLocaleString('ar-MA')}</p></CardContent>
-        </Card>
-        <Card className="border-white/10 bg-zinc-900/70 text-zinc-50 shadow-none">
-          <CardHeader className="px-3 pb-1.5 pt-3 sm:px-6 sm:pb-2 sm:pt-6"><CardTitle className="text-xs text-zinc-400">مفتوحة</CardTitle></CardHeader>
-          <CardContent className="px-3 pb-3 sm:px-6 sm:pb-6"><p className="text-base font-black sm:text-xl">{formatMoney(revenue)}</p></CardContent>
-        </Card>
-        <Card className="border-white/10 bg-zinc-900/70 text-zinc-50 shadow-none">
-          <CardHeader className="px-3 pb-1.5 pt-3 sm:px-6 sm:pb-2 sm:pt-6"><CardTitle className="text-xs text-zinc-400">المرتجعات</CardTitle></CardHeader>
-          <CardContent className="px-3 pb-3 sm:px-6 sm:pb-6"><p className="text-lg font-black sm:text-2xl">{returnsCount.toLocaleString('ar-MA')}</p></CardContent>
-        </Card>
+      <section className="grid grid-cols-2 overflow-hidden rounded-lg border border-white/10 bg-zinc-900/70 text-zinc-50 lg:grid-cols-4">
+        {[
+          { label: 'قيد التأكيد', value: pendingCount.toLocaleString('ar-MA'), emphasis: true },
+          { label: 'في التوصيل', value: deliveryCount.toLocaleString('ar-MA') },
+          { label: 'مفتوحة', value: formatMoney(revenue) },
+          { label: 'المرتجعات', value: returnsCount.toLocaleString('ar-MA') },
+        ].map((metric, index) => (
+          <div key={metric.label} className={`min-w-0 px-3 py-2.5 ${index % 2 ? 'border-r border-white/10' : ''} ${index > 1 ? 'border-t border-white/10 lg:border-t-0' : ''} lg:border-r lg:border-white/10 lg:last:border-r-0`}>
+            <p className="truncate text-[11px] font-bold text-zinc-500 sm:text-xs">{metric.label}</p>
+            <p className={`mt-0.5 truncate text-base font-black tracking-normal sm:text-lg ${metric.emphasis ? 'text-orange-300' : 'text-zinc-50'}`}>{metric.value}</p>
+          </div>
+        ))}
       </section>
 
       <div className="mt-5 flex flex-wrap items-center gap-2">
