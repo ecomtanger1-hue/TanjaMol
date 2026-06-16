@@ -239,7 +239,7 @@ type OrdersProps = {
 function groupOrdersByDate(orders: StoredOrder[]) {
   return orders.reduce<Array<{ key: string; label: string; orders: StoredOrder[] }>>((groups, order) => {
     const key = dateKey(order.createdAt);
-    const current = groups.at(-1);
+    const current = groups[groups.length - 1];
     if (current?.key === key) {
       current.orders.push(order);
       return groups;
@@ -258,9 +258,9 @@ function MobileOrderCard({ order, onNavigate }: { order: StoredOrder; onNavigate
       <button
         type="button"
         onClick={() => onNavigate(`#/admin/orders/${encodeURIComponent(order.id)}`)}
-        className="grid w-full grid-cols-[112px_minmax(0,1fr)] gap-3 text-right"
+        className="grid w-full grid-cols-[92px_minmax(0,1fr)] gap-2 text-right sm:grid-cols-[112px_minmax(0,1fr)] sm:gap-3"
       >
-        <span className="grid aspect-square min-h-[112px] place-items-center overflow-hidden rounded-md border border-white/10 bg-zinc-950/80 text-center text-sm font-black leading-6 text-zinc-400">
+        <span className="grid aspect-square min-h-[92px] place-items-center overflow-hidden rounded-md border border-white/10 bg-zinc-950/80 text-center text-xs font-black leading-5 text-zinc-400 sm:min-h-[112px] sm:text-sm sm:leading-6">
           {firstItem?.image ? (
             <img
               src={firstItem.image}
@@ -277,19 +277,19 @@ function MobileOrderCard({ order, onNavigate }: { order: StoredOrder; onNavigate
         </span>
 
         <span className="grid min-w-0 grid-rows-[auto_1fr] gap-3">
-          <span className="grid grid-cols-[minmax(0,1fr)_88px_92px] items-center gap-2">
-            <span className="min-w-0 truncate rounded-md border border-white/10 bg-zinc-950/80 px-3 py-2 text-center text-sm font-black text-zinc-50">
+          <span className="grid grid-cols-[minmax(0,1fr)_74px_78px] items-center gap-2 sm:grid-cols-[minmax(0,1fr)_88px_92px]">
+            <span className="min-w-0 truncate rounded-md border border-white/10 bg-zinc-950/80 px-2 py-2 text-center text-xs font-black text-zinc-50 sm:px-3 sm:text-sm">
               {order.name || 'الاسم'}
             </span>
-            <span className="truncate rounded-md border border-white/10 bg-zinc-950/80 px-2 py-2 text-center text-sm font-black text-orange-300">
+            <span className="truncate rounded-md border border-white/10 bg-zinc-950/80 px-1 py-2 text-center text-xs font-black text-orange-300 sm:px-2 sm:text-sm">
               {formatMoney(order.total)}
             </span>
-            <span className="truncate rounded-md border border-white/10 bg-zinc-950/80 px-2 py-2 text-center text-sm font-black text-zinc-100">
+            <span className="truncate rounded-md border border-white/10 bg-zinc-950/80 px-1 py-2 text-center text-xs font-black text-zinc-100 sm:px-2 sm:text-sm">
               {statusLabels[order.status]}
             </span>
           </span>
 
-          <span className="grid min-h-[52px] items-center rounded-md border border-white/10 bg-zinc-950/80 px-3 py-2 text-center text-sm font-black leading-6 text-zinc-100">
+          <span className="grid min-h-[48px] items-center rounded-md border border-white/10 bg-zinc-950/80 px-3 py-2 text-center text-sm font-black leading-6 text-zinc-100">
             <span className="line-clamp-2 break-words">{order.address || 'العنوان'}</span>
           </span>
         </span>
