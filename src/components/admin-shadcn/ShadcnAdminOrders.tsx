@@ -258,9 +258,9 @@ function MobileOrderCard({ order, onNavigate }: { order: StoredOrder; onNavigate
       <button
         type="button"
         onClick={() => onNavigate(`#/admin/orders/${encodeURIComponent(order.id)}`)}
-        className="grid w-full grid-cols-[92px_minmax(0,1fr)] gap-2 text-right sm:grid-cols-[112px_minmax(0,1fr)] sm:gap-3"
+        className="grid w-full grid-cols-[84px_minmax(0,1fr)] gap-2 text-right sm:grid-cols-[112px_minmax(0,1fr)] sm:gap-3"
       >
-        <span className="grid aspect-square min-h-[92px] place-items-center overflow-hidden rounded-md border border-white/10 bg-zinc-950/80 text-center text-xs font-black leading-5 text-zinc-400 sm:min-h-[112px] sm:text-sm sm:leading-6">
+        <span className="grid aspect-square min-h-[84px] place-items-center overflow-hidden rounded-md border border-white/10 bg-zinc-950/80 text-center text-xs font-black leading-5 text-zinc-400 sm:min-h-[112px] sm:text-sm sm:leading-6">
           {firstItem?.image ? (
             <img
               src={firstItem.image}
@@ -276,17 +276,17 @@ function MobileOrderCard({ order, onNavigate }: { order: StoredOrder; onNavigate
           )}
         </span>
 
-        <span className="grid min-w-0 grid-rows-[auto_1fr] gap-3">
-          <span className="grid grid-cols-[minmax(0,1fr)_74px_78px] items-center gap-2 sm:grid-cols-[minmax(0,1fr)_88px_92px]">
+        <span className="grid min-w-0 grid-rows-[auto_1fr] gap-2.5 sm:gap-3">
+          <span className="grid grid-cols-[minmax(0,1fr)_62px_54px] items-center gap-1 sm:grid-cols-[minmax(0,1fr)_82px_76px] sm:gap-2">
             <span className="min-w-0 truncate rounded-md border border-white/10 bg-zinc-950/80 px-2 py-2 text-center text-xs font-black text-zinc-50 sm:px-3 sm:text-sm">
               {order.name || 'الاسم'}
             </span>
-            <span className="truncate rounded-md border border-white/10 bg-zinc-950/80 px-1 py-2 text-center text-xs font-black text-orange-300 sm:px-2 sm:text-sm">
+            <span className="truncate rounded-md border border-white/10 bg-zinc-950/80 px-1 py-2 text-center text-[10px] font-black text-orange-300 sm:px-2 sm:text-sm">
               {formatMoney(order.total)}
             </span>
-            <span className="truncate rounded-md border border-white/10 bg-zinc-950/80 px-1 py-2 text-center text-xs font-black text-zinc-100 sm:px-2 sm:text-sm">
+            <Badge variant="outline" title={statusLabels[order.status]} className={`${statusStyles[order.status]} h-7 max-w-full justify-self-center truncate rounded-full px-2 text-[10px] font-black leading-none sm:h-8 sm:text-xs`}>
               {statusLabels[order.status]}
-            </span>
+            </Badge>
           </span>
 
           <span className="grid min-h-[48px] items-center rounded-md border border-white/10 bg-zinc-950/80 px-3 py-2 text-center text-sm font-black leading-6 text-zinc-100">
