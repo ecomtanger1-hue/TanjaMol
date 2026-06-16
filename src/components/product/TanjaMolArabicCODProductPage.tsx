@@ -508,10 +508,10 @@ export const TanjaMolArabicCODProductPage = ({
                     color: detail.textColor || undefined,
                   };
                   return <article key={detail.id} dir="ltr" className="grid gap-4 lg:min-h-[320px] lg:grid-cols-2 lg:items-stretch lg:gap-6">
-                    <div dir="rtl" style={textPanelStyle} className={`order-1 flex flex-col justify-center rounded-md p-5 shadow-[inset_0_0_0_1px_rgba(23,32,27,0.045)] lg:p-7 ${reverse ? 'lg:order-1' : 'lg:order-2'}`}>
+                    <div dir="rtl" style={textPanelStyle} className={`order-2 flex flex-col justify-center rounded-md p-5 shadow-[inset_0_0_0_1px_rgba(23,32,27,0.045)] lg:p-7 ${reverse ? 'lg:order-1' : 'lg:order-2'}`}>
                       <ProductDetailRichText detail={detail} />
                     </div>
-                    <figure className={`order-2 min-h-[220px] overflow-hidden rounded-md shadow-[inset_0_0_0_1px_rgba(23,32,27,0.055)] ${reverse ? 'lg:order-2' : 'lg:order-1'}`}>
+                    <figure className={`order-1 min-h-[220px] overflow-hidden rounded-md shadow-[inset_0_0_0_1px_rgba(23,32,27,0.055)] ${reverse ? 'lg:order-2' : 'lg:order-1'}`}>
                       <ProductDetailMedia detail={detail} src={detail.mediaUrl || productGallery[(index + 1) % productGallery.length]?.src || productGallery[0].src} className="tm-image h-full min-h-[220px] w-full object-cover lg:min-h-[320px]" />
                     </figure>
                   </article>;
