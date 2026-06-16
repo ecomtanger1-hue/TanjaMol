@@ -507,11 +507,11 @@ export const TanjaMolArabicCODProductPage = ({
                     backgroundColor: detail.backgroundColor || '#f8fafc',
                     color: detail.textColor || undefined,
                   };
-                  return <article key={detail.id} dir="ltr" className="grid gap-0 rounded-lg lg:min-h-[320px] lg:grid-cols-2 lg:items-stretch lg:gap-6 lg:rounded-none">
-                    <div dir="rtl" style={textPanelStyle} className={`relative z-10 order-2 mx-3 -mt-7 flex flex-col justify-center rounded-lg border border-[var(--tm-border)] p-4 shadow-[0_18px_42px_-30px_rgba(23,32,27,0.72),inset_0_1px_0_rgba(255,255,255,0.72)] sm:p-5 lg:mx-0 lg:mt-0 lg:rounded-md lg:border-0 lg:p-7 lg:shadow-[inset_0_0_0_1px_rgba(23,32,27,0.045)] ${reverse ? 'lg:order-1' : 'lg:order-2'}`}>
+                  return <article key={detail.id} dir="ltr" className="grid overflow-hidden rounded-lg border border-[var(--tm-border)] bg-[var(--tm-surface-tint)] shadow-[0_16px_42px_-34px_rgba(23,32,27,0.55)] lg:min-h-[320px] lg:grid-cols-2 lg:items-stretch lg:gap-6 lg:overflow-visible lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none">
+                    <div dir="rtl" style={textPanelStyle} className={`order-2 flex flex-col justify-center rounded-b-lg p-4 pt-3 sm:p-5 lg:rounded-md lg:p-7 lg:shadow-[inset_0_0_0_1px_rgba(23,32,27,0.045)] ${reverse ? 'lg:order-1' : 'lg:order-2'}`}>
                       <ProductDetailRichText detail={detail} />
                     </div>
-                    <figure className={`order-1 overflow-hidden rounded-t-lg bg-[#131921]/[0.04] p-2 pb-10 shadow-[inset_0_0_0_1px_rgba(23,32,27,0.055)] lg:min-h-[320px] lg:rounded-md lg:bg-transparent lg:p-0 ${reverse ? 'lg:order-2' : 'lg:order-1'}`}>
+                    <figure className={`order-1 bg-[#131921]/[0.04] p-2 pb-0 lg:min-h-[320px] lg:overflow-hidden lg:rounded-md lg:bg-transparent lg:p-0 lg:shadow-[inset_0_0_0_1px_rgba(23,32,27,0.055)] ${reverse ? 'lg:order-2' : 'lg:order-1'}`}>
                       <ProductDetailMedia detail={detail} src={detail.mediaUrl || productGallery[(index + 1) % productGallery.length]?.src || productGallery[0].src} className="tm-image h-auto min-h-0 w-full rounded-md object-contain lg:h-full lg:min-h-[320px] lg:rounded-none lg:object-cover" />
                     </figure>
                   </article>;
