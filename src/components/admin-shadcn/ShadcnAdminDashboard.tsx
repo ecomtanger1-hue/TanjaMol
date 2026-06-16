@@ -86,19 +86,19 @@ export function ShadcnAdminDashboard({
         </>
       }
     >
-      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <section className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
         {metrics.map(metric => {
           const Icon = metric.icon;
           return (
             <Card key={metric.label} className="border-white/10 bg-zinc-900/70 text-zinc-50 shadow-none">
-              <CardHeader className="flex-row items-center justify-between gap-3 pb-2">
-                <CardTitle className="text-sm font-bold text-zinc-400">{metric.label}</CardTitle>
-                <span className="grid size-9 place-items-center rounded-md bg-white/10 text-orange-300">
-                  <Icon className="size-4" />
+              <CardHeader className="flex-row items-center justify-between gap-2 px-3 pb-1.5 pt-3 sm:gap-3 sm:px-6 sm:pb-2 sm:pt-6">
+                <CardTitle className="text-xs font-bold text-zinc-400 sm:text-sm">{metric.label}</CardTitle>
+                <span className="grid size-7 place-items-center rounded-md bg-white/10 text-orange-300 sm:size-9">
+                  <Icon className="size-3.5 sm:size-4" />
                 </span>
               </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-black tracking-normal">{metric.value}</p>
+              <CardContent className="px-3 pb-3 sm:px-6 sm:pb-6">
+                <p className="text-lg font-black tracking-normal sm:text-2xl">{metric.value}</p>
               </CardContent>
             </Card>
           );
@@ -114,7 +114,7 @@ export function ShadcnAdminDashboard({
               <ArrowUpLeft className="size-4" />
             </Button>
           </CardHeader>
-          <CardContent className="grid gap-2">
+          <CardContent className="hidden gap-2 sm:grid">
             {recentOrders.length ? recentOrders.map(order => (
               <button
                 key={order.id}
@@ -137,6 +137,36 @@ export function ShadcnAdminDashboard({
               </button>
             )) : (
               <div className="rounded-lg border border-dashed border-white/10 p-6 text-center text-sm text-zinc-400">لا توجد طلبات بعد.</div>
+            )}
+          </CardContent>
+          <CardContent className="grid gap-2 px-3 pb-3 sm:hidden">
+            {recentOrders.length ? recentOrders.map(order => (
+              <button
+                key={order.id}
+                type="button"
+                onClick={() => onNavigate(`#/admin/orders/${encodeURIComponent(order.id)}`)}
+                className="grid gap-2 rounded-lg border border-white/10 bg-zinc-950/70 p-2.5 text-right transition hover:border-orange-400/50"
+              >
+                <span className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
+                  <span className="min-w-0">
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span className="truncate text-sm font-black text-zinc-50">{order.id}</span>
+                      <Badge variant="outline" className={`${statusClassNames[order.status]} h-6 shrink-0 rounded-full px-2 text-[10px] font-black`}>{statusLabels[order.status]}</Badge>
+                    </span>
+                    <span className="mt-1 block truncate text-xs font-bold text-zinc-300">{order.name || 'عميل بدون اسم'}</span>
+                  </span>
+                  <span className="text-left">
+                    <span className="block text-sm font-black text-orange-300">{formatMoney(order.total)}</span>
+                    <span className="block text-[11px] text-zinc-500">{formatTime(order.createdAt)}</span>
+                  </span>
+                </span>
+                <span className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+                  <span className="truncate text-xs text-zinc-500">{order.address}</span>
+                  <span className="shrink-0 text-[11px] text-zinc-500">{order.items.length.toLocaleString('ar-MA')} منتج</span>
+                </span>
+              </button>
+            )) : (
+              <div className="rounded-lg border border-dashed border-white/10 p-5 text-center text-sm text-zinc-400">لا توجد طلبات بعد.</div>
             )}
           </CardContent>
         </Card>

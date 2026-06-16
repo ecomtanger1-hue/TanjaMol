@@ -223,18 +223,18 @@ export function ShadcnAdminProductsPage({
         </>
       }
     >
-      <section className="grid grid-cols-3 gap-3">
+      <section className="grid grid-cols-3 gap-2.5 sm:gap-3">
         <Card className="border-white/10 bg-zinc-900/70 text-zinc-50 shadow-none">
-          <CardHeader className="pb-2"><CardTitle className="text-xs text-zinc-400">ظاهر</CardTitle></CardHeader>
-          <CardContent><p className="text-2xl font-black">{visibleCount.toLocaleString('ar-MA')}</p></CardContent>
+          <CardHeader className="px-3 pb-1.5 pt-3 sm:px-6 sm:pb-2 sm:pt-6"><CardTitle className="text-xs text-zinc-400">ظاهر</CardTitle></CardHeader>
+          <CardContent className="px-3 pb-3 sm:px-6 sm:pb-6"><p className="text-lg font-black sm:text-2xl">{visibleCount.toLocaleString('ar-MA')}</p></CardContent>
         </Card>
         <Card className="border-white/10 bg-zinc-900/70 text-zinc-50 shadow-none">
-          <CardHeader className="pb-2"><CardTitle className="text-xs text-zinc-400">مسودات</CardTitle></CardHeader>
-          <CardContent><p className="text-2xl font-black">{draftCount.toLocaleString('ar-MA')}</p></CardContent>
+          <CardHeader className="px-3 pb-1.5 pt-3 sm:px-6 sm:pb-2 sm:pt-6"><CardTitle className="text-xs text-zinc-400">مسودات</CardTitle></CardHeader>
+          <CardContent className="px-3 pb-3 sm:px-6 sm:pb-6"><p className="text-lg font-black sm:text-2xl">{draftCount.toLocaleString('ar-MA')}</p></CardContent>
         </Card>
         <Card className="border-white/10 bg-zinc-900/70 text-zinc-50 shadow-none">
-          <CardHeader className="pb-2"><CardTitle className="text-xs text-zinc-400">انتباه</CardTitle></CardHeader>
-          <CardContent><p className="text-2xl font-black text-orange-300">{attentionCount.toLocaleString('ar-MA')}</p></CardContent>
+          <CardHeader className="px-3 pb-1.5 pt-3 sm:px-6 sm:pb-2 sm:pt-6"><CardTitle className="text-xs text-zinc-400">انتباه</CardTitle></CardHeader>
+          <CardContent className="px-3 pb-3 sm:px-6 sm:pb-6"><p className="text-lg font-black text-orange-300 sm:text-2xl">{attentionCount.toLocaleString('ar-MA')}</p></CardContent>
         </Card>
       </section>
 
