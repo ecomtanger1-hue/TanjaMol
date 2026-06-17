@@ -503,15 +503,11 @@ export const TanjaMolArabicCODProductPage = ({
               <div className="mt-6 grid gap-4 lg:gap-6">
                 {productDetails.map((detail, index) => {
                   const reverse = detail.reverse ?? index % 2 === 1;
-                  const textPanelStyle = {
-                    backgroundColor: detail.backgroundColor || '#f8fafc',
-                    color: detail.textColor || undefined,
-                  };
                   return <article key={detail.id} dir="ltr" className="grid overflow-hidden rounded-lg border border-[var(--tm-border)] bg-[var(--tm-surface-tint)] shadow-[0_16px_42px_-34px_rgba(23,32,27,0.55)] lg:min-h-[320px] lg:grid-cols-2 lg:items-stretch lg:gap-6 lg:overflow-visible lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none">
-                    <div dir="rtl" style={textPanelStyle} className={`order-2 flex flex-col justify-center rounded-b-lg p-4 pt-3 sm:p-5 lg:rounded-md lg:p-7 lg:shadow-[inset_0_0_0_1px_rgba(23,32,27,0.045)] ${reverse ? 'lg:order-1' : 'lg:order-2'}`}>
+                    <div dir="rtl" className={`order-2 flex flex-col justify-center rounded-b-lg bg-[var(--tm-surface-tint)] p-4 pt-3 sm:p-5 lg:rounded-md lg:p-7 lg:shadow-[inset_0_0_0_1px_rgba(23,32,27,0.045)] ${reverse ? 'lg:order-1' : 'lg:order-2'}`}>
                       <ProductDetailRichText detail={detail} />
                     </div>
-                    <figure className={`order-1 bg-[#131921]/[0.04] p-2 pb-0 lg:min-h-[320px] lg:overflow-hidden lg:rounded-md lg:bg-transparent lg:p-0 lg:shadow-[inset_0_0_0_1px_rgba(23,32,27,0.055)] ${reverse ? 'lg:order-2' : 'lg:order-1'}`}>
+                    <figure className={`order-1 bg-[var(--tm-surface-tint)] p-2 pb-0 lg:min-h-[320px] lg:overflow-hidden lg:rounded-md lg:bg-transparent lg:p-0 lg:shadow-[inset_0_0_0_1px_rgba(23,32,27,0.055)] ${reverse ? 'lg:order-2' : 'lg:order-1'}`}>
                       <ProductDetailMedia detail={detail} src={detail.mediaUrl || productGallery[(index + 1) % productGallery.length]?.src || productGallery[0].src} className="tm-image h-auto min-h-0 w-full rounded-md object-contain lg:h-full lg:min-h-[320px] lg:rounded-none lg:object-cover" />
                     </figure>
                   </article>;
