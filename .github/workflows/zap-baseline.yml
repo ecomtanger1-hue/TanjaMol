@@ -1,0 +1,21 @@
+name: ZAP Baseline Security Scan
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * 1"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  zap-baseline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run ZAP baseline scan
+        uses: zaproxy/action-baseline@v0.15.0
+        with:
+          target: "https://tanjamall.com"
+          cmd_options: "-a"
