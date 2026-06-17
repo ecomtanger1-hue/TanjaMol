@@ -5,6 +5,7 @@ import { ProductDetailMedia, ProductDetailRichText } from './ProductDetailRichTe
 import { ProductCard } from '../storefront/ProductCard';
 import { SiteFooter, SiteHeader } from '../storefront/StorefrontPages';
 import { navigateToRoute } from '../../lib/routing';
+import { trackInitiateCheckout } from '../../lib/metaPixel';
 const gallery = [{
   src: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=1200&q=85',
   alt: 'ساعة ذكية سوداء على مكتب مرتب'
@@ -311,6 +312,7 @@ export const TanjaMolArabicCODProductPage = ({
   const handleOrderNow = () => {
     if (isResolvedSoldOut || isOrderSubmitting) return;
     if (!showOrderForm) {
+      trackInitiateCheckout([orderItem]);
       scrollToOrder();
       return;
     }
@@ -322,6 +324,7 @@ export const TanjaMolArabicCODProductPage = ({
   useEffect(() => {
     if (window.sessionStorage.getItem('tm-open-product-order') !== '1') return;
     window.sessionStorage.removeItem('tm-open-product-order');
+    trackInitiateCheckout([orderItem]);
     window.setTimeout(scrollToOrder, 120);
   }, [product?.id]);
 

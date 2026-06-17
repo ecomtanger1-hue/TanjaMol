@@ -21,6 +21,16 @@ npm run build
 npm run preview
 ```
 
+## Meta Pixel
+
+Create a Pixel in Meta Events Manager, then set this environment variable before deploying:
+
+```bash
+VITE_META_PIXEL_ID=your-meta-pixel-id
+```
+
+The storefront tracks PageView, ViewContent, Search, AddToCart, InitiateCheckout, and Purchase events. Admin pages are excluded from tracking.
+
 ## Supabase Storage
 
 Product, gallery, detail-block, variant, and inline editor images upload to the public `product-images` bucket in Supabase Storage.

@@ -31,6 +31,7 @@ import {
   type StoredOrder,
 } from './storefrontRuntime';
 import { getCurrentRoute, replaceLegacyHashRoute, routeToPath } from './lib/routing';
+import { trackAddToCart, trackInitiateCheckout, trackPageView, trackPurchase, trackSearch, trackViewContent } from './lib/metaPixel';
 
 const TanjaMolAddProductPage = lazy(() => import('./components/magicpath/tanja-mol-add-product-page/TanjaMolAddProductPage').then(module => ({
   default: module.TanjaMolAddProductPage,
@@ -454,6 +455,18 @@ export function App() {
     applyPageSeo(activeProduct, settings, activeCategories);
   }, [activeCategories, activeProduct, settings]);
 
+  useEffect(() => {
+    trackPageView(route);
+  }, [route]);
+
+  useEffect(() => {
+    trackViewContent(activeProduct);
+  }, [activeProduct]);
+
+  useEffect(() => {
+    if (route.startsWith('#/search')) trackSearch(searchQuery);
+  }, [route, searchQuery]);
+
   const navigate = (nextRoute: string) => {
     window.history.pushState(null, '', routeToPath(nextRoute));
     setRoute(nextRoute);
@@ -468,6 +481,7 @@ export function App() {
   }, [route]);
 
   const addToCart = (item: CartItem) => {
+    trackAddToCart(item);
     setSubmittedOrder(null);
     setCart(current => {
       const existing = current.find(cartItem => cartItem.id === item.id && cartItem.variant === item.variant);
@@ -483,6 +497,7 @@ export function App() {
   };
 
   const orderProduct = (item: CartItem) => {
+    trackInitiateCheckout([item]);
     setSubmittedOrder(null);
     setDirectItem(item);
     setIsCartOpen(true);
@@ -529,6 +544,7 @@ export function App() {
       setSubmittedOrder(order);
       setIsCartOpen(true);
       setNotice('تم استلام طلبك');
+      trackPurchase(order);
       return order;
     } catch (error) {
       console.error('Failed to save order to Supabase', error);
@@ -539,11 +555,16 @@ export function App() {
     }
   };
 
-  const placeOrder = (draft: OrderDraft) => submitOrderDraft(draft);
+  const placeOrder = (draft: OrderDraft) => {
+    trackInitiateCheckout(draft.items);
+    return submitOrderDraft(draft);
+  };
 
   const placeOrderFromForm = (items: CartItem[], source: string, event: FormEvent<HTMLFormElement>) => {
     const draft = parseOrderForm(event, source, items);
-    return draft ? submitOrderDraft(draft) : Promise.resolve(null);
+    if (!draft) return Promise.resolve(null);
+    trackInitiateCheckout(draft.items);
+    return submitOrderDraft(draft);
   };
 
   const updateOrderStatus = (orderId: string, status: StoredOrder['status']) => {
