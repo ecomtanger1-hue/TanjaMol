@@ -904,7 +904,7 @@ export const TanjaMolAddProductPage = ({
             <AdminSection title="معرض المنتج" summary={gallerySummary} status={cleanGallery.length ? 'done' : 'missing'} defaultOpen={false} action={
               <>
                 <input id={uploadInputId} ref={uploadInputRef} type="file" accept="image/*" multiple disabled={uploadingImages || publishing} className="sr-only" onChange={event => void handleImageUpload(event.target.files)} />
-                <label htmlFor={uploadInputId} aria-disabled={uploadingImages || publishing} className={`tm-admin-press inline-grid min-h-[44px] place-items-center rounded-md bg-[#131921] px-3 text-xs font-black text-white ${uploadingImages || publishing ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
+                <label htmlFor={uploadInputId} aria-disabled={uploadingImages || publishing} className={`tm-admin-press inline-grid min-h-[44px] place-items-center rounded-md bg-[#3f4a43] px-3 text-xs font-black text-white ${uploadingImages || publishing ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
                   رفع صور
                 </label>
               </>
@@ -1008,7 +1008,7 @@ export const TanjaMolAddProductPage = ({
                             />
                           </label>
                           <div className="grid grid-cols-2 gap-2">
-                            <button type="button" onClick={() => addVariantOptionValue(group.id)} className="tm-admin-press min-h-[44px] rounded-md bg-[#131921] px-3 text-xs font-black text-white">إضافة قيمة</button>
+                            <button type="button" onClick={() => addVariantOptionValue(group.id)} className="tm-admin-press min-h-[44px] rounded-md bg-[#3f4a43] px-3 text-xs font-black text-white">إضافة قيمة</button>
                             <button type="button" onClick={() => removeVariantOption(group.id)} className="tm-admin-press min-h-[44px] rounded-md bg-[#fff1d5] px-3 text-xs font-black text-[#9a5a00]">حذف النوع</button>
                           </div>
                         </div>
@@ -1135,7 +1135,7 @@ export const TanjaMolAddProductPage = ({
                                           className="w-[130px] rounded-md bg-[#fbfaf6] px-3 py-2 text-sm font-black text-[#17201b] outline-none focus:ring-1 focus:ring-[#b45309]"
                                           aria-label="اسم نوع المتغير"
                                         />
-                                        <button type="button" onClick={() => addVariantOptionValue(group.id)} className="tm-admin-press min-h-[44px] rounded-md bg-[#131921] px-3 text-xs font-black text-white">إضافة قيمة</button>
+                                        <button type="button" onClick={() => addVariantOptionValue(group.id)} className="tm-admin-press min-h-[44px] rounded-md bg-[#3f4a43] px-3 text-xs font-black text-white">إضافة قيمة</button>
                                         <button type="button" onClick={() => removeVariantOption(group.id)} className="tm-admin-press min-h-[44px] rounded-md bg-[#fff1d5] px-3 text-xs font-black text-[#9a5a00]">حذف النوع</button>
                                       </div>
                                     </td>
@@ -1234,7 +1234,7 @@ export const TanjaMolAddProductPage = ({
                                       className="w-[130px] rounded-md bg-[#fbfaf6] px-3 py-2 text-sm font-black text-[#17201b] outline-none focus:ring-1 focus:ring-[#b45309]"
                                       aria-label="اسم نوع المتغير"
                                     />
-                                    <button type="button" onClick={() => addVariantOptionValue(group.id)} className="tm-admin-press min-h-[44px] rounded-md bg-[#131921] px-3 text-xs font-black text-white">إضافة قيمة</button>
+                                    <button type="button" onClick={() => addVariantOptionValue(group.id)} className="tm-admin-press min-h-[44px] rounded-md bg-[#3f4a43] px-3 text-xs font-black text-white">إضافة قيمة</button>
                                     <button type="button" onClick={() => removeVariantOption(group.id)} className="tm-admin-press min-h-[44px] rounded-md bg-[#fff1d5] px-3 text-xs font-black text-[#9a5a00]">حذف النوع</button>
                                   </div>
                                 </td>
@@ -1428,7 +1428,7 @@ export const TanjaMolAddProductPage = ({
               </div>
             </AdminSection>
 
-            {draftSaved ? <div className="fixed bottom-4 left-4 z-[70] rounded-md bg-[#131921] px-4 py-3 text-sm font-black text-white shadow-[0_18px_48px_-22px_rgba(23,32,27,0.65)]" role="status">تم حفظ المسودة</div> : null}
+            {draftSaved ? <div className="fixed bottom-4 left-4 z-[70] rounded-md bg-[#3f4a43] px-4 py-3 text-sm font-black text-white shadow-[0_18px_48px_-22px_rgba(23,32,27,0.48)]" role="status">تم حفظ المسودة</div> : null}
           </div>
         </main>
       </div>
@@ -1618,7 +1618,7 @@ function BlockMediaPicker({
           ) : null}
         </div>
 
-        <label htmlFor={inputId} aria-disabled={uploadDisabled} className={`tm-admin-press mt-[17px] grid min-h-[44px] place-items-center rounded-md bg-[#131921] px-3 text-xs font-black text-white ${uploadDisabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
+        <label htmlFor={inputId} aria-disabled={uploadDisabled} className={`tm-admin-press mt-[17px] grid min-h-[44px] place-items-center rounded-md bg-[#3f4a43] px-3 text-xs font-black text-white ${uploadDisabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
           رفع جديد
         </label>
         <input id={inputId} type="file" accept="image/*" disabled={uploadDisabled} className="sr-only" onChange={event => {

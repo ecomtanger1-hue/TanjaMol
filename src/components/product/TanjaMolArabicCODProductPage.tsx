@@ -1,5 +1,4 @@
 import { type FormEvent, useEffect, useRef, useState } from 'react';
-import { Check } from 'lucide-react';
 import { categories as defaultCategories, categoryRoute, defaultProductDetailsIntro, parseOrderForm, type CartItem, type Category, type OrderDraft, type Product, type ProductVariant } from '../../storefrontRuntime';
 import { ProductDetailMedia, ProductDetailRichText, ProductDetailTitle } from './ProductDetailRichText';
 import { ProductCard } from '../storefront/ProductCard';
@@ -77,8 +76,6 @@ export const TanjaMolArabicCODProductPage = ({
   const [selectedVariantIds, setSelectedVariantIds] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [showOrderForm, setShowOrderForm] = useState(false);
-  const [added, setAdded] = useState(false);
   const mobileGalleryRef = useRef<HTMLDivElement>(null);
   const productTitle = product?.title ?? 'ساعة ذكية مقاومة للماء ببطارية طويلة';
   const productCategory = product?.category ?? 'الإلكترونيات';
@@ -241,7 +238,6 @@ export const TanjaMolArabicCODProductPage = ({
     setSelectedVariantIds(nextSelected);
     setSelectedImage(0);
     setQuantity(1);
-    setShowOrderForm(false);
   }, [product?.id]);
 
   useEffect(() => {
@@ -293,50 +289,13 @@ export const TanjaMolArabicCODProductPage = ({
 
   const submitOrder = (event: FormEvent<HTMLFormElement>) => {
     const draft = parseOrderForm(event, 'product-page', [orderItem]);
-    if (draft) void onPlaceOrder(draft);
-  };
-  const addProduct = () => {
-    if (isResolvedSoldOut) return;
-    onAddToCart(orderItem);
-    setAdded(true);
-    window.setTimeout(() => setAdded(false), 1300);
-  };
-
-  const scrollToOrder = () => {
-    setShowOrderForm(true);
-    window.setTimeout(() => {
-      const form = document.getElementById('product-order-details');
-      const panel = document.getElementById('product-order-form');
-      const target = form || panel;
-
-      if (!target) return;
-
-      const headerOffset = 84;
-      const targetTop = target.getBoundingClientRect().top + window.scrollY - headerOffset;
-      window.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
-    }, 80);
-  };
-
-  const handleOrderNow = () => {
-    if (isResolvedSoldOut || isOrderSubmitting) return;
-    if (!showOrderForm) {
+    if (draft) {
       trackInitiateCheckout([orderItem]);
-      scrollToOrder();
-      return;
+      void onPlaceOrder(draft);
     }
-
-    const form = document.getElementById('product-order-details') as HTMLFormElement | null;
-    form?.requestSubmit();
   };
 
-  useEffect(() => {
-    if (window.sessionStorage.getItem('tm-open-product-order') !== '1') return;
-    window.sessionStorage.removeItem('tm-open-product-order');
-    trackInitiateCheckout([orderItem]);
-    window.setTimeout(scrollToOrder, 120);
-  }, [product?.id]);
-
-  return <div dir="rtl" className="min-h-screen w-full overflow-x-hidden bg-[#f7f5ef] pb-[calc(96px+env(safe-area-inset-bottom))] pt-16 text-[#17201b] md:pb-0">
+  return <div dir="rtl" className="min-h-screen w-full overflow-x-hidden bg-[#f7f5ef] pt-16 text-[#17201b]">
     <SiteHeader cartCount={cartCount} onNavigate={navigate} onOpenCart={onOpenCart} onOpenSearch={onOpenSearch} />
 
       <main>
@@ -453,22 +412,7 @@ export const TanjaMolArabicCODProductPage = ({
                 </div>
               </div>
 
-              <div className="mt-4 grid gap-2">
-                <button className="tm-press tm-order-cta tm-button-primary px-5 text-base disabled:cursor-not-allowed disabled:opacity-55" type="button" disabled={isResolvedSoldOut || isOrderSubmitting} onClick={handleOrderNow}>
-                  {isOrderSubmitting ? '\u062c\u0627\u0631\u064a \u0627\u0644\u0625\u0631\u0633\u0627\u0644' : '\u0627\u0637\u0644\u0628 \u0627\u0644\u0622\u0646'}
-                </button>
-                <button className={`tm-press tm-secondary-label relative overflow-hidden px-5 text-sm disabled:cursor-not-allowed disabled:opacity-55 ${added ? 'tm-add-button-added tm-button-dark' : 'tm-button-secondary'}`} type="button" disabled={isResolvedSoldOut} onClick={addProduct} aria-live="polite" aria-label={added ? `تمت إضافة ${productTitle} للسلة` : `أضف ${productTitle} للسلة`}>
-                  <span className="relative z-10 inline-flex items-center justify-center gap-2">
-                    {added ? <Check className="h-4 w-4" aria-hidden="true" strokeWidth={3} /> : null}
-                    {added ? 'تمت الإضافة' : 'أضف للسلة'}
-                  </span>
-                  {added ? <span className="tm-add-spark" aria-hidden="true" /> : null}
-                  {added ? <span className="tm-add-fly" aria-hidden="true" /> : null}
-                </button>
-              </div>
-
-              {showOrderForm ? (
-                <form id="product-order-details" className="tm-panel-white mt-4 grid scroll-mt-24 gap-3 p-3" onSubmit={submitOrder}>
+              <form id="product-order-details" className="tm-panel-white mt-4 grid scroll-mt-24 gap-3 p-3" onSubmit={submitOrder}>
                   <div>
                     <p className="tm-modal-title">معلومات الطلب</p>
                     <p className="tm-small-copy tm-text-muted mt-1">نؤكد التفاصيل على واتساب قبل الإرسال. لا يوجد دفع مسبق.</p>
@@ -487,15 +431,10 @@ export const TanjaMolArabicCODProductPage = ({
                     <span className="tm-field-label">الحي أو العنوان داخل طنجة *</span>
                     <input id="product-order-address" required name="address" className="tm-field" autoComplete="address-line1" enterKeyHint="send" />
                   </label>
-                  <button className="tm-press tm-button-primary min-h-[52px] px-5 text-base disabled:cursor-not-allowed disabled:opacity-60" type="submit" disabled={isOrderSubmitting}>
-                    {isOrderSubmitting ? '\u062c\u0627\u0631\u064a \u0625\u0631\u0633\u0627\u0644 \u0627\u0644\u0637\u0644\u0628...' : '\u062a\u0623\u0643\u064a\u062f \u0627\u0644\u0637\u0644\u0628'}
+                  <button className="tm-press tm-button-primary min-h-[52px] px-5 text-base disabled:cursor-not-allowed disabled:opacity-60" type="submit" disabled={isResolvedSoldOut || isOrderSubmitting}>
+                    {isResolvedSoldOut ? '\u063a\u064a\u0631 \u0645\u062a\u0648\u0641\u0631 \u062d\u0627\u0644\u064a\u0627' : isOrderSubmitting ? '\u062c\u0627\u0631\u064a \u0625\u0631\u0633\u0627\u0644 \u0627\u0644\u0637\u0644\u0628...' : '\u062a\u0623\u0643\u064a\u062f \u0627\u0644\u0637\u0644\u0628'}
                   </button>
-                </form>
-              ) : (
-                <div className="tm-body-copy tm-panel-white mt-3 px-3 py-2.5 text-sm leading-7 text-[var(--tm-ink-soft)]">
-                  {hasRealVariants ? '\u0627\u062e\u062a\u0631 \u0627\u0644\u062e\u064a\u0627\u0631\u0627\u062a \u0627\u0644\u0645\u0646\u0627\u0633\u0628\u0629\u060c \u062b\u0645 \u0623\u0631\u0633\u0644 \u0637\u0644\u0628\u0643 \u0645\u0646 \u0627\u0644\u0645\u0648\u0642\u0639.' : '\u0623\u0631\u0633\u0644 \u0637\u0644\u0628\u0643 \u0645\u0646 \u0627\u0644\u0645\u0648\u0642\u0639\u060c \u0648\u0633\u0646\u0624\u0643\u062f \u0627\u0644\u062a\u0641\u0627\u0635\u064a\u0644 \u0645\u0639\u0643 \u0642\u0628\u0644 \u0627\u0644\u062a\u0648\u0635\u064a\u0644.'}
-                </div>
-              )}
+              </form>
 
               <div className="mt-3 grid gap-2 text-sm font-bold text-[var(--tm-ink-soft)]">
                 <div className="flex items-center justify-between rounded-md bg-[var(--tm-surface-tint)] px-3 py-2.5">
@@ -626,19 +565,5 @@ export const TanjaMolArabicCODProductPage = ({
       </main>
 
       <SiteFooter categories={categoryList} onNavigate={navigateToRoute} />
-
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 bg-transparent px-3 py-3 md:hidden" style={{
-      paddingBottom: 'max(14px, env(safe-area-inset-bottom))'
-    }}>
-        <div className="tm-mobile-order-bar pointer-events-auto mx-auto flex max-w-[520px] items-center gap-3 rounded-lg p-2">
-          <div className="min-w-0 flex-1">
-            <p className="tm-num font-heading text-xl font-black text-[#b45309]">{resolvedVariantPriceLabel}</p>
-            <p className="truncate text-[11px] font-extrabold text-[#68736c]">{'\u0627\u0644\u062f\u0641\u0639 \u0639\u0646\u062f \u0627\u0644\u0627\u0633\u062a\u0644\u0627\u0645'}</p>
-          </div>
-          <button className="tm-press tm-order-cta min-h-[52px] min-w-[138px] overflow-hidden rounded-md bg-[#ff9900] px-5 text-sm font-black text-[#131921] shadow-[0_16px_34px_-18px_rgba(255,153,0,0.95)] disabled:cursor-not-allowed disabled:opacity-60" type="button" disabled={isResolvedSoldOut || isOrderSubmitting} onClick={handleOrderNow}>
-            {isOrderSubmitting ? '\u062c\u0627\u0631\u064a \u0627\u0644\u0625\u0631\u0633\u0627\u0644' : '\u0627\u0637\u0644\u0628 \u0627\u0644\u0622\u0646'}
-          </button>
-        </div>
-      </div>
     </div>;
 };

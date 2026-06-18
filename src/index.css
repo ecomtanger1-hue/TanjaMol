@@ -1341,45 +1341,45 @@ body {
 }
 
 .tm-shadcn-product-editor {
-  background: #09090b !important;
-  color: #f4f4f5 !important;
+  background: #eef0ea !important;
+  color: #17201b !important;
   font-family: var(--font-sans);
 }
 
 .tm-shadcn-product-editor main {
-  background: #09090b;
+  background: #eef0ea;
 }
 
 .tm-shadcn-product-editor header {
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  background: rgba(9, 9, 11, 0.88) !important;
-  color: #fafafa !important;
+  border-color: #d7ded6 !important;
+  background: rgba(247, 246, 240, 0.94) !important;
+  color: #17201b !important;
   backdrop-filter: blur(16px);
 }
 
 .tm-shadcn-product-editor header h1,
 .tm-shadcn-product-editor .font-heading {
-  color: #fafafa;
+  color: #17201b;
   letter-spacing: 0;
 }
 
 .tm-shadcn-product-editor header > div:last-child,
 .tm-shadcn-product-editor .border-t {
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: #d7ded6 !important;
 }
 
 .tm-shadcn-product-editor header > div:last-child {
-  background: rgba(24, 24, 27, 0.72) !important;
+  background: rgba(238, 240, 234, 0.86) !important;
 }
 
 .tm-shadcn-product-editor .tm-admin-surface,
 .tm-shadcn-product-editor section.tm-admin-surface,
 .tm-shadcn-product-editor .rounded-md.bg-white,
 .tm-shadcn-product-editor .bg-white {
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  background: rgba(24, 24, 27, 0.72) !important;
-  color: #f4f4f5 !important;
-  box-shadow: none !important;
+  border: 1px solid #d7ded6 !important;
+  background: #f7f5ef !important;
+  color: #17201b !important;
+  box-shadow: 0 18px 46px -38px rgba(23, 32, 27, 0.28) !important;
 }
 
 .tm-shadcn-product-editor section.tm-admin-surface {
@@ -1397,16 +1397,16 @@ body {
 .tm-shadcn-product-editor label > span,
 .tm-shadcn-product-editor .text-\[\#65716a\],
 .tm-shadcn-product-editor .text-\[\#5f6861\] {
-  color: #a1a1aa !important;
+  color: #65716a !important;
 }
 
 .tm-shadcn-product-editor .tm-admin-field,
 .tm-shadcn-product-editor input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="color"]),
 .tm-shadcn-product-editor textarea,
 .tm-shadcn-product-editor select {
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  background: #09090b !important;
-  color: #f4f4f5 !important;
+  border-color: #cfd8d1 !important;
+  background: #fbfaf6 !important;
+  color: #17201b !important;
   box-shadow: none !important;
 }
 
@@ -1418,75 +1418,75 @@ body {
 .tm-shadcn-product-editor textarea:focus-visible,
 .tm-shadcn-product-editor select:focus,
 .tm-shadcn-product-editor select:focus-visible {
-  border-color: #fb923c !important;
-  box-shadow: 0 0 0 3px rgba(251, 146, 60, 0.28) !important;
+  border-color: #b45309 !important;
+  box-shadow: 0 0 0 3px rgba(255, 153, 0, 0.24) !important;
 }
 
 .tm-shadcn-product-editor input::placeholder,
 .tm-shadcn-product-editor textarea::placeholder {
-  color: #71717a !important;
+  color: #8a938d !important;
 }
 
 .tm-shadcn-product-editor button,
 .tm-shadcn-product-editor label[for] {
-  border-color: rgba(255, 255, 255, 0.1);
+  border-color: #cfd8d1;
 }
 
 .tm-shadcn-product-editor button.bg-\[\#ff9900\],
 .tm-shadcn-product-editor label.bg-\[\#ff9900\] {
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  background: #27272a !important;
-  color: #fafafa !important;
-  box-shadow: none !important;
+  border: 1px solid rgba(180, 83, 9, 0.22) !important;
+  background: #ff9900 !important;
+  color: #131921 !important;
+  box-shadow: 0 16px 34px -24px rgba(180, 83, 9, 0.62) !important;
 }
 
 .tm-shadcn-product-editor button.bg-\[\#ff9900\]:hover,
 .tm-shadcn-product-editor label.bg-\[\#ff9900\]:hover {
-  background: #3f3f46 !important;
+  background: #f59a12 !important;
 }
 
 .tm-shadcn-product-editor .bg-\[\#ff9900\]:not(button):not(label) {
-  background: #d4d4d8 !important;
+  background: #ffd99a !important;
 }
 
 .tm-shadcn-product-editor button.bg-\[\#131921\],
 .tm-shadcn-product-editor label.bg-\[\#131921\],
 .tm-shadcn-product-editor .bg-\[\#131921\] {
-  background: #18181b !important;
-  color: #fafafa !important;
+  background: #3f4a43 !important;
+  color: #ffffff !important;
 }
 
 .tm-shadcn-product-editor button.bg-white,
 .tm-shadcn-product-editor .bg-\[\#fbfaf6\],
 .tm-shadcn-product-editor .bg-\[\#eef3ef\] {
-  background: #18181b !important;
-  color: #f4f4f5 !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  background: #fbfaf6 !important;
+  color: #17201b !important;
+  border-color: #d7ded6 !important;
 }
 
 .tm-shadcn-product-editor .bg-\[\#fff3df\],
 .tm-shadcn-product-editor .bg-\[\#fff1d5\],
 .tm-shadcn-product-editor .tm-admin-chip-brand,
 .tm-shadcn-product-editor .tm-admin-chip-warning {
-  background: rgba(249, 115, 22, 0.16) !important;
-  color: #fed7aa !important;
-  border-color: rgba(249, 115, 22, 0.28) !important;
+  background: #fff3df !important;
+  color: #b45309 !important;
+  border-color: #f3d0a0 !important;
 }
 
 .tm-shadcn-product-editor .tm-admin-chip-muted,
 .tm-shadcn-product-editor .bg-\[\#eef3ef\].text-\[\#65716a\] {
-  background: rgba(113, 113, 122, 0.18) !important;
-  color: #d4d4d8 !important;
+  background: #e8eee8 !important;
+  color: #65716a !important;
 }
 
 .tm-shadcn-product-editor .text-\[\#b45309\],
 .tm-shadcn-product-editor .text-\[\#9a5a00\] {
-  color: #fb923c !important;
+  color: #b45309 !important;
 }
 
 .tm-shadcn-product-editor .text-\[\#131921\],
 .tm-shadcn-product-editor .text-\[\#17201b\] {
-  color: #fafafa !important;
+  color: #17201b !important;
 }
 
 .tm-shadcn-product-editor .border-\[\#e3e6df\],
@@ -1494,49 +1494,49 @@ body {
 .tm-shadcn-product-editor .border-\[\#dfe5df\],
 .tm-shadcn-product-editor .border-\[\#cfd8d1\],
 .tm-shadcn-product-editor .border-\[\#bfcac1\] {
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: #d7ded6 !important;
 }
 
 .tm-shadcn-product-editor table {
-  color: #f4f4f5;
+  color: #17201b;
 }
 
 .tm-shadcn-product-editor th {
-  color: #a1a1aa !important;
+  color: #65716a !important;
 }
 
 .tm-shadcn-product-editor td,
 .tm-shadcn-product-editor tr {
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: #d7ded6 !important;
 }
 
 .tm-shadcn-product-editor img {
-  border-color: rgba(255, 255, 255, 0.1);
+  border-color: #d7ded6;
 }
 
 .tm-shadcn-product-editor .jodit-container,
 .tm-shadcn-product-editor .jodit-toolbar__box,
 .tm-shadcn-product-editor .jodit-workplace {
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: #cfd8d1 !important;
 }
 
 .tm-shadcn-product-editor .jodit-container {
-  background: #18181b !important;
+  background: #f6f5ef !important;
 }
 
 .tm-shadcn-product-editor .jodit-wysiwyg,
 .tm-shadcn-product-editor .jodit-source {
-  background: #09090b !important;
-  color: #f4f4f5 !important;
+  background: #f6f5ef !important;
+  color: #17201b !important;
 }
 
 .tm-shadcn-product-editor .jodit-toolbar__box {
-  background: #18181b !important;
+  background: #e7ebe5 !important;
 }
 
 .tm-shadcn-product-editor .tm-jodit-editor {
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  background: #09090b !important;
+  border-color: #cfd8d1 !important;
+  background: #e7ebe5 !important;
   box-shadow: none !important;
 }
 
@@ -1545,8 +1545,8 @@ body {
 .tm-shadcn-product-editor .tm-jodit-editor .jodit-wysiwyg,
 .tm-shadcn-product-editor .tm-jodit-editor .jodit-source,
 .tm-shadcn-product-editor .tm-jodit-editor iframe {
-  background: #09090b !important;
-  color: #f4f4f5 !important;
+  background: #f6f5ef !important;
+  color: #17201b !important;
 }
 
 .tm-shadcn-product-editor .tm-jodit-editor .jodit-toolbar__box,
@@ -1554,48 +1554,69 @@ body {
 .tm-shadcn-product-editor .tm-jodit-editor .jodit-ui-group,
 .tm-shadcn-product-editor .tm-jodit-editor .jodit-ui-button,
 .tm-shadcn-product-editor .tm-jodit-editor .jodit-toolbar-button__button {
-  background: #18181b !important;
-  color: #d4d4d8 !important;
+  background: #e7ebe5 !important;
+  color: #17201b !important;
 }
 
 .tm-shadcn-product-editor .tm-jodit-editor .jodit-ui-button:hover,
 .tm-shadcn-product-editor .tm-jodit-editor .jodit-toolbar-button__button:hover,
 .tm-shadcn-product-editor .tm-jodit-editor .jodit-toolbar-button_active_true .jodit-toolbar-button__button {
-  background: #27272a !important;
-  color: #fafafa !important;
+  background: #dbe2da !important;
+  color: #17201b !important;
 }
 
 .tm-shadcn-product-editor .tm-jodit-editor .jodit-ui-separator,
 .tm-shadcn-product-editor .tm-jodit-editor .jodit-ui-group:before,
 .tm-shadcn-product-editor .tm-jodit-editor .jodit-toolbar__box:not(:empty) {
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: #cfd8d1 !important;
 }
 
 .tm-shadcn-product-editor .tm-jodit-editor .jodit-icon,
 .tm-shadcn-product-editor .tm-jodit-editor .jodit-icon svg,
 .tm-shadcn-product-editor .tm-jodit-editor .jodit-toolbar-button__trigger svg {
-  color: #d4d4d8 !important;
-  fill: #d4d4d8 !important;
-  stroke: #d4d4d8 !important;
+  color: #17201b !important;
+  fill: #17201b !important;
+  stroke: #17201b !important;
 }
 
 .tm-shadcn-product-editor .tm-jodit-editor .jodit-placeholder,
 .tm-shadcn-product-editor .tm-jodit-editor .jodit-wysiwyg:empty:before {
-  color: #71717a !important;
+  color: #7b8580 !important;
 }
 
 .tm-shadcn-product-editor .tm-jodit-editor .jodit-popup,
 .tm-shadcn-product-editor .tm-jodit-editor .jodit-dialog,
 .tm-shadcn-product-editor .tm-jodit-editor .jodit-ui-list {
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  background: #18181b !important;
-  color: #f4f4f5 !important;
+  border-color: #cfd8d1 !important;
+  background: #f6f5ef !important;
+  color: #17201b !important;
 }
 
 .tm-shadcn-product-editor .tm-jodit-editor blockquote {
-  border-color: rgba(255, 255, 255, 0.14) !important;
-  background: #18181b !important;
-  color: #f4f4f5 !important;
+  border-color: #ead6b8 !important;
+  background: #fff7e8 !important;
+  color: #17201b !important;
+}
+
+.jodit-popup,
+.jodit-dialog,
+.jodit-ui-list {
+  border-color: #cfd8d1 !important;
+  background: #f6f5ef !important;
+  color: #17201b !important;
+}
+
+.jodit-popup .jodit-ui-button,
+.jodit-popup .jodit-toolbar-button__button,
+.jodit-dialog .jodit-ui-button {
+  background: #f6f5ef !important;
+  color: #17201b !important;
+}
+
+.jodit-popup .jodit-ui-button:hover,
+.jodit-popup .jodit-toolbar-button__button:hover,
+.jodit-dialog .jodit-ui-button:hover {
+  background: #dbe2da !important;
 }
 
 .tm-rich-editor-body h1,
