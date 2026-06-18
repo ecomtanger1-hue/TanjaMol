@@ -76,6 +76,7 @@ export const TanjaMolArabicCODProductPage = ({
   const [selectedVariantIds, setSelectedVariantIds] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
+  const [showStickyOrderBar, setShowStickyOrderBar] = useState(false);
   const mobileGalleryRef = useRef<HTMLDivElement>(null);
   const productTitle = product?.title ?? 'ساعة ذكية مقاومة للماء ببطارية طويلة';
   const productCategory = product?.category ?? 'الإلكترونيات';
@@ -295,7 +296,41 @@ export const TanjaMolArabicCODProductPage = ({
     }
   };
 
-  return <div dir="rtl" className="min-h-screen w-full overflow-x-hidden bg-[#f7f5ef] pt-16 text-[#17201b]">
+  const scrollToOrderForm = () => {
+    trackInitiateCheckout([orderItem]);
+    const target = document.getElementById('product-order-form');
+    if (!target) return;
+
+    const headerOffset = 84;
+    const targetTop = target.getBoundingClientRect().top + window.scrollY - headerOffset;
+    window.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    const updateStickyOrderBar = () => {
+      const orderForm = document.getElementById('product-order-form');
+      const description = document.getElementById('product-description-section');
+      if (!orderForm || !description) {
+        setShowStickyOrderBar(false);
+        return;
+      }
+
+      const formIsPast = orderForm.getBoundingClientRect().bottom <= 0;
+      const descriptionHasStarted = description.getBoundingClientRect().top <= window.innerHeight * 0.85;
+      setShowStickyOrderBar(formIsPast && descriptionHasStarted);
+    };
+
+    updateStickyOrderBar();
+    window.addEventListener('scroll', updateStickyOrderBar, { passive: true });
+    window.addEventListener('resize', updateStickyOrderBar);
+
+    return () => {
+      window.removeEventListener('scroll', updateStickyOrderBar);
+      window.removeEventListener('resize', updateStickyOrderBar);
+    };
+  }, [product?.id]);
+
+  return <div dir="rtl" className={`min-h-screen w-full overflow-x-hidden bg-[#f7f5ef] pt-16 text-[#17201b] ${showStickyOrderBar ? 'pb-[calc(96px+env(safe-area-inset-bottom))] md:pb-0' : ''}`}>
     <SiteHeader cartCount={cartCount} onNavigate={navigate} onOpenCart={onOpenCart} onOpenSearch={onOpenSearch} />
 
       <main>
@@ -446,7 +481,7 @@ export const TanjaMolArabicCODProductPage = ({
           </div>
         </section>
 
-        <section className="bg-[#f7f5ef] py-9 sm:py-12 lg:py-16">
+        <section id="product-description-section" className="bg-[#f7f5ef] py-9 sm:py-12 lg:py-16">
           <div className="mx-auto grid w-full max-w-[1440px] gap-5 px-4 sm:px-6 lg:px-10 xl:px-12">
             {productDetails.length ? <section className="grid gap-6 lg:gap-10">
               {showProductDetailsIntro ? <>
@@ -565,5 +600,21 @@ export const TanjaMolArabicCODProductPage = ({
       </main>
 
       <SiteFooter categories={categoryList} onNavigate={navigateToRoute} />
+
+      {showStickyOrderBar ? (
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 bg-transparent px-3 py-3 md:hidden" style={{
+          paddingBottom: 'max(14px, env(safe-area-inset-bottom))'
+        }}>
+          <div className="tm-mobile-order-bar pointer-events-auto mx-auto flex max-w-[520px] items-center gap-3 rounded-lg p-2">
+            <div className="min-w-0 flex-1">
+              <p className="tm-num font-heading text-xl font-black text-[#b45309]">{resolvedVariantPriceLabel}</p>
+              <p className="truncate text-[11px] font-extrabold text-[#68736c]">{'\u0627\u0644\u062f\u0641\u0639 \u0639\u0646\u062f \u0627\u0644\u0627\u0633\u062a\u0644\u0627\u0645'}</p>
+            </div>
+            <button className="tm-press tm-order-cta min-h-[52px] min-w-[138px] overflow-hidden rounded-md bg-[#ff9900] px-5 text-sm font-black text-[#131921] shadow-[0_16px_34px_-18px_rgba(255,153,0,0.95)] disabled:cursor-not-allowed disabled:opacity-60" type="button" disabled={isResolvedSoldOut} onClick={scrollToOrderForm}>
+              {isResolvedSoldOut ? '\u063a\u064a\u0631 \u0645\u062a\u0648\u0641\u0631' : '\u0627\u0637\u0644\u0628 \u0627\u0644\u0622\u0646'}
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>;
 };
