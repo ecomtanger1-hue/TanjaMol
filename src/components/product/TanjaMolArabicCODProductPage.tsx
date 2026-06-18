@@ -501,22 +501,22 @@ export const TanjaMolArabicCODProductPage = ({
 
         <section className="bg-[#f7f5ef] py-10 sm:py-14 lg:py-16">
           <div className="mx-auto grid w-full max-w-[1180px] gap-4 px-4 sm:px-6 lg:px-8">
-            {productDetails.length ? <details className="tm-surface rounded-lg bg-white p-4 open:bg-[#fffdf8] sm:p-5 lg:p-7" open>
-              <summary className="cursor-pointer font-heading text-xl font-black sm:text-2xl">تفاصيل المنتج</summary>
-              <div className="mt-6 grid gap-4 lg:gap-6">
+            {productDetails.length ? <section className="grid gap-5">
+              <h2 className="tm-heading font-heading text-xl font-black text-[var(--tm-ink)] sm:text-2xl">تفاصيل المنتج</h2>
+              <div className="grid gap-8 lg:gap-10">
                 {productDetails.map((detail, index) => {
                   const reverse = detail.reverse ?? index % 2 === 1;
-                  return <article key={detail.id} dir="ltr" className="grid overflow-hidden rounded-lg border border-[var(--tm-border)] bg-[var(--tm-surface-tint)] shadow-[0_16px_42px_-34px_rgba(23,32,27,0.55)] lg:min-h-[320px] lg:grid-cols-2 lg:items-stretch lg:gap-6 lg:overflow-visible lg:rounded-none lg:border-0 lg:bg-transparent lg:shadow-none">
-                    <div dir="rtl" className={`order-2 flex flex-col justify-center rounded-b-lg bg-[var(--tm-surface-tint)] p-4 pt-3 sm:p-5 lg:rounded-md lg:p-7 lg:shadow-[inset_0_0_0_1px_rgba(23,32,27,0.045)] ${reverse ? 'lg:order-1' : 'lg:order-2'}`}>
+                  return <article key={detail.id} dir="ltr" className="grid gap-4 lg:min-h-[320px] lg:grid-cols-2 lg:items-stretch lg:gap-6">
+                    <div dir="rtl" className={`order-2 flex flex-col justify-center lg:p-7 ${reverse ? 'lg:order-1' : 'lg:order-2'}`}>
                       <ProductDetailRichText detail={detail} />
                     </div>
-                    <figure className={`order-1 bg-[var(--tm-surface-tint)] p-2 pb-0 lg:min-h-[320px] lg:overflow-hidden lg:rounded-md lg:bg-transparent lg:p-0 lg:shadow-[inset_0_0_0_1px_rgba(23,32,27,0.055)] ${reverse ? 'lg:order-2' : 'lg:order-1'}`}>
+                    <figure className={`order-1 lg:min-h-[320px] lg:overflow-hidden lg:rounded-md ${reverse ? 'lg:order-2' : 'lg:order-1'}`}>
                       <ProductDetailMedia detail={detail} src={detail.mediaUrl || productGallery[(index + 1) % productGallery.length]?.src || productGallery[0].src} className="tm-image h-auto min-h-0 w-full rounded-md object-contain lg:h-full lg:min-h-[320px] lg:rounded-none lg:object-cover" />
                     </figure>
                   </article>;
                 })}
               </div>
-            </details> : null}
+            </section> : null}
 
             <details className="tm-surface rounded-lg bg-white p-4 open:bg-[#fffdf8] sm:p-5 lg:p-6" open>
               <summary className="cursor-pointer font-heading text-xl font-black sm:text-2xl">المواصفات</summary>
