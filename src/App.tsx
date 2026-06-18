@@ -27,6 +27,7 @@ import {
   type Category,
   type OrderDraft,
   type Product,
+  type ProductDetailBlock,
   type StoreSettings,
   type StoredOrder,
 } from './storefrontRuntime';
@@ -98,6 +99,15 @@ function getRoute() {
 
 function cleanText(value: string, maxLength: number) {
   return value.replace(/\s+/g, ' ').trim().slice(0, maxLength);
+}
+
+function hasDetailContent(detail: ProductDetailBlock) {
+  return Boolean(
+    detail.title?.trim() ||
+    detail.text?.trim() ||
+    detail.richTextHtml?.trim() ||
+    detail.mediaUrl?.trim()
+  );
 }
 
 function absoluteAssetUrl(src: string) {
@@ -256,6 +266,7 @@ export function App() {
   const [notice, setNotice] = useState('');
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
   const [isAdminLoading, setIsAdminLoading] = useState(() => getRoute().startsWith('#/admin'));
+  const [isAdminDataReady, setIsAdminDataReady] = useState(false);
   const [adminLoginError, setAdminLoginError] = useState('');
 
   useEffect(() => {
@@ -323,12 +334,12 @@ export function App() {
     }
 
     if (isAdminLoggedIn) {
-      setIsAdminLoading(false);
       return;
     }
 
     let active = true;
     setIsAdminLoading(true);
+    setIsAdminDataReady(false);
 
     void import('./lib/supabaseAdmin')
       .then(async ({ fetchAdminOrders, restoreAdminSession }) => {
@@ -346,6 +357,7 @@ export function App() {
           if (!active) return;
           setRemoteProducts(nextProducts);
           setProductDetailsBySlug(Object.fromEntries(nextProducts.map(product => [product.slug, product])));
+          setIsAdminDataReady(true);
         }
       })
       .catch(() => undefined)
@@ -361,18 +373,36 @@ export function App() {
   useEffect(() => {
     if (!isAdminLoggedIn || !route.startsWith('#/admin')) return;
 
+    let active = true;
+    setIsAdminDataReady(false);
+    setIsAdminLoading(true);
+
     void Promise.all([
       import('./lib/supabaseAdmin').then(({ fetchAdminOrders }) => fetchAdminOrders()),
       import('./lib/supabaseProducts').then(({ fetchProductsFromSupabase }) => fetchProductsFromSupabase(true)),
     ])
       .then(([nextOrders, nextProducts]) => {
+        if (!active) return;
         setOrders(nextOrders);
         setRemoteProducts(nextProducts);
         setProductDetailsBySlug(Object.fromEntries(nextProducts.map(product => [product.slug, product])));
+        setIsAdminDataReady(true);
       })
       .catch(error => {
         console.error('Failed to load admin data', error);
+        if (active) {
+          setRemoteProducts([]);
+          setIsAdminDataReady(true);
+          setNotice('تم تسجيل الدخول، لكن تعذر تحميل بيانات الإدارة');
+        }
+      })
+      .finally(() => {
+        if (active) setIsAdminLoading(false);
       });
+
+    return () => {
+      active = false;
+    };
   }, [isAdminLoggedIn, route]);
 
   useEffect(() => {
@@ -613,21 +643,33 @@ export function App() {
 
   const loginAdmin = async (email: string, password: string) => {
     setAdminLoginError('');
+    setIsAdminLoading(true);
+    setIsAdminDataReady(false);
     try {
       const { fetchAdminOrders, signInAdmin } = await import('./lib/supabaseAdmin');
       await signInAdmin(email, password);
-      const [{ fetchProductsFromSupabase }, nextOrders] = await Promise.all([
-        import('./lib/supabaseProducts'),
-        fetchAdminOrders(),
-      ]);
-      setOrders(nextOrders);
-      const nextProducts = await fetchProductsFromSupabase(true);
-      setRemoteProducts(nextProducts);
-      setProductDetailsBySlug(Object.fromEntries(nextProducts.map(product => [product.slug, product])));
       setIsAdminLoggedIn(true);
+      try {
+        const [{ fetchProductsFromSupabase }, nextOrders] = await Promise.all([
+          import('./lib/supabaseProducts'),
+          fetchAdminOrders(),
+        ]);
+        setOrders(nextOrders);
+        const nextProducts = await fetchProductsFromSupabase(true);
+        setRemoteProducts(nextProducts);
+        setProductDetailsBySlug(Object.fromEntries(nextProducts.map(product => [product.slug, product])));
+        setIsAdminDataReady(true);
+      } catch (error) {
+        console.error('Failed to load admin data after login', error);
+        setRemoteProducts([]);
+        setIsAdminDataReady(true);
+        setNotice('تم تسجيل الدخول، لكن تعذر تحميل بيانات الإدارة');
+      }
       navigate('#/admin');
     } catch {
       setAdminLoginError('بيانات الدخول غير صحيحة أو الحساب ليس مديراً');
+    } finally {
+      setIsAdminLoading(false);
     }
   };
 
@@ -666,12 +708,28 @@ export function App() {
   const saveProduct = async (product: Product, previousSlug = product.slug, options?: { isDraft?: boolean; silent?: boolean }) => {
     const previousProduct = adminProducts.find(item => item.slug === previousSlug || item.slug === product.slug);
     const isDraft = options?.isDraft ?? false;
+    const previousDetails = previousProduct?.details ?? [];
+    const incomingDetails = product.details ?? [];
+    const previousGallery = previousProduct?.gallery?.filter(Boolean) ?? [];
+    const incomingGallery = product.gallery?.filter(Boolean) ?? [];
+    const protectedProduct = previousProduct && !isDraft ? {
+      ...product,
+      details: previousDetails.some(hasDetailContent) && !incomingDetails.some(hasDetailContent)
+        ? previousDetails
+        : product.details,
+      gallery: previousGallery.length > 1 && incomingGallery.length <= 1
+        ? previousGallery
+        : product.gallery,
+      image: previousGallery.length > 1 && incomingGallery.length <= 1
+        ? previousProduct.image || previousGallery[0] || product.image
+        : product.image,
+    } : product;
     const isVisible = isDraft
       ? false
       : previousProduct?.isDraft
         ? true
         : previousProduct?.isVisible ?? !effectiveHiddenProductSlugs.includes(previousSlug);
-    const nextProduct = { ...product, isDraft, isVisible };
+    const nextProduct = { ...protectedProduct, isDraft, isVisible };
 
     try {
       const { upsertProductToSupabase } = await import('./lib/supabaseProducts');
@@ -880,7 +938,9 @@ export function App() {
       return <ShadcnAdminLogin error={adminLoginError} loading={isAdminLoading} onLogin={loginAdmin} />;
     }
 
-    if (route.startsWith('#/admin') && isAdminLoading) {
+    const isAdminRouteLoading = route.startsWith('#/admin') && (isAdminLoading || (isAdminLoggedIn && !isAdminDataReady));
+
+    if (isAdminRouteLoading) {
       return <ShadcnAdminLogin error="" loading onLogin={loginAdmin} />;
     }
 
@@ -1012,6 +1072,10 @@ export function App() {
     }
 
     if (productSlug) {
+      if (activeProduct && !cachedProductDetail && !isKnownMissingProduct) {
+        return <ProductRouteLoading />;
+      }
+
       if (!activeProduct) {
         if (loadingProductSlug === productSlug || (remoteProducts === null && !isKnownMissingProduct)) {
           return <ProductRouteLoading />;
@@ -1072,7 +1136,7 @@ export function App() {
     }
 
     return <NotFoundPage cartCount={cartCount} onNavigate={navigate} onOpenCart={commonProps.onOpenCart} onOpenSearch={commonProps.onOpenSearch} />;
-  }, [activeCategories, activeProduct, adminProducts, cartCount, categoryId, collectionId, commonProps, effectiveHiddenProductSlugs, isAdminLoggedIn, isKnownMissingProduct, isOrderSubmitting, loadingProductSlug, markOrderCustomerMessageSent, orders, productSlug, remoteProducts, route, searchQuery, settings, storefrontProducts]);
+  }, [activeCategories, activeProduct, adminProducts, cachedProductDetail, cartCount, categoryId, collectionId, commonProps, effectiveHiddenProductSlugs, isAdminDataReady, isAdminLoading, isAdminLoggedIn, isKnownMissingProduct, isOrderSubmitting, loadingProductSlug, markOrderCustomerMessageSent, orders, productSlug, remoteProducts, route, searchQuery, settings, storefrontProducts]);
 
   return (
     <>

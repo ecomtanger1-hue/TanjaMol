@@ -30,8 +30,6 @@ export async function signInAdmin(email: string, password: string) {
 
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) throw error;
-
-  await fetchAdminOrders();
 }
 
 export async function restoreAdminSession() {
@@ -40,13 +38,11 @@ export async function restoreAdminSession() {
   const { data } = await supabase.auth.getSession();
   if (!data.session) return false;
 
-  try {
-    await fetchAdminOrders();
-    return true;
-  } catch {
-    await supabase.auth.signOut();
-    return false;
-  }
+  const { error } = await supabase.auth.getUser();
+  if (!error) return true;
+
+  await supabase.auth.signOut();
+  return false;
 }
 
 export async function signOutAdmin() {
