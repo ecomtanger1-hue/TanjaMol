@@ -1,7 +1,7 @@
 import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { Check } from 'lucide-react';
 import { categories as defaultCategories, categoryRoute, parseOrderForm, type CartItem, type Category, type OrderDraft, type Product, type ProductVariant } from '../../storefrontRuntime';
-import { ProductDetailMedia, ProductDetailRichText } from './ProductDetailRichText';
+import { ProductDetailMedia, ProductDetailRichText, ProductDetailTitle } from './ProductDetailRichText';
 import { ProductCard } from '../storefront/ProductCard';
 import { SiteFooter, SiteHeader } from '../storefront/StorefrontPages';
 import { navigateToRoute } from '../../lib/routing';
@@ -92,6 +92,7 @@ export const TanjaMolArabicCODProductPage = ({
   }));
   const productSpecs = product?.specs?.length ? product.specs : specs;
   const productDetails = product?.details?.length ? product.details : [];
+  const productDetailsHighlights = ['صور واضحة', 'شرح مباشر', 'قرار أسهل قبل الطلب'];
   const showReviews = product?.reviewsEnabled ?? true;
   const productRating = product?.rating ?? 4.8;
   const productReviewCount = product?.reviewCount ?? 127;
@@ -499,19 +500,41 @@ export const TanjaMolArabicCODProductPage = ({
           </div>
         </section>
 
-        <section className="bg-[#f7f5ef] py-10 sm:py-14 lg:py-16">
-          <div className="mx-auto grid w-full max-w-[1180px] gap-4 px-4 sm:px-6 lg:px-8">
-            {productDetails.length ? <section className="grid gap-5">
-              <h2 className="tm-heading font-heading text-xl font-black text-[var(--tm-ink)] sm:text-2xl">تفاصيل المنتج</h2>
-              <div className="grid gap-8 lg:gap-10">
+        <section className="bg-[#f7f5ef] py-12 sm:py-16 lg:py-20">
+          <div className="mx-auto grid w-full max-w-[1440px] gap-6 px-4 sm:px-6 lg:px-10 xl:px-12">
+            {productDetails.length ? <section className="grid gap-8 lg:gap-14">
+              <div className="mx-auto grid max-w-[760px] gap-3 text-center">
+                <p className="tm-kicker text-[#b45309]">تفاصيل المنتج</p>
+                <h2 className="tm-heading font-heading text-3xl font-black leading-tight text-[var(--tm-ink)] sm:text-4xl lg:text-5xl">كل ما تحتاج معرفته قبل الطلب</h2>
+                <p className="tm-copy mx-auto max-w-[620px] text-sm font-semibold leading-7 text-[var(--tm-muted)] sm:text-base lg:text-lg">
+                  صور ومعلومات مرتبة تساعدك تفهم المنتج بوضوح قبل إرسال الطلب.
+                </p>
+              </div>
+
+              <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0">
+                {productDetailsHighlights.map(item => (
+                  <span key={item} className="shrink-0 rounded-full bg-white/75 px-4 py-2 text-xs font-black text-[var(--tm-ink-soft)] shadow-[0_12px_34px_-24px_rgba(23,32,27,0.45)] ring-1 ring-black/[0.04] backdrop-blur sm:text-sm">
+                    {item}
+                  </span>
+                ))}
+              </div>
+
+              <div className="grid gap-10 lg:gap-16 xl:gap-20">
                 {productDetails.map((detail, index) => {
                   const reverse = detail.reverse ?? index % 2 === 1;
-                  return <article key={detail.id} dir="ltr" className="grid gap-4 lg:min-h-[320px] lg:grid-cols-2 lg:items-stretch lg:gap-6">
-                    <div dir="rtl" className={`order-2 flex flex-col justify-center lg:p-7 ${reverse ? 'lg:order-1' : 'lg:order-2'}`}>
-                      <ProductDetailRichText detail={detail} />
+                  return <article key={detail.id} dir="ltr" className="grid gap-5 lg:min-h-[460px] lg:grid-cols-[minmax(0,1.12fr)_minmax(380px,0.88fr)] lg:items-center lg:gap-10 xl:min-h-[520px] xl:gap-14">
+                    <div dir="rtl" className={`order-2 flex flex-col justify-center px-1 sm:px-2 lg:px-0 ${reverse ? 'lg:order-1 lg:justify-self-end' : 'lg:order-2 lg:justify-self-start'}`}>
+                      <div className="max-w-[560px]">
+                        <p className="tm-kicker text-[#b45309]">{`تفصيل ${String(index + 1).padStart(2, '0')}`}</p>
+                        {detail.title?.trim() ? <ProductDetailTitle detail={detail} /> : null}
+                        <ProductDetailRichText detail={detail} />
+                      </div>
                     </div>
-                    <figure className={`order-1 lg:min-h-[320px] lg:overflow-hidden lg:rounded-md ${reverse ? 'lg:order-2' : 'lg:order-1'}`}>
-                      <ProductDetailMedia detail={detail} src={detail.mediaUrl || productGallery[(index + 1) % productGallery.length]?.src || productGallery[0].src} className="tm-image h-auto min-h-0 w-full rounded-md object-contain lg:h-full lg:min-h-[320px] lg:rounded-none lg:object-cover" />
+                    <figure className={`relative order-1 min-h-[300px] overflow-hidden rounded-[22px] bg-white shadow-[0_28px_70px_-40px_rgba(23,32,27,0.55)] outline outline-1 outline-[rgba(0,0,0,0.1)] sm:min-h-[420px] lg:min-h-[460px] lg:rounded-[28px] xl:min-h-[520px] ${reverse ? 'lg:order-2' : 'lg:order-1'}`}>
+                      <ProductDetailMedia detail={detail} src={detail.mediaUrl || productGallery[(index + 1) % productGallery.length]?.src || productGallery[0].src} className="h-full min-h-[300px] w-full object-cover sm:min-h-[420px] lg:min-h-[460px] xl:min-h-[520px]" />
+                      <span className="tm-num absolute left-4 top-4 grid h-10 min-w-10 place-items-center rounded-full bg-[#131921]/92 px-3 text-sm font-black text-white shadow-[0_12px_30px_-18px_rgba(19,25,33,0.8)] backdrop-blur">
+                        {String(index + 1).padStart(2, '0')}
+                      </span>
                     </figure>
                   </article>;
                 })}
