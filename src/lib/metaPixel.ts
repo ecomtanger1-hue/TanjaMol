@@ -66,7 +66,9 @@ function ensureMetaPixel() {
     window._fbq = fbq;
   }
 
-  if (!document.getElementById('meta-pixel-script')) {
+  const hasMetaPixelScript = document.getElementById('meta-pixel-script') || Array.from(document.scripts).some(script => script.src.includes('connect.facebook.net') && script.src.includes('fbevents.js'));
+
+  if (!hasMetaPixelScript) {
     const script = document.createElement('script');
     script.id = 'meta-pixel-script';
     script.async = true;
