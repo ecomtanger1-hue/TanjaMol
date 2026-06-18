@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from 'react';
-import type { Category, Product, ProductDetailBlock, ProductVariant, ProductVariantOption } from '../../../storefrontRuntime';
+import { defaultProductDetailsIntro, type Category, type Product, type ProductDetailBlock, type ProductDetailsIntro, type ProductVariant, type ProductVariantOption } from '../../../storefrontRuntime';
 import { AdminSidebar } from '../../admin/AdminLayout';
 import { TanjaMallLogo } from '../../brand/TanjaMallLogo';
 import { navigateToRoute } from '../../../lib/routing';
@@ -22,6 +22,7 @@ type SpecDraft = {
 
 type DetailDraft = ProductDetailBlock;
 type VariantOptionDraft = ProductVariantOption;
+type DetailIntroDraft = Required<ProductDetailsIntro>;
 
 const fallbackImage = 'https://images.unsplash.com/photo-1607083206968-13611e3d76db?auto=format&fit=crop&w=1200&q=85';
 
@@ -87,6 +88,15 @@ const defaultDetailFormat = {
   textSize: 'base',
   headingSize: 'h3',
 } satisfies Pick<DetailDraft, 'textAlign' | 'textSize' | 'headingSize'>;
+
+function withDefaultDetailsIntro(intro?: ProductDetailsIntro): DetailIntroDraft {
+  return {
+    ...defaultProductDetailsIntro,
+    ...(intro || {}),
+    highlights: intro ? (intro.highlights || []).filter(item => item.trim()) : defaultProductDetailsIntro.highlights,
+    hidden: intro?.hidden ?? false,
+  };
+}
 
 function isPlaceholderDetailTitle(value: string) {
   return /^بلوك\s+\d+$/.test(value.trim());
@@ -320,6 +330,7 @@ export const TanjaMolAddProductPage = ({
   const [variantsEnabled, setVariantsEnabled] = useState(false);
   const [variantOptions, setVariantOptions] = useState<VariantOptionDraft[]>([]);
   const [variants, setVariants] = useState<ProductVariant[]>([]);
+  const [detailsIntro, setDetailsIntro] = useState<DetailIntroDraft>(() => withDefaultDetailsIntro());
   const [details, setDetails] = useState<DetailDraft[]>([]);
   const [activeDetail, setActiveDetail] = useState(0);
   const [specs, setSpecs] = useState<SpecDraft[]>([]);
@@ -358,6 +369,7 @@ export const TanjaMolAddProductPage = ({
       setVariantsEnabled(false);
       setVariantOptions([]);
       setVariants([]);
+      setDetailsIntro(withDefaultDetailsIntro());
       setDetails([]);
       setActiveDetail(0);
       detailHistoryRef.current = [];
@@ -393,6 +405,7 @@ export const TanjaMolAddProductPage = ({
     const nextVariantOptions = product.variantOptions?.length ? product.variantOptions : inferVariantOptionsFromVariants(product.variants || []);
     setVariantOptions(nextVariantOptions);
     setVariants(product.variants?.length ? generateVariantsFromOptions(nextVariantOptions, product.variants, product.priceLabel) : []);
+    setDetailsIntro(withDefaultDetailsIntro(product.detailsIntro));
     setDetails((product.details?.length ? product.details : initialDetails).map(withDefaultDetailFormat));
     detailHistoryRef.current = [];
     detailFutureRef.current = [];
@@ -438,6 +451,13 @@ export const TanjaMolAddProductPage = ({
     return [{ id: `current-${category}`, title: category, count: '', image: '' }, ...categories];
   }, [categories, category]);
   const formattedDetails = useMemo(() => details.map(withDefaultDetailFormat), [details]);
+  const formattedDetailsIntro = useMemo<DetailIntroDraft>(() => ({
+    kicker: detailsIntro.kicker.trim(),
+    title: detailsIntro.title.trim(),
+    description: detailsIntro.description.trim(),
+    highlights: detailsIntro.highlights.map(item => item.trim()).filter(Boolean),
+    hidden: detailsIntro.hidden,
+  }), [detailsIntro]);
 
   const previewProduct = useMemo<Product>(() => ({
     id: slug || makeSlug(title),
@@ -459,12 +479,13 @@ export const TanjaMolAddProductPage = ({
     reviewCount: Number(reviewCount) || 0,
     showRelated,
     showPolicies,
+    detailsIntro: formattedDetailsIntro,
     details: formattedDetails,
     specs: specs.filter(spec => spec.label.trim() && spec.value.trim()).map(spec => [spec.label, spec.value] as [string, string]),
     variantsEnabled,
     variantOptions,
     variants,
-  }), [badge, category, cleanGallery, delivery, formattedDetails, manualReviewsEnabled, oldPrice, price, rating, reviewCount, reviewsEnabled, shortDescription, showPolicies, showRelated, slug, specs, stock, title, variantOptions, variants, variantsEnabled]);
+  }), [badge, category, cleanGallery, delivery, formattedDetails, formattedDetailsIntro, manualReviewsEnabled, oldPrice, price, rating, reviewCount, reviewsEnabled, shortDescription, showPolicies, showRelated, slug, specs, stock, title, variantOptions, variants, variantsEnabled]);
 
   const hasStartedListing = useMemo(() => (
     Boolean(title.trim()) ||
@@ -1234,7 +1255,72 @@ export const TanjaMolAddProductPage = ({
             </AdminSection>
 
             <AdminSection title="تفاصيل المنتج المصورة" summary={detailsSummary} status={details.some(detail => detail.text.trim()) ? 'done' : 'missing'} defaultOpen={false} onOpen={() => setDetailsEditorReady(true)} action={<button type="button" onClick={addDetailBlock} className="tm-admin-press min-h-[44px] rounded-md bg-[#ff9900] px-3 text-xs font-black text-[#131921]">إضافة بلوك</button>}>
-              <div className="rounded-md border border-[#dfe5df] bg-[#fbfaf6] p-3">
+              <div className="grid gap-3 rounded-md border border-[#dfe5df] bg-[#fbfaf6] p-3">
+                <div className="grid gap-3 rounded-md border border-[#dfe5df] bg-white p-3">
+                  <label className="flex min-h-[44px] items-center gap-3 text-sm font-extrabold text-[#17201b]">
+                    <input
+                      type="checkbox"
+                      checked={detailsIntro.hidden}
+                      onChange={event => setDetailsIntro(current => ({ ...current, hidden: event.target.checked }))}
+                      className="h-4 w-4 accent-[#ff9900]"
+                    />
+                    إخفاء مقدمة تفاصيل المنتج
+                  </label>
+
+                  {!detailsIntro.hidden ? (
+                    <div className="grid gap-3">
+                      <div className="grid gap-3 lg:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)]">
+                        <TextField label="النص الصغير" value={detailsIntro.kicker} onChange={value => setDetailsIntro(current => ({ ...current, kicker: value }))} />
+                        <TextField label="العنوان الرئيسي" value={detailsIntro.title} onChange={value => setDetailsIntro(current => ({ ...current, title: value }))} />
+                      </div>
+
+                      <label className="grid gap-1">
+                        <span className="text-xs font-black text-[#65716a]">الوصف القصير</span>
+                        <textarea
+                          value={detailsIntro.description}
+                          onChange={event => setDetailsIntro(current => ({ ...current, description: event.target.value }))}
+                          className="tm-admin-field min-h-[96px] resize-y px-3 py-3 text-sm font-semibold leading-7"
+                        />
+                      </label>
+
+                      <div className="grid gap-2">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <p className="text-xs font-black text-[#65716a]">الوسوم الصغيرة</p>
+                          <button
+                            type="button"
+                            onClick={() => setDetailsIntro(current => ({ ...current, highlights: [...current.highlights, ''] }))}
+                            className="tm-admin-press min-h-[36px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black"
+                          >
+                            إضافة وسم
+                          </button>
+                        </div>
+
+                        <div className="grid gap-2 sm:grid-cols-3">
+                          {detailsIntro.highlights.map((highlight, highlightIndex) => (
+                            <div key={highlightIndex} className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_68px]">
+                              <input
+                                value={highlight}
+                                onChange={event => setDetailsIntro(current => ({
+                                  ...current,
+                                  highlights: current.highlights.map((item, itemIndex) => itemIndex === highlightIndex ? event.target.value : item),
+                                }))}
+                                className="tm-admin-field px-3 text-sm font-bold"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setDetailsIntro(current => ({ ...current, highlights: current.highlights.filter((_, itemIndex) => itemIndex !== highlightIndex) }))}
+                                className="tm-admin-press min-h-[44px] rounded-md bg-[#fff1d5] px-3 text-xs font-black text-[#9a5a00]"
+                              >
+                                حذف
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+
                 <div className="grid gap-4">
                   {details.map((detail, index) => (
                     <article key={detail.id} className="rounded-md border border-[#dfe5df] bg-white p-3">

@@ -33,6 +33,7 @@ create table if not exists public.products (
   variants_enabled boolean,
   variant_options jsonb not null default '[]'::jsonb,
   variants jsonb not null default '[]'::jsonb,
+  data jsonb not null default '{}'::jsonb,
   is_visible boolean not null default true,
   is_draft boolean not null default false,
   sort_order integer not null default 0,
@@ -66,6 +67,7 @@ alter table public.products add column if not exists specs jsonb default '[]'::j
 alter table public.products add column if not exists variants_enabled boolean;
 alter table public.products add column if not exists variant_options jsonb default '[]'::jsonb;
 alter table public.products add column if not exists variants jsonb default '[]'::jsonb;
+alter table public.products add column if not exists data jsonb default '{}'::jsonb;
 alter table public.products add column if not exists is_visible boolean default true;
 alter table public.products add column if not exists is_draft boolean default false;
 alter table public.products add column if not exists sort_order integer default 0;

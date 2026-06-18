@@ -1,4 +1,4 @@
-import type { Product, ProductDetailBlock, ProductVariant, ProductVariantOption } from '../storefrontRuntime';
+import type { Product, ProductDetailBlock, ProductDetailsIntro, ProductVariant, ProductVariantOption } from '../storefrontRuntime';
 import { supabase } from './supabase';
 
 type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
@@ -28,6 +28,7 @@ type ProductRow = {
   variants_enabled?: boolean | null;
   variant_options?: JsonValue | null;
   variants?: JsonValue | null;
+  data?: JsonValue | null;
   is_visible?: boolean | null;
   is_draft?: boolean | null;
   sort_order?: number | null;
@@ -54,6 +55,7 @@ const PRODUCT_OPTIONAL_COMPATIBILITY_COLUMNS = [
   'variant_options',
   'variants',
   'sort_order',
+  'data',
 ] as const;
 
 const STORE_CONFIG_PRODUCT_SLUG = '__tanjamol_store_config__';
@@ -79,12 +81,30 @@ function jsonArray<T>(value: JsonValue | null | undefined, fallback: T[]): T[] {
   return Array.isArray(value) ? value as T[] : fallback;
 }
 
+function jsonObject(value: JsonValue | null | undefined): Record<string, JsonValue> {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, JsonValue> : {};
+}
+
+function mapDetailsIntro(value: JsonValue | null | undefined): ProductDetailsIntro | undefined {
+  const intro = jsonObject(value);
+  if (!Object.keys(intro).length) return undefined;
+
+  return {
+    kicker: typeof intro.kicker === 'string' ? intro.kicker : undefined,
+    title: typeof intro.title === 'string' ? intro.title : undefined,
+    description: typeof intro.description === 'string' ? intro.description : undefined,
+    highlights: jsonArray<string>(intro.highlights, []).filter(Boolean),
+    hidden: typeof intro.hidden === 'boolean' ? intro.hidden : undefined,
+  };
+}
+
 function mapProduct(row: ProductRow): Product {
   const gallery = jsonArray<string>(row.gallery, []).filter(Boolean);
   const image = row.image || gallery[0] || '';
   const variantOptions = jsonArray<ProductVariantOption>(row.variant_options, []);
   const variants = jsonArray<ProductVariant>(row.variants, []);
   const inferredVariantsEnabled = Boolean(variantOptions.length || variants.some(variant => variant.enabled));
+  const data = jsonObject(row.data);
 
   return {
     id: row.id || row.slug || '',
@@ -106,6 +126,7 @@ function mapProduct(row: ProductRow): Product {
     reviewCount: row.review_count ?? undefined,
     showRelated: row.show_related ?? true,
     showPolicies: row.show_policies ?? true,
+    detailsIntro: mapDetailsIntro(data.detailsIntro),
     details: jsonArray<ProductDetailBlock>(row.details, []),
     specs: jsonArray<Array<string>>(row.specs, []).flatMap(item => item.length >= 2 ? [[String(item[0]), String(item[1])] as [string, string]] : []),
     variantsEnabled: row.variants_enabled ?? inferredVariantsEnabled,
@@ -116,10 +137,22 @@ function mapProduct(row: ProductRow): Product {
     sortOrder: row.sort_order ?? 0,
     createdAt: row.created_at || undefined,
     updatedAt: row.updated_at || undefined,
+    data,
   };
 }
 
 function productPayload(product: Product, isVisible = product.isVisible ?? true): ProductPayload {
+  const data = {
+    ...jsonObject(product.data as JsonValue | null | undefined),
+    detailsIntro: {
+      kicker: product.detailsIntro?.kicker || '',
+      title: product.detailsIntro?.title || '',
+      description: product.detailsIntro?.description || '',
+      highlights: product.detailsIntro?.highlights || [],
+      hidden: product.detailsIntro?.hidden ?? false,
+    },
+  };
+
   return {
     id: product.id,
     slug: product.slug,
@@ -145,6 +178,7 @@ function productPayload(product: Product, isVisible = product.isVisible ?? true)
     variants_enabled: product.variantsEnabled ?? Boolean(product.variantOptions?.length || product.variants?.length),
     variant_options: product.variantOptions || [],
     variants: product.variants || [],
+    data,
     is_visible: isVisible,
     is_draft: product.isDraft ?? false,
     sort_order: product.sortOrder ?? 0,

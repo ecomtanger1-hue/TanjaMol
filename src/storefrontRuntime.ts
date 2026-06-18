@@ -20,6 +20,7 @@ export type Product = {
   reviewCount?: number;
   showRelated?: boolean;
   showPolicies?: boolean;
+  detailsIntro?: ProductDetailsIntro;
   details?: ProductDetailBlock[];
   specs?: Array<[string, string]>;
   variantsEnabled?: boolean;
@@ -30,6 +31,15 @@ export type Product = {
   sortOrder?: number;
   createdAt?: string;
   updatedAt?: string;
+  data?: Record<string, unknown>;
+};
+
+export type ProductDetailsIntro = {
+  kicker?: string;
+  title?: string;
+  description?: string;
+  highlights?: string[];
+  hidden?: boolean;
 };
 
 export type ProductDetailBlock = {
@@ -48,6 +58,14 @@ export type ProductDetailBlock = {
   textUnderline?: boolean;
   textColor?: string;
   backgroundColor?: string;
+};
+
+export const defaultProductDetailsIntro: Required<ProductDetailsIntro> = {
+  kicker: 'تفاصيل المنتج',
+  title: 'كل ما تحتاج معرفته قبل الطلب',
+  description: 'صور ومعلومات مرتبة تساعدك تفهم المنتج بوضوح قبل إرسال الطلب.',
+  highlights: ['صور واضحة', 'شرح مباشر', 'قرار أسهل قبل الطلب'],
+  hidden: false,
 };
 
 export type ProductVariant = {

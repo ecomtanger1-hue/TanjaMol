@@ -1,6 +1,6 @@
 import { type FormEvent, useEffect, useRef, useState } from 'react';
 import { Check } from 'lucide-react';
-import { categories as defaultCategories, categoryRoute, parseOrderForm, type CartItem, type Category, type OrderDraft, type Product, type ProductVariant } from '../../storefrontRuntime';
+import { categories as defaultCategories, categoryRoute, defaultProductDetailsIntro, parseOrderForm, type CartItem, type Category, type OrderDraft, type Product, type ProductVariant } from '../../storefrontRuntime';
 import { ProductDetailMedia, ProductDetailRichText, ProductDetailTitle } from './ProductDetailRichText';
 import { ProductCard } from '../storefront/ProductCard';
 import { SiteFooter, SiteHeader } from '../storefront/StorefrontPages';
@@ -92,7 +92,14 @@ export const TanjaMolArabicCODProductPage = ({
   }));
   const productSpecs = product?.specs?.length ? product.specs : specs;
   const productDetails = product?.details?.length ? product.details : [];
-  const productDetailsHighlights = ['صور واضحة', 'شرح مباشر', 'قرار أسهل قبل الطلب'];
+  const productDetailsIntro = {
+    ...defaultProductDetailsIntro,
+    ...(product?.detailsIntro || {}),
+    highlights: product?.detailsIntro
+      ? (product.detailsIntro.highlights || []).filter(Boolean)
+      : defaultProductDetailsIntro.highlights,
+  };
+  const showProductDetailsIntro = productDetails.length > 0 && !productDetailsIntro.hidden;
   const showReviews = product?.reviewsEnabled ?? true;
   const productRating = product?.rating ?? 4.8;
   const productReviewCount = product?.reviewCount ?? 127;
@@ -503,21 +510,23 @@ export const TanjaMolArabicCODProductPage = ({
         <section className="bg-[#f7f5ef] py-9 sm:py-12 lg:py-16">
           <div className="mx-auto grid w-full max-w-[1440px] gap-5 px-4 sm:px-6 lg:px-10 xl:px-12">
             {productDetails.length ? <section className="grid gap-6 lg:gap-10">
-              <div className="mx-auto grid max-w-[760px] gap-2 text-center">
-                <p className="tm-kicker text-[#b45309]">تفاصيل المنتج</p>
-                <h2 className="tm-heading font-heading text-3xl font-black leading-tight text-[var(--tm-ink)] sm:text-4xl lg:text-5xl">كل ما تحتاج معرفته قبل الطلب</h2>
-                <p className="tm-copy mx-auto max-w-[620px] text-sm font-semibold leading-7 text-[var(--tm-muted)] sm:text-base lg:text-lg">
-                  صور ومعلومات مرتبة تساعدك تفهم المنتج بوضوح قبل إرسال الطلب.
-                </p>
-              </div>
+              {showProductDetailsIntro ? <>
+                <div className="mx-auto grid max-w-[760px] gap-2 text-center">
+                  <p className="tm-kicker text-[#b45309]">{productDetailsIntro.kicker}</p>
+                  <h2 className="tm-heading font-heading text-3xl font-black leading-tight text-[var(--tm-ink)] sm:text-4xl lg:text-5xl">{productDetailsIntro.title}</h2>
+                  <p className="tm-copy mx-auto max-w-[620px] text-sm font-semibold leading-7 text-[var(--tm-muted)] sm:text-base lg:text-lg">
+                    {productDetailsIntro.description}
+                  </p>
+                </div>
 
-              <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0">
-                {productDetailsHighlights.map(item => (
-                  <span key={item} className="shrink-0 rounded-full bg-white/75 px-4 py-2 text-xs font-black text-[var(--tm-ink-soft)] shadow-[0_12px_34px_-24px_rgba(23,32,27,0.45)] ring-1 ring-black/[0.04] backdrop-blur sm:text-sm">
-                    {item}
-                  </span>
-                ))}
-              </div>
+                <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:justify-center sm:overflow-visible sm:px-0">
+                  {productDetailsIntro.highlights.map(item => (
+                    <span key={item} className="shrink-0 rounded-full bg-white/75 px-4 py-2 text-xs font-black text-[var(--tm-ink-soft)] shadow-[0_12px_34px_-24px_rgba(23,32,27,0.45)] ring-1 ring-black/[0.04] backdrop-blur sm:text-sm">
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </> : null}
 
               <div className="grid gap-7 sm:gap-9 lg:gap-12 xl:gap-14">
                 {productDetails.map((detail, index) => {
