@@ -29,6 +29,12 @@ const orderedListOptions = {
   'upper-roman': 'I II III',
 } as const;
 
+const fontOptions = {
+  'Cairo, Arial, sans-serif': 'Cairo',
+  'Tajawal, Cairo, sans-serif': 'Tajawal',
+  '"Noto Sans Arabic Variable", Cairo, Arial, sans-serif': 'Noto Sans Arabic',
+} as const;
+
 function plainTextToHtml(text: string) {
   return text
     .split('\n')
@@ -154,10 +160,14 @@ export function JoditBlockEditor({
     style: {
       fontFamily: 'Cairo, Arial, sans-serif',
       fontSize: '16px',
-      lineHeight: '1.9',
+      lineHeight: '2',
       textAlign: 'right',
     },
     controls: {
+      font: {
+        list: Jodit.atom(fontOptions),
+        childTemplate: (_editor: IJodit, _key: string, value: string) => `<span style="font-family:${value}">${fontOptions[value as keyof typeof fontOptions] || value}</span>`,
+      },
       fontsize: {
         icon: 'tm-fontsize-text',
         text: '16px',
@@ -201,7 +211,7 @@ export function JoditBlockEditor({
   } as any), [folder]);
 
   return (
-    <div className="tm-jodit-editor relative rounded-md border border-white/10 bg-zinc-950 shadow-none [&_.jodit-container]:!border-0 [&_.jodit-container]:!rounded-md [&_.jodit-icon]:!h-[18px] [&_.jodit-icon]:!w-[18px] [&_.jodit-status-bar]:!hidden [&_.jodit-toolbar-editor-collection]:!flex-wrap [&_.jodit-toolbar__box]:!overflow-visible [&_.jodit-toolbar__box]:!border-white/10 [&_.jodit-toolbar__box]:!bg-zinc-900 [&_.jodit-ui-button]:!min-h-[44px] [&_.jodit-ui-button]:!min-w-[44px] [&_.jodit-ui-button]:!px-2 [&_.jodit-ui-button__text]:!hidden [&_.jodit-toolbar-button_fontsize_.jodit-ui-button__text]:!inline-flex [&_.jodit-toolbar-button_fontsize_.jodit-ui-button__text]:!min-w-[44px] [&_.jodit-toolbar-button_fontsize_.jodit-ui-button__text]:!text-[13px] [&_.jodit-toolbar-button_fontsize_.jodit-ui-button__text]:!font-black [&_.jodit-wysiwyg]:!bg-zinc-950 [&_.jodit-wysiwyg]:!text-zinc-100 [&_.jodit-wysiwyg]:!caret-zinc-100 [&_.jodit-wysiwyg]:!px-4 [&_.jodit-wysiwyg]:!py-4 [&_.jodit-wysiwyg_h1]:!my-4 [&_.jodit-wysiwyg_h1]:!text-4xl [&_.jodit-wysiwyg_h1]:!font-black [&_.jodit-wysiwyg_h1]:!leading-tight [&_.jodit-wysiwyg_h2]:!my-3 [&_.jodit-wysiwyg_h2]:!text-3xl [&_.jodit-wysiwyg_h2]:!font-black [&_.jodit-wysiwyg_h2]:!leading-tight [&_.jodit-wysiwyg_h3]:!my-3 [&_.jodit-wysiwyg_h3]:!text-2xl [&_.jodit-wysiwyg_h3]:!font-extrabold [&_.jodit-wysiwyg_h4]:!my-2 [&_.jodit-wysiwyg_h4]:!text-xl [&_.jodit-wysiwyg_h4]:!font-extrabold [&_.jodit-wysiwyg_blockquote]:!rounded-md [&_.jodit-wysiwyg_blockquote]:!border [&_.jodit-wysiwyg_blockquote]:!border-white/15 [&_.jodit-wysiwyg_blockquote]:!bg-zinc-900 [&_.jodit-wysiwyg_blockquote]:!px-4 [&_.jodit-wysiwyg_blockquote]:!py-3 [&_.jodit-wysiwyg_blockquote]:!font-bold [&_.jodit-wysiwyg_img]:!max-w-full [&_.jodit-wysiwyg_li]:!my-1 [&_.jodit-wysiwyg_ol]:!pr-6 [&_.jodit-wysiwyg_ul]:!pr-6">
+    <div className="tm-jodit-editor relative rounded-md border border-white/10 bg-zinc-950 shadow-none [&_.jodit-container]:!border-0 [&_.jodit-container]:!rounded-md [&_.jodit-icon]:!h-[18px] [&_.jodit-icon]:!w-[18px] [&_.jodit-status-bar]:!hidden [&_.jodit-toolbar-editor-collection]:!flex-wrap [&_.jodit-toolbar__box]:!overflow-visible [&_.jodit-toolbar__box]:!border-white/10 [&_.jodit-toolbar__box]:!bg-zinc-900 [&_.jodit-ui-button]:!min-h-[44px] [&_.jodit-ui-button]:!min-w-[44px] [&_.jodit-ui-button]:!px-2 [&_.jodit-ui-button__text]:!hidden [&_.jodit-toolbar-button_fontsize_.jodit-ui-button__text]:!inline-flex [&_.jodit-toolbar-button_fontsize_.jodit-ui-button__text]:!min-w-[44px] [&_.jodit-toolbar-button_fontsize_.jodit-ui-button__text]:!text-[13px] [&_.jodit-toolbar-button_fontsize_.jodit-ui-button__text]:!font-black [&_.jodit-wysiwyg]:!bg-zinc-950 [&_.jodit-wysiwyg]:!text-zinc-100 [&_.jodit-wysiwyg]:!caret-zinc-100 [&_.jodit-wysiwyg]:!px-4 [&_.jodit-wysiwyg]:!py-4 [&_.jodit-wysiwyg]:!leading-[2] [&_.jodit-wysiwyg_p]:!leading-[2] [&_.jodit-wysiwyg_span]:!leading-[2] [&_.jodit-wysiwyg_h1]:!my-4 [&_.jodit-wysiwyg_h1]:!text-4xl [&_.jodit-wysiwyg_h1]:!font-black [&_.jodit-wysiwyg_h1]:!leading-[1.25] [&_.jodit-wysiwyg_h2]:!my-3 [&_.jodit-wysiwyg_h2]:!text-3xl [&_.jodit-wysiwyg_h2]:!font-black [&_.jodit-wysiwyg_h2]:!leading-[1.32] [&_.jodit-wysiwyg_h3]:!my-3 [&_.jodit-wysiwyg_h3]:!text-2xl [&_.jodit-wysiwyg_h3]:!font-extrabold [&_.jodit-wysiwyg_h3]:!leading-[1.34] [&_.jodit-wysiwyg_h4]:!my-2 [&_.jodit-wysiwyg_h4]:!text-xl [&_.jodit-wysiwyg_h4]:!font-extrabold [&_.jodit-wysiwyg_h4]:!leading-[1.4] [&_.jodit-wysiwyg_blockquote]:!rounded-md [&_.jodit-wysiwyg_blockquote]:!border [&_.jodit-wysiwyg_blockquote]:!border-white/15 [&_.jodit-wysiwyg_blockquote]:!bg-zinc-900 [&_.jodit-wysiwyg_blockquote]:!px-4 [&_.jodit-wysiwyg_blockquote]:!py-3 [&_.jodit-wysiwyg_blockquote]:!font-bold [&_.jodit-wysiwyg_img]:!max-w-full [&_.jodit-wysiwyg_li]:!my-1 [&_.jodit-wysiwyg_li]:!leading-[2] [&_.jodit-wysiwyg_ol]:!pr-6 [&_.jodit-wysiwyg_ul]:!pr-6">
       <JoditEditor
         ref={editorRef}
         value={value}

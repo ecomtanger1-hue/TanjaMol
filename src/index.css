@@ -1634,6 +1634,7 @@ body {
 .tm-product-rich-text * {
   max-width: 100%;
   overflow-wrap: anywhere;
+  line-height: inherit !important;
 }
 
 .tm-product-rich-text div,
