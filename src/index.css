@@ -1636,10 +1636,22 @@ body {
   overflow-wrap: anywhere;
 }
 
+.tm-product-rich-text div,
 .tm-product-rich-text p,
-.tm-product-rich-text span {
+.tm-product-rich-text span,
+.tm-product-rich-text code,
+.tm-product-rich-text kbd,
+.tm-product-rich-text samp {
   background: transparent !important;
   color: inherit !important;
+  overflow: visible;
+  white-space: normal;
+  font-family: inherit !important;
+}
+
+.tm-product-rich-text div {
+  min-height: 0 !important;
+  padding: 0 !important;
 }
 
 .tm-product-rich-text pre {

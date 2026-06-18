@@ -113,14 +113,49 @@ function renderRichBlocks(text: string) {
   return blocks;
 }
 
+function sanitizeStyleAttribute(style: string) {
+  const nextRules = style
+    .split(';')
+    .map(rule => rule.trim())
+    .filter(Boolean)
+    .filter(rule => {
+      const [rawProperty, ...rawValue] = rule.split(':');
+      const property = rawProperty.trim().toLowerCase();
+      const value = rawValue.join(':').trim().toLowerCase();
+
+      if (!property) return false;
+      if (property.includes('background')) return false;
+      if (property === 'caret-color') return false;
+      if (property === 'white-space') return false;
+      if (property === 'overflow' || property === 'overflow-x' || property === 'overflow-y') return false;
+      if (property === 'min-height') return false;
+      if (property === 'font-family' && value.includes('monospace')) return false;
+      if (property === 'color' && (value.includes('#f4f4f5') || value.includes('244, 244, 245') || value === 'white' || value === '#fff' || value === '#ffffff')) return false;
+
+      return true;
+    });
+
+  return nextRules.join('; ');
+}
+
 function sanitizeRichHtml(html: string) {
   return html
     .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '')
     .replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, '')
     .replace(/\son\w+="[^"]*"/gi, '')
     .replace(/\son\w+='[^']*'/gi, '')
+    .replace(/\sstyle="([^"]*)"/gi, (_match, style: string) => {
+      const cleanStyle = sanitizeStyleAttribute(style);
+      return cleanStyle ? ` style="${cleanStyle}"` : '';
+    })
+    .replace(/\sstyle='([^']*)'/gi, (_match, style: string) => {
+      const cleanStyle = sanitizeStyleAttribute(style);
+      return cleanStyle ? ` style="${cleanStyle}"` : '';
+    })
     .replace(/<pre(\s[^>]*)?>/gi, '<p>')
     .replace(/<\/pre>/gi, '</p>')
+    .replace(/<code(\s[^>]*)?>/gi, '<span>')
+    .replace(/<\/code>/gi, '</span>')
     .replace(/javascript:/gi, '');
 }
 
