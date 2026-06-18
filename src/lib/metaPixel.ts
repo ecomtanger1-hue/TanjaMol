@@ -23,6 +23,8 @@ declare global {
   interface Window {
     fbq?: Fbq;
     _fbq?: Fbq;
+    __tmMetaPixelBasePageView?: boolean;
+    __tmMetaPixelInitializedId?: string;
   }
 }
 
@@ -39,6 +41,10 @@ function shouldTrack() {
 
 function ensureMetaPixel() {
   if (!shouldTrack() || !META_PIXEL_ID) return false;
+  if (!initializedPixelId && window.__tmMetaPixelInitializedId === META_PIXEL_ID && window.fbq) {
+    initializedPixelId = META_PIXEL_ID;
+  }
+
   if (initializedPixelId === META_PIXEL_ID && window.fbq) return true;
 
   if (!window.fbq) {
@@ -107,6 +113,12 @@ export function trackPageView(route: string) {
   if (lastPageView === currentPage) return;
 
   lastPageView = currentPage;
+  if (window.__tmMetaPixelBasePageView) {
+    window.__tmMetaPixelBasePageView = false;
+    ensureMetaPixel();
+    return;
+  }
+
   track('PageView');
 }
 
