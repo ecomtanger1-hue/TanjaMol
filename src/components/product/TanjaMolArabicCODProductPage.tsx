@@ -500,10 +500,10 @@ export const TanjaMolArabicCODProductPage = ({
           </div>
         </section>
 
-        <section className="bg-[#f7f5ef] py-12 sm:py-16 lg:py-20">
-          <div className="mx-auto grid w-full max-w-[1440px] gap-6 px-4 sm:px-6 lg:px-10 xl:px-12">
-            {productDetails.length ? <section className="grid gap-8 lg:gap-14">
-              <div className="mx-auto grid max-w-[760px] gap-3 text-center">
+        <section className="bg-[#f7f5ef] py-9 sm:py-12 lg:py-16">
+          <div className="mx-auto grid w-full max-w-[1440px] gap-5 px-4 sm:px-6 lg:px-10 xl:px-12">
+            {productDetails.length ? <section className="grid gap-6 lg:gap-10">
+              <div className="mx-auto grid max-w-[760px] gap-2 text-center">
                 <p className="tm-kicker text-[#b45309]">تفاصيل المنتج</p>
                 <h2 className="tm-heading font-heading text-3xl font-black leading-tight text-[var(--tm-ink)] sm:text-4xl lg:text-5xl">كل ما تحتاج معرفته قبل الطلب</h2>
                 <p className="tm-copy mx-auto max-w-[620px] text-sm font-semibold leading-7 text-[var(--tm-muted)] sm:text-base lg:text-lg">
@@ -519,10 +519,10 @@ export const TanjaMolArabicCODProductPage = ({
                 ))}
               </div>
 
-              <div className="grid gap-10 lg:gap-16 xl:gap-20">
+              <div className="grid gap-7 sm:gap-9 lg:gap-12 xl:gap-14">
                 {productDetails.map((detail, index) => {
                   const reverse = detail.reverse ?? index % 2 === 1;
-                  return <article key={detail.id} dir="ltr" className="grid gap-5 lg:min-h-[460px] lg:grid-cols-[minmax(0,1.12fr)_minmax(380px,0.88fr)] lg:items-center lg:gap-10 xl:min-h-[520px] xl:gap-14">
+                  return <article key={detail.id} dir="ltr" className="grid gap-4 lg:min-h-[420px] lg:grid-cols-[minmax(0,1.12fr)_minmax(380px,0.88fr)] lg:items-center lg:gap-9 xl:min-h-[480px] xl:gap-12">
                     <div dir="rtl" className={`order-2 flex flex-col justify-center px-1 sm:px-2 lg:px-0 ${reverse ? 'lg:order-1 lg:justify-self-end' : 'lg:order-2 lg:justify-self-start'}`}>
                       <div className="max-w-[560px]">
                         <p className="tm-kicker text-[#b45309]">{`تفصيل ${String(index + 1).padStart(2, '0')}`}</p>
@@ -530,8 +530,8 @@ export const TanjaMolArabicCODProductPage = ({
                         <ProductDetailRichText detail={detail} />
                       </div>
                     </div>
-                    <figure className={`relative order-1 min-h-[300px] overflow-hidden rounded-[22px] bg-white shadow-[0_28px_70px_-40px_rgba(23,32,27,0.55)] outline outline-1 outline-[rgba(0,0,0,0.1)] sm:min-h-[420px] lg:min-h-[460px] lg:rounded-[28px] xl:min-h-[520px] ${reverse ? 'lg:order-2' : 'lg:order-1'}`}>
-                      <ProductDetailMedia detail={detail} src={detail.mediaUrl || productGallery[(index + 1) % productGallery.length]?.src || productGallery[0].src} className="h-full min-h-[300px] w-full object-cover sm:min-h-[420px] lg:min-h-[460px] xl:min-h-[520px]" />
+                    <figure className={`relative order-1 min-h-[260px] overflow-hidden rounded-[22px] bg-white shadow-[0_28px_70px_-40px_rgba(23,32,27,0.55)] outline outline-1 outline-[rgba(0,0,0,0.1)] sm:min-h-[340px] lg:min-h-[420px] lg:rounded-[28px] xl:min-h-[480px] ${reverse ? 'lg:order-2' : 'lg:order-1'}`}>
+                      <ProductDetailMedia detail={detail} src={detail.mediaUrl || productGallery[(index + 1) % productGallery.length]?.src || productGallery[0].src} className="h-full min-h-[260px] w-full object-cover sm:min-h-[340px] lg:min-h-[420px] xl:min-h-[480px]" />
                       <span className="tm-num absolute left-4 top-4 grid h-10 min-w-10 place-items-center rounded-full bg-[#131921]/92 px-3 text-sm font-black text-white shadow-[0_12px_30px_-18px_rgba(19,25,33,0.8)] backdrop-blur">
                         {String(index + 1).padStart(2, '0')}
                       </span>
