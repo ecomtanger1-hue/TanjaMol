@@ -1630,6 +1630,29 @@ body {
   border-radius: 0.375rem;
 }
 
+.tm-product-rich-text,
+.tm-product-rich-text * {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.tm-product-rich-text p,
+.tm-product-rich-text span {
+  background: transparent !important;
+  color: inherit !important;
+}
+
+.tm-product-rich-text pre {
+  margin: 0;
+  padding: 0;
+  overflow: visible;
+  white-space: pre-wrap;
+  background: transparent !important;
+  color: inherit !important;
+  font: inherit !important;
+  text-align: inherit;
+}
+
 .tm-surface {
   box-shadow:
     var(--tm-shadow-border),

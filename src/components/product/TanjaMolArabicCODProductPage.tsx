@@ -523,8 +523,8 @@ export const TanjaMolArabicCODProductPage = ({
                 {productDetails.map((detail, index) => {
                   const reverse = detail.reverse ?? index % 2 === 1;
                   return <article key={detail.id} dir="ltr" className="grid gap-4 lg:min-h-[420px] lg:grid-cols-[minmax(0,1.12fr)_minmax(380px,0.88fr)] lg:items-center lg:gap-9 xl:min-h-[480px] xl:gap-12">
-                    <div dir="rtl" className={`order-2 flex flex-col justify-center px-1 sm:px-2 lg:px-0 ${reverse ? 'lg:order-1 lg:justify-self-end' : 'lg:order-2 lg:justify-self-start'}`}>
-                      <div className="max-w-[560px]">
+                    <div dir="rtl" className={`order-2 flex min-w-0 flex-col justify-center px-1 sm:px-2 lg:px-0 ${reverse ? 'lg:order-1 lg:justify-self-end' : 'lg:order-2 lg:justify-self-start'}`}>
+                      <div className="min-w-0 max-w-[560px]">
                         <p className="tm-kicker text-[#b45309]">{`تفصيل ${String(index + 1).padStart(2, '0')}`}</p>
                         {detail.title?.trim() ? <ProductDetailTitle detail={detail} /> : null}
                         <ProductDetailRichText detail={detail} />

@@ -156,9 +156,6 @@ export function JoditBlockEditor({
       fontSize: '16px',
       lineHeight: '1.9',
       textAlign: 'right',
-      backgroundColor: '#09090b',
-      color: '#f4f4f5',
-      caretColor: '#f4f4f5',
     },
     controls: {
       fontsize: {
