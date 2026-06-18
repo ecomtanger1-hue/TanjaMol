@@ -28,7 +28,7 @@ declare global {
   }
 }
 
-const META_PIXEL_ID = import.meta.env.VITE_META_PIXEL_ID?.trim();
+const META_PIXEL_ID = '1024192293463169';
 const CURRENCY = 'MAD';
 
 let initializedPixelId = '';
