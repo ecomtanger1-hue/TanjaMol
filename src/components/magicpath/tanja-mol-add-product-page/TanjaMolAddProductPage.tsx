@@ -82,6 +82,27 @@ const initialDetails: DetailDraft[] = [
   },
 ];
 
+const defaultDetailFormat = {
+  textAlign: 'right',
+  textSize: 'base',
+  headingSize: 'h3',
+} satisfies Pick<DetailDraft, 'textAlign' | 'textSize' | 'headingSize'>;
+
+function isPlaceholderDetailTitle(value: string) {
+  return /^بلوك\s+\d+$/.test(value.trim());
+}
+
+function withDefaultDetailFormat(detail: DetailDraft, index = 0): DetailDraft {
+  return {
+    ...detail,
+    title: isPlaceholderDetailTitle(detail.title) ? '' : detail.title,
+    textAlign: detail.textAlign ?? defaultDetailFormat.textAlign,
+    textSize: detail.textSize ?? defaultDetailFormat.textSize,
+    headingSize: detail.headingSize ?? defaultDetailFormat.headingSize,
+    reverse: detail.reverse ?? index % 2 === 1,
+  };
+}
+
 const initialSpecs: SpecDraft[] = [
   { id: 'spec-1', label: 'الشحن', value: '24 إلى 48 ساعة داخل طنجة' },
   { id: 'spec-2', label: 'الدفع', value: 'الدفع عند الاستلام' },
@@ -372,7 +393,7 @@ export const TanjaMolAddProductPage = ({
     const nextVariantOptions = product.variantOptions?.length ? product.variantOptions : inferVariantOptionsFromVariants(product.variants || []);
     setVariantOptions(nextVariantOptions);
     setVariants(product.variants?.length ? generateVariantsFromOptions(nextVariantOptions, product.variants, product.priceLabel) : []);
-    setDetails(product.details?.length ? product.details : initialDetails);
+    setDetails((product.details?.length ? product.details : initialDetails).map(withDefaultDetailFormat));
     detailHistoryRef.current = [];
     detailFutureRef.current = [];
     setSpecs(product.specs?.length ? product.specs.map(([label, value], index) => ({ id: `spec-${index + 1}`, label, value })) : initialSpecs);
@@ -416,6 +437,7 @@ export const TanjaMolAddProductPage = ({
     if (!category || categories.some(item => item.title === category)) return categories;
     return [{ id: `current-${category}`, title: category, count: '', image: '' }, ...categories];
   }, [categories, category]);
+  const formattedDetails = useMemo(() => details.map(withDefaultDetailFormat), [details]);
 
   const previewProduct = useMemo<Product>(() => ({
     id: slug || makeSlug(title),
@@ -437,12 +459,12 @@ export const TanjaMolAddProductPage = ({
     reviewCount: Number(reviewCount) || 0,
     showRelated,
     showPolicies,
-    details: details.map((detail, index) => ({ ...detail, reverse: detail.reverse ?? index % 2 === 1 })),
+    details: formattedDetails,
     specs: specs.filter(spec => spec.label.trim() && spec.value.trim()).map(spec => [spec.label, spec.value] as [string, string]),
     variantsEnabled,
     variantOptions,
     variants,
-  }), [badge, category, cleanGallery, delivery, details, manualReviewsEnabled, oldPrice, price, rating, reviewCount, reviewsEnabled, shortDescription, showPolicies, showRelated, slug, specs, stock, title, variantOptions, variants, variantsEnabled]);
+  }), [badge, category, cleanGallery, delivery, formattedDetails, manualReviewsEnabled, oldPrice, price, rating, reviewCount, reviewsEnabled, shortDescription, showPolicies, showRelated, slug, specs, stock, title, variantOptions, variants, variantsEnabled]);
 
   const hasStartedListing = useMemo(() => (
     Boolean(title.trim()) ||
@@ -603,8 +625,9 @@ export const TanjaMolAddProductPage = ({
   const addDetailBlock = () => {
     const index = details.length + 1;
     setDetailsWithHistory(current => [...current, {
+      ...defaultDetailFormat,
       id: `detail-${Date.now()}`,
-      title: `بلوك ${index}`,
+      title: '',
       text: '',
       mediaUrl: '',
       mediaType: 'image',
@@ -622,7 +645,7 @@ export const TanjaMolAddProductPage = ({
   };
 
   const duplicateDetail = (detail: DetailDraft) => {
-    setDetailsWithHistory(current => [...current, { ...detail, id: `detail-${Date.now()}` }]);
+    setDetailsWithHistory(current => [...current, withDefaultDetailFormat({ ...detail, id: `detail-${Date.now()}` }, current.length)]);
     setActiveDetail(details.length);
   };
 
