@@ -1687,6 +1687,23 @@ body {
   text-align: inherit;
 }
 
+@media (min-width: 1024px) {
+  .tm-product-detail-title {
+    font-size: clamp(2.25rem, 2.2vw, 3.05rem) !important;
+    line-height: 1.22 !important;
+  }
+
+  .tm-product-detail-copy {
+    font-size: clamp(1.42rem, 1.34vw, 1.72rem) !important;
+    line-height: 2.05 !important;
+  }
+
+  .tm-product-detail-copy :where(p, div, span, li, strong, b, em, u, font) {
+    font-size: inherit !important;
+    line-height: inherit !important;
+  }
+}
+
 .tm-surface {
   box-shadow:
     var(--tm-shadow-border),
