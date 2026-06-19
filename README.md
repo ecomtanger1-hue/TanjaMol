@@ -1,35 +1,50 @@
-# TanjaMol Storefront
+# TanjaMall Storefront
 
-Arabic COD storefront prototype for TanjaMol.
+Arabic COD storefront/admin app for TanjaMall.
 
-## Local testing
+## Local Testing
 
 ```bash
-npm install
-npm run dev
+npm.cmd install
+npm.cmd run dev
 ```
 
 Open:
 
 - Storefront: http://127.0.0.1:5173/#/
-- Product page: http://127.0.0.1:5173/#/product/smart-watch
+- Admin: http://127.0.0.1:5173/#/admin
 
-## Production check
+## Production Check
 
 ```bash
-npm run build
-npm run preview
+npm.cmd run encoding:check
+npm.cmd run build
+npm.cmd run preview
 ```
 
 ## Meta Pixel
 
-Create a Pixel in Meta Events Manager, then set this environment variable before deploying:
+Current live Meta Pixel dataset ID:
 
 ```bash
-VITE_META_PIXEL_ID=your-meta-pixel-id
+1024192293463169
 ```
 
-The storefront tracks PageView, ViewContent, Search, AddToCart, InitiateCheckout, and Purchase events. Admin pages are excluded from tracking.
+The base snippet is installed in `index.html`, and runtime event helpers live in `src/lib/metaPixel.ts`. Keep both synchronized if the pixel/dataset changes.
+
+The storefront tracks PageView, ViewContent, Search, AddToCart, InitiateCheckout, and Purchase events. Admin routes are excluded from tracking.
+
+The site uses strict framing protection (`X-Frame-Options: DENY` and `frame-ancestors 'none'`). This can prevent Meta's visual Event Setup Tool from attaching to the site, but coded pixel events still work and are the preferred tracking path.
+
+## Supabase
+
+The app uses Supabase for:
+
+- admin login/session restore
+- products, draft/visibility state, gallery/detail metadata
+- orders and order items
+- store settings/categories/hero product
+- public product image storage
 
 ## Supabase Storage
 
@@ -38,7 +53,7 @@ Product, gallery, detail-block, variant, and inline editor images upload to the 
 If uploads show a Storage setup error, run `supabase/storage-setup.sql` in the Supabase SQL editor for the live project. Then verify it locally:
 
 ```bash
-npm run storage:check
+npm.cmd run storage:check
 ```
 
 ## Cloudflare Pages

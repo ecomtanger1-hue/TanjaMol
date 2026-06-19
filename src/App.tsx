@@ -33,6 +33,7 @@ import {
 } from './storefrontRuntime';
 import { getCurrentRoute, replaceLegacyHashRoute, routeToPath } from './lib/routing';
 import { trackAddToCart, trackInitiateCheckout, trackPageView, trackPurchase, trackSearch, trackViewContent } from './lib/metaPixel';
+import { TanjaMallLogo } from './components/brand/TanjaMallLogo';
 
 const TanjaMolAddProductPage = lazy(() => import('./components/magicpath/tanja-mol-add-product-page/TanjaMolAddProductPage').then(module => ({
   default: module.TanjaMolAddProductPage,
@@ -1171,9 +1172,39 @@ export function App() {
 
 function AdminRouteLoading() {
   return (
-    <main dir="rtl" className="grid min-h-screen place-items-center bg-[#f4f2eb] px-4 text-[#17201b]">
-      <div className="rounded-md bg-white px-5 py-4 text-center shadow-[0_18px_48px_rgba(23,32,27,0.12)]">
-        <p className="font-heading text-lg font-black">جاري تحميل الإدارة</p>
+    <main dir="rtl" className="min-h-screen bg-zinc-950 text-zinc-50">
+      <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[80px_minmax(0,1fr)]">
+        <aside className="hidden border-l border-white/10 bg-zinc-950/95 px-3 py-5 lg:block">
+          <TanjaMallLogo compact iconOnly className="justify-center" />
+          <div className="mt-10 grid gap-3">
+            {Array.from({ length: 5 }).map((_, index) => <SkeletonBlock key={index} className="h-11 w-11 bg-white/10" />)}
+          </div>
+        </aside>
+        <section className="min-w-0">
+          <div className="border-b border-white/10 bg-zinc-950/85 px-4 py-4 md:px-6 lg:px-8">
+            <div className="flex items-center justify-between gap-4">
+              <div className="grid gap-2">
+                <SkeletonBlock className="h-7 w-36 bg-white/12" />
+                <SkeletonBlock className="h-3 w-52 bg-white/8" />
+              </div>
+              <SkeletonBlock className="h-11 w-28 bg-orange-400/25" />
+            </div>
+          </div>
+          <div className="grid gap-4 p-4 md:grid-cols-3 md:p-6 lg:p-8">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div key={index} className="rounded-lg border border-white/10 bg-zinc-900/70 p-4">
+                <SkeletonBlock className="h-3 w-24 bg-white/10" />
+                <SkeletonBlock className="mt-4 h-8 w-20 bg-white/16" />
+              </div>
+            ))}
+            <div className="rounded-lg border border-white/10 bg-zinc-900/70 p-4 md:col-span-3">
+              <SkeletonBlock className="h-5 w-32 bg-white/12" />
+              <div className="mt-5 grid gap-3">
+                {Array.from({ length: 4 }).map((_, index) => <SkeletonBlock key={index} className="h-14 bg-white/8" />)}
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     </main>
   );
@@ -1181,12 +1212,66 @@ function AdminRouteLoading() {
 
 function ProductRouteLoading() {
   return (
-    <main dir="rtl" className="grid min-h-screen place-items-center bg-[var(--tm-bg)] px-4 text-[var(--tm-ink)]">
-      <div className="tm-panel-white w-full max-w-[420px] p-5 text-center">
-        <p className="font-heading text-xl font-black">جاري تحميل المنتج</p>
+    <main dir="rtl" className="min-h-screen overflow-hidden bg-[var(--tm-bg)] pb-24 pt-16 text-[var(--tm-ink)]">
+      <div className="fixed inset-x-0 top-0 z-20 bg-[var(--tm-header-alpha)] px-4 py-2.5 shadow-[0_14px_36px_rgba(19,25,33,0.2)]">
+        <div className="mx-auto flex max-w-[1180px] items-center justify-between">
+          <SkeletonBlock className="h-11 w-11 bg-white/16" />
+          <TanjaMallLogo compact className="text-white" textClassName="text-xl text-white" />
+          <SkeletonBlock className="h-11 w-11 bg-white/16" />
+        </div>
+      </div>
+
+      <div className="mx-auto grid w-full max-w-[1180px] gap-5 px-4 py-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(340px,0.9fr)] lg:px-8 lg:py-8">
+        <section className="grid gap-4">
+          <div className="overflow-hidden rounded-lg bg-white shadow-[0_18px_46px_-28px_rgba(23,32,27,0.42)]">
+            <SkeletonBlock className="h-[320px] rounded-none bg-[#ece7dc] sm:h-[420px] lg:h-[600px]" />
+          </div>
+          <div className="hidden grid-cols-4 gap-3 md:grid">
+            {Array.from({ length: 4 }).map((_, index) => <SkeletonBlock key={index} className="h-24 bg-white/80" />)}
+          </div>
+        </section>
+
+        <aside className="rounded-lg bg-[#fffdf8] p-4 shadow-[0_18px_46px_-28px_rgba(23,32,27,0.42)] ring-1 ring-black/[0.06] sm:p-5 lg:self-start">
+          <SkeletonBlock className="h-4 w-24 bg-[#fff3df]" />
+          <SkeletonBlock className="mt-4 h-9 w-4/5 bg-[#e8e1d5]" />
+          <SkeletonBlock className="mt-3 h-5 w-full bg-[#eee8dd]" />
+          <SkeletonBlock className="mt-2 h-5 w-2/3 bg-[#eee8dd]" />
+          <div className="mt-5 flex items-center justify-between gap-3">
+            <SkeletonBlock className="h-12 w-32 bg-[#ff9900]/35" />
+            <SkeletonBlock className="h-12 w-36 bg-white" />
+          </div>
+          <div className="mt-5 grid gap-3 rounded-md bg-white p-3 ring-1 ring-black/[0.06]">
+            <SkeletonBlock className="h-5 w-32 bg-[#e8e1d5]" />
+            {Array.from({ length: 3 }).map((_, index) => <SkeletonBlock key={index} className="h-12 bg-[#f7f5ef]" />)}
+            <SkeletonBlock className="h-12 bg-[#ff9900]/55" />
+          </div>
+        </aside>
+
+        <section className="grid gap-4 lg:col-span-2">
+          <div className="mx-auto grid w-full max-w-[760px] justify-items-center gap-3 text-center">
+            <SkeletonBlock className="h-4 w-28 bg-[#fff3df]" />
+            <SkeletonBlock className="h-9 w-3/4 bg-[#e8e1d5]" />
+            <SkeletonBlock className="h-5 w-full max-w-[620px] bg-[#eee8dd]" />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div key={index} className="overflow-hidden rounded-lg bg-white shadow-[0_12px_34px_-24px_rgba(23,32,27,0.45)] ring-1 ring-black/[0.05]">
+                <SkeletonBlock className="h-40 rounded-none bg-[#ece7dc]" />
+                <div className="grid gap-2 p-3">
+                  <SkeletonBlock className="h-5 w-4/5 bg-[#e8e1d5]" />
+                  <SkeletonBlock className="h-4 w-2/3 bg-[#eee8dd]" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
     </main>
   );
+}
+
+function SkeletonBlock({ className = '' }: { className?: string }) {
+  return <div aria-hidden="true" className={`animate-pulse rounded-md ${className}`} />;
 }
 
 function readStored<T>(key: string, fallback: T): T {

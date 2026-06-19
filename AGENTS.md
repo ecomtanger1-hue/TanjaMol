@@ -15,3 +15,6 @@
 - Prefer `apply_patch` for manual edits. If scripted edits are necessary, use UTF-8-safe Node scripts and keep them narrowly scoped.
 - Run `npm.cmd run encoding:check` before committing or publishing UI/copy changes.
 - If Arabic text must be inserted by script, prefer Unicode escapes or verify the exact diff before build.
+- The active app lives in `Tanjamolstore`; sibling folders such as `backups`, `Tanjamolstore-shadcn-lab`, and generated preview/log folders are not the production target unless the user explicitly says so.
+- The live deploy path is GitHub `main` to Cloudflare Pages. If the user asks to publish, run the checks, commit only the intentional diff, push `main`, then verify the Cloudflare deployment or live behavior when appropriate.
+- The storefront Meta Pixel is intentionally coded in the app (`src/lib/metaPixel.ts` plus the base snippet in `index.html`). Keep event names and pixel ID synchronized if the dataset changes.
