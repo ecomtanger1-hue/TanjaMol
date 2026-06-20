@@ -12,7 +12,6 @@ type AddProductProps = {
   onOpenDashboard: () => void;
   onOpenProduct: (slug: string) => void;
   onCreateProduct: (product: Product, previousSlug?: string, options?: { isDraft?: boolean; silent?: boolean }) => void | Promise<void>;
-  onLogout: () => void;
 };
 
 type SpecDraft = {
@@ -310,7 +309,6 @@ export const TanjaMolAddProductPage = ({
   onOpenDashboard,
   onOpenProduct,
   onCreateProduct,
-  onLogout,
 }: AddProductProps) => {
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const detailHistoryRef = useRef<DetailDraft[][]>([]);
@@ -852,9 +850,6 @@ export const TanjaMolAddProductPage = ({
                 ) : null}
                 <button type="button" onClick={onBack} className="tm-admin-press min-h-[44px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black">
                   رجوع
-                </button>
-                <button type="button" onClick={onLogout} className="tm-admin-press min-h-[44px] rounded-md border border-red-200 bg-red-50 px-3 text-xs font-black text-red-700">
-                  تسجيل الخروج
                 </button>
                 <button type="button" onClick={() => void saveDraft()} disabled={publishing || uploadingImages} className="tm-admin-press min-h-[44px] rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black disabled:cursor-not-allowed disabled:opacity-60">
                   حفظ مسودة

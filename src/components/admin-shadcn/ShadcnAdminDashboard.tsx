@@ -72,7 +72,6 @@ export function ShadcnAdminDashboard({
   return (
     <ShadcnAdminShell
       title="لوحة التحكم"
-      description="نظرة عملية على الطلبات والمنتجات من الهاتف أو المكتب."
       route={route}
       onNavigate={onNavigate}
       onLogout={onLogout}

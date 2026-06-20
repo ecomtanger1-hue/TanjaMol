@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { Plus, Save, Trash2 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -15,7 +14,6 @@ type ShadcnAdminSettingsPageProps = {
   route: string;
   onSave: (settings: StoreSettings) => void;
   onNavigate: (route: string) => void;
-  onLogout: () => void;
 };
 
 function emptyCategory(): Category {
@@ -27,7 +25,7 @@ function emptyCategory(): Category {
   };
 }
 
-export function ShadcnAdminSettingsPage({ settings, products, route, onSave, onNavigate, onLogout }: ShadcnAdminSettingsPageProps) {
+export function ShadcnAdminSettingsPage({ settings, products, route, onSave, onNavigate }: ShadcnAdminSettingsPageProps) {
   const [draft, setDraft] = useState<StoreSettings>(() => ({
     ...settings,
     categories: settings.categories || [],
@@ -48,22 +46,27 @@ export function ShadcnAdminSettingsPage({ settings, products, route, onSave, onN
   };
 
   const addCategory = () => {
-    setDraft(current => ({ ...current, categories: [...(current.categories || []), emptyCategory()] }));
+    setDraft(current => ({ ...current, categories: [emptyCategory(), ...(current.categories || [])] }));
   };
 
   const deleteCategory = (id: string) => {
     setDraft(current => ({ ...current, categories: (current.categories || []).filter(category => category.id !== id) }));
   };
 
+  const saveDraft = () => {
+    onSave({
+      ...draft,
+      categories: (draft.categories || []).map(category => ({ ...category, count: '' })),
+    });
+  };
+
   return (
     <ShadcnAdminShell
       title="الإعدادات"
-      description="إعدادات المتجر، الأقسام، ومنتج الواجهة الرئيسية."
       route={route}
       onNavigate={onNavigate}
-      onLogout={onLogout}
       actions={
-        <Button type="button" className="bg-orange-500 text-zinc-950 hover:bg-orange-400" onClick={() => onSave(draft)}>
+        <Button type="button" className="bg-orange-500 text-zinc-950 hover:bg-orange-400" onClick={saveDraft}>
           <Save className="size-4" />
           حفظ
         </Button>
@@ -134,35 +137,30 @@ export function ShadcnAdminSettingsPage({ settings, products, route, onSave, onN
               </div>
               <Button type="button" size="sm" className="bg-orange-500 text-zinc-950 hover:bg-orange-400" onClick={addCategory}>
                 <Plus className="size-4" />
-                قسم
+                قسم جديد
               </Button>
             </CardHeader>
             <CardContent className="grid gap-3">
               {categories.map((category, index) => (
-                <div key={category.id} className="rounded-lg border border-white/10 bg-zinc-950/70 p-3">
-                  <div className="mb-3 flex items-center justify-between gap-2">
-                    <Badge variant="outline" className="border-white/10 text-zinc-300">قسم {index + 1}</Badge>
-                    <Button type="button" size="icon" variant="ghost" className="text-red-300 hover:bg-red-500/10 hover:text-red-200" onClick={() => deleteCategory(category.id)} aria-label="حذف القسم">
-                      <Trash2 className="size-4" />
-                    </Button>
-                  </div>
-                  <div className="grid gap-3">
-                    <label className="grid gap-2 text-sm font-bold text-zinc-300">
-                      اسم القسم
-                      <Input value={category.title} onChange={event => updateCategory(category.id, 'title', event.target.value)} className="h-11 border-white/10 bg-zinc-900 text-zinc-100" />
-                    </label>
-                    <label className="grid gap-2 text-sm font-bold text-zinc-300">
-                      العدد/الوصف
-                      <Input value={category.count} onChange={event => updateCategory(category.id, 'count', event.target.value)} className="h-11 border-white/10 bg-zinc-900 text-zinc-100" />
-                    </label>
-                    <label className="grid gap-2 text-sm font-bold text-zinc-300">
-                      رابط الصورة
-                      <Input value={category.image} onChange={event => updateCategory(category.id, 'image', event.target.value)} className="h-11 border-white/10 bg-zinc-900 text-zinc-100" />
-                    </label>
+                <div key={category.id} className="grid gap-3 rounded-lg border border-white/10 bg-zinc-950/70 p-3 md:grid-cols-[88px_minmax(0,1fr)_minmax(0,1.25fr)_44px] md:items-end">
+                  <div className="overflow-hidden rounded-md border border-white/10 bg-zinc-900">
                     {category.image ? (
-                      <img src={category.image} alt="" width={420} height={160} loading="lazy" decoding="async" className="h-28 w-full rounded-md object-cover" />
-                    ) : null}
+                      <img src={category.image} alt="" width={176} height={176} loading="lazy" decoding="async" className="aspect-square w-full object-cover" />
+                    ) : (
+                      <div className="grid aspect-square place-items-center text-xs font-black text-zinc-500">صورة</div>
+                    )}
                   </div>
+                  <label className="grid gap-2 text-sm font-bold text-zinc-300">
+                    اسم القسم
+                    <Input value={category.title} autoFocus={index === 0 && !category.title} onChange={event => updateCategory(category.id, 'title', event.target.value)} className="h-11 border-white/10 bg-zinc-900 text-zinc-100" />
+                  </label>
+                  <label className="grid gap-2 text-sm font-bold text-zinc-300">
+                    رابط الصورة
+                    <Input value={category.image} onChange={event => updateCategory(category.id, 'image', event.target.value)} className="h-11 border-white/10 bg-zinc-900 text-zinc-100" />
+                  </label>
+                  <Button type="button" size="icon" variant="ghost" className="text-red-300 hover:bg-red-500/10 hover:text-red-200" onClick={() => deleteCategory(category.id)} aria-label="حذف القسم">
+                    <Trash2 className="size-4" />
+                  </Button>
                 </div>
               ))}
               {!categories.length ? (
@@ -171,7 +169,7 @@ export function ShadcnAdminSettingsPage({ settings, products, route, onSave, onN
                 </div>
               ) : null}
               <Separator className="bg-white/10" />
-              <Button type="button" className="min-h-11 bg-orange-500 text-zinc-950 hover:bg-orange-400" onClick={() => onSave(draft)}>
+              <Button type="button" className="min-h-11 bg-orange-500 text-zinc-950 hover:bg-orange-400" onClick={saveDraft}>
                 <Save className="size-4" />
                 حفظ الإعدادات
               </Button>

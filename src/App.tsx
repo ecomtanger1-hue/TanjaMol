@@ -965,7 +965,6 @@ export function App() {
           onShowProducts={showProducts}
           onSyncProducts={syncProductsToSupabase}
           onToggleVisibility={toggleProductVisibility}
-          onLogout={logoutAdmin}
         />
       );
     }
@@ -987,7 +986,6 @@ export function App() {
             onShowProducts={showProducts}
             onSyncProducts={syncProductsToSupabase}
             onToggleVisibility={toggleProductVisibility}
-            onLogout={logoutAdmin}
           />
         );
       }
@@ -1002,7 +1000,6 @@ export function App() {
           onOpenDashboard={() => navigate('#/admin')}
           onOpenProduct={(nextSlug) => navigate(productRoute(nextSlug))}
           onCreateProduct={saveProduct}
-          onLogout={logoutAdmin}
         />
       );
     }
@@ -1017,7 +1014,6 @@ export function App() {
           onOpenDashboard={() => navigate('#/admin')}
           onOpenProduct={(slug) => navigate(productRoute(slug))}
           onCreateProduct={saveProduct}
-          onLogout={logoutAdmin}
         />
       );
     }
@@ -1031,7 +1027,6 @@ export function App() {
           onNavigate={navigate}
           onUpdateOrderStatus={updateOrderStatus}
           onMarkCustomerMessageSent={markOrderCustomerMessageSent}
-          onLogout={logoutAdmin}
         />
       );
     }
@@ -1045,7 +1040,6 @@ export function App() {
           onNavigate={navigate}
           onUpdateOrderStatus={updateOrderStatus}
           onMarkCustomerMessageSent={markOrderCustomerMessageSent}
-          onLogout={logoutAdmin}
         />
       );
     }
@@ -1059,13 +1053,12 @@ export function App() {
           onNavigate={navigate}
           onUpdateOrderStatus={updateOrderStatus}
           onMarkCustomerMessageSent={markOrderCustomerMessageSent}
-          onLogout={logoutAdmin}
         />
       );
     }
 
     if (route === '#/admin/settings') {
-      return <ShadcnAdminSettingsPage settings={settings} products={adminProducts} route={route} onSave={saveStoreSettings} onNavigate={navigate} onLogout={logoutAdmin} />;
+      return <ShadcnAdminSettingsPage settings={settings} products={adminProducts} route={route} onSave={saveStoreSettings} onNavigate={navigate} />;
     }
 
     if (productSlug) {

@@ -234,7 +234,6 @@ type OrdersProps = {
   onNavigate: (route: string) => void;
   onUpdateOrderStatus: (orderId: string, status: OrderStatus) => void;
   onMarkCustomerMessageSent: (orderId: string, status: OrderStatus) => void;
-  onLogout: () => void;
 };
 
 function groupOrdersByDate(orders: StoredOrder[]) {
@@ -299,7 +298,7 @@ function MobileOrderCard({ order, onNavigate }: { order: StoredOrder; onNavigate
   );
 }
 
-export function ShadcnAdminOrdersPage({ orders, settings, route, onNavigate, onUpdateOrderStatus, onMarkCustomerMessageSent, onLogout }: OrdersProps) {
+export function ShadcnAdminOrdersPage({ orders, settings, route, onNavigate, onUpdateOrderStatus, onMarkCustomerMessageSent }: OrdersProps) {
   const [query, setQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
   const [status, setStatus] = useState<OrderStatus | 'all'>('all');
@@ -326,10 +325,8 @@ export function ShadcnAdminOrdersPage({ orders, settings, route, onNavigate, onU
   return (
     <ShadcnAdminShell
       title="الطلبات"
-      description="إدارة سريعة للطلبات من الهاتف بدون ازدحام."
       route={route}
       onNavigate={onNavigate}
-      onLogout={onLogout}
     >
       <section className="grid grid-cols-2 overflow-hidden rounded-lg border border-white/10 bg-zinc-900/70 text-zinc-50 lg:grid-cols-4">
         {[
@@ -448,13 +445,13 @@ export function ShadcnAdminOrdersPage({ orders, settings, route, onNavigate, onU
   );
 }
 
-export function ShadcnAdminOrderDetailPage({ orders, settings, route, onNavigate, onUpdateOrderStatus, onMarkCustomerMessageSent, onLogout }: OrdersProps) {
+export function ShadcnAdminOrderDetailPage({ orders, settings, route, onNavigate, onUpdateOrderStatus, onMarkCustomerMessageSent }: OrdersProps) {
   const id = decodeURIComponent(route.replace('#/admin/orders/', ''));
   const order = orders.find(item => item.id === id);
 
   if (!order) {
     return (
-      <ShadcnAdminShell title="تفاصيل الطلب" route={route} onNavigate={onNavigate} onLogout={onLogout}>
+      <ShadcnAdminShell title="تفاصيل الطلب" route={route} onNavigate={onNavigate}>
         <div className="rounded-lg border border-dashed border-white/10 p-8 text-center text-sm text-zinc-400">لم يتم العثور على الطلب.</div>
       </ShadcnAdminShell>
     );
@@ -469,10 +466,8 @@ export function ShadcnAdminOrderDetailPage({ orders, settings, route, onNavigate
   return (
     <ShadcnAdminShell
       title={`طلب ${order.id}`}
-      description={<span className="hidden sm:inline">{formatDate(order.createdAt)}</span>}
       route={route}
       onNavigate={onNavigate}
-      onLogout={onLogout}
       actions={
         <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-start">
           <span className="text-sm font-bold text-zinc-400 sm:hidden">{formatDate(order.createdAt)}</span>
@@ -701,14 +696,14 @@ export function ShadcnAdminOrderDetailPage({ orders, settings, route, onNavigate
   );
 }
 
-export function ShadcnAdminCustomerDetailPage({ orders, settings, route, onNavigate, onUpdateOrderStatus, onMarkCustomerMessageSent, onLogout }: OrdersProps) {
+export function ShadcnAdminCustomerDetailPage({ orders, settings, route, onNavigate, onUpdateOrderStatus, onMarkCustomerMessageSent }: OrdersProps) {
   const phone = decodeURIComponent(route.replace('#/admin/customers/', ''));
   const customerOrders = orders.filter(order => order.phone === phone);
   const firstOrder = customerOrders[0];
   const total = customerOrders.reduce((sum, order) => sum + order.total, 0);
 
   return (
-    <ShadcnAdminShell title={firstOrder?.name || 'عميل'} description={phone} route={route} onNavigate={onNavigate} onLogout={onLogout}>
+    <ShadcnAdminShell title={firstOrder?.name || 'عميل'} route={route} onNavigate={onNavigate}>
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <Card className="border-white/10 bg-zinc-900/70 text-zinc-50 shadow-none"><CardHeader className="pb-2"><CardTitle className="text-xs text-zinc-400">الطلبات</CardTitle></CardHeader><CardContent><p className="text-2xl font-black">{customerOrders.length.toLocaleString('ar-MA')}</p></CardContent></Card>
         <Card className="border-white/10 bg-zinc-900/70 text-zinc-50 shadow-none"><CardHeader className="pb-2"><CardTitle className="text-xs text-zinc-400">المجموع</CardTitle></CardHeader><CardContent><p className="text-xl font-black text-orange-300">{formatMoney(total)}</p></CardContent></Card>

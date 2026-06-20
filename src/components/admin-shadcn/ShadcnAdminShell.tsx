@@ -23,7 +23,7 @@ type ShadcnAdminShellProps = {
   children: ReactNode;
   actions?: ReactNode;
   onNavigate: (route: string) => void;
-  onLogout: () => void;
+  onLogout?: () => void;
 };
 
 export function ShadcnAdminShell({ title, description, route, children, actions, onNavigate, onLogout }: ShadcnAdminShellProps) {
@@ -92,13 +92,17 @@ export function ShadcnAdminShell({ title, description, route, children, actions,
               <h1 className="text-2xl font-black tracking-normal md:text-3xl">{title}</h1>
               {description ? <p className="mt-1 text-sm text-zinc-400">{description}</p> : null}
             </div>
-            <div className="flex flex-wrap gap-2">
-              {actions}
-              <Button type="button" variant="outline" className="border-red-400/20 bg-red-500/10 text-red-100 hover:bg-red-500/20" onClick={onLogout}>
-                <LogOut className="size-4" />
-                تسجيل الخروج
-              </Button>
-            </div>
+            {actions || onLogout ? (
+              <div className="flex flex-wrap gap-2">
+                {actions}
+                {onLogout ? (
+                  <Button type="button" variant="outline" className="border-red-400/20 bg-red-500/10 text-red-100 hover:bg-red-500/20" onClick={onLogout}>
+                    <LogOut className="size-4" />
+                    تسجيل الخروج
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         </header>
 
