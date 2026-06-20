@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { BarChart3, Boxes, Home, Package, Settings, ShoppingBag, Store } from 'lucide-react';
+import { BarChart3, Boxes, Home, LogOut, Package, Settings, ShoppingBag, Store } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -23,9 +23,10 @@ type ShadcnAdminShellProps = {
   children: ReactNode;
   actions?: ReactNode;
   onNavigate: (route: string) => void;
+  onLogout: () => void;
 };
 
-export function ShadcnAdminShell({ title, description, route, children, actions, onNavigate }: ShadcnAdminShellProps) {
+export function ShadcnAdminShell({ title, description, route, children, actions, onNavigate, onLogout }: ShadcnAdminShellProps) {
   return (
     <div className="dark min-h-screen bg-zinc-950 text-zinc-50">
       <aside className="group/shadcn-sidebar fixed inset-y-0 right-0 z-30 hidden w-20 overflow-hidden border-l border-white/10 bg-zinc-950/95 px-3 py-5 backdrop-blur transition-[width,box-shadow] duration-200 hover:w-64 hover:shadow-[-22px_0_44px_-32px_rgba(0,0,0,0.8)] lg:block">
@@ -91,7 +92,13 @@ export function ShadcnAdminShell({ title, description, route, children, actions,
               <h1 className="text-2xl font-black tracking-normal md:text-3xl">{title}</h1>
               {description ? <p className="mt-1 text-sm text-zinc-400">{description}</p> : null}
             </div>
-            {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
+            <div className="flex flex-wrap gap-2">
+              {actions}
+              <Button type="button" variant="outline" className="border-red-400/20 bg-red-500/10 text-red-100 hover:bg-red-500/20" onClick={onLogout}>
+                <LogOut className="size-4" />
+                تسجيل الخروج
+              </Button>
+            </div>
           </div>
         </header>
 

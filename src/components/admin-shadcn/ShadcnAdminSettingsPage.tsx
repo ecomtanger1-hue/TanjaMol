@@ -15,6 +15,7 @@ type ShadcnAdminSettingsPageProps = {
   route: string;
   onSave: (settings: StoreSettings) => void;
   onNavigate: (route: string) => void;
+  onLogout: () => void;
 };
 
 function emptyCategory(): Category {
@@ -26,7 +27,7 @@ function emptyCategory(): Category {
   };
 }
 
-export function ShadcnAdminSettingsPage({ settings, products, route, onSave, onNavigate }: ShadcnAdminSettingsPageProps) {
+export function ShadcnAdminSettingsPage({ settings, products, route, onSave, onNavigate, onLogout }: ShadcnAdminSettingsPageProps) {
   const [draft, setDraft] = useState<StoreSettings>(() => ({
     ...settings,
     categories: settings.categories || [],
@@ -60,6 +61,7 @@ export function ShadcnAdminSettingsPage({ settings, products, route, onSave, onN
       description="إعدادات المتجر، الأقسام، ومنتج الواجهة الرئيسية."
       route={route}
       onNavigate={onNavigate}
+      onLogout={onLogout}
       actions={
         <Button type="button" className="bg-orange-500 text-zinc-950 hover:bg-orange-400" onClick={() => onSave(draft)}>
           <Save className="size-4" />

@@ -25,6 +25,7 @@ type ShadcnAdminProductsPageProps = {
   onShowProducts?: (slugs: string[]) => void;
   onSyncProducts?: () => void;
   onToggleVisibility: (slug: string) => void;
+  onLogout: () => void;
 };
 
 function productSales(product: Product, orders: StoredOrder[]) {
@@ -73,6 +74,7 @@ export function ShadcnAdminProductsPage({
   onShowProducts,
   onSyncProducts,
   onToggleVisibility,
+  onLogout,
 }: ShadcnAdminProductsPageProps) {
   const [query, setQuery] = useState('');
   const [searchOpen, setSearchOpen] = useState(false);
@@ -211,6 +213,7 @@ export function ShadcnAdminProductsPage({
       title="المنتجات"
       route={route}
       onNavigate={onNavigate}
+      onLogout={onLogout}
       actions={
         <>
           <Button type="button" variant="outline" className="border-white/10 bg-white/5 text-zinc-100 hover:bg-white/10" onClick={onSyncProducts}>

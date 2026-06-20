@@ -13,6 +13,7 @@ type ShadcnAdminDashboardProps = {
   route: string;
   onNavigate: (route: string) => void;
   onOpenProduct: (slug: string) => void;
+  onLogout: () => void;
 };
 
 const statusLabels: Record<StoredOrder['status'], string> = {
@@ -52,6 +53,7 @@ export function ShadcnAdminDashboard({
   route,
   onNavigate,
   onOpenProduct,
+  onLogout,
 }: ShadcnAdminDashboardProps) {
   const todayOrders = orders.filter(order => isToday(order.createdAt));
   const activeOrders = orders.filter(order => order.status !== 'done');
@@ -73,6 +75,7 @@ export function ShadcnAdminDashboard({
       description="نظرة عملية على الطلبات والمنتجات من الهاتف أو المكتب."
       route={route}
       onNavigate={onNavigate}
+      onLogout={onLogout}
       actions={
         <>
           <Button type="button" className="bg-orange-500 text-zinc-950 hover:bg-orange-400" onClick={() => onNavigate('#/admin/products/new')}>

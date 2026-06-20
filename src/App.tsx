@@ -646,6 +646,22 @@ export function App() {
     }
   };
 
+  const logoutAdmin = async () => {
+    setIsAdminLoading(true);
+    try {
+      const { signOutAdmin } = await import('./lib/supabaseAdmin');
+      await signOutAdmin();
+    } catch (error) {
+      console.error('Failed to sign out admin', error);
+    } finally {
+      setIsAdminLoggedIn(false);
+      setIsAdminDataReady(false);
+      setIsAdminLoading(false);
+      setAdminLoginError('');
+      navigate('#/admin/login');
+    }
+  };
+
   const commonProps = {
     cartCount,
     products: storefrontProducts,
@@ -930,6 +946,7 @@ export function App() {
           route={route}
           onNavigate={navigate}
           onOpenProduct={(slug) => navigate(productRoute(slug))}
+          onLogout={logoutAdmin}
         />
       );
     }
@@ -948,6 +965,7 @@ export function App() {
           onShowProducts={showProducts}
           onSyncProducts={syncProductsToSupabase}
           onToggleVisibility={toggleProductVisibility}
+          onLogout={logoutAdmin}
         />
       );
     }
@@ -969,6 +987,7 @@ export function App() {
             onShowProducts={showProducts}
             onSyncProducts={syncProductsToSupabase}
             onToggleVisibility={toggleProductVisibility}
+            onLogout={logoutAdmin}
           />
         );
       }
@@ -983,6 +1002,7 @@ export function App() {
           onOpenDashboard={() => navigate('#/admin')}
           onOpenProduct={(nextSlug) => navigate(productRoute(nextSlug))}
           onCreateProduct={saveProduct}
+          onLogout={logoutAdmin}
         />
       );
     }
@@ -997,6 +1017,7 @@ export function App() {
           onOpenDashboard={() => navigate('#/admin')}
           onOpenProduct={(slug) => navigate(productRoute(slug))}
           onCreateProduct={saveProduct}
+          onLogout={logoutAdmin}
         />
       );
     }
@@ -1010,6 +1031,7 @@ export function App() {
           onNavigate={navigate}
           onUpdateOrderStatus={updateOrderStatus}
           onMarkCustomerMessageSent={markOrderCustomerMessageSent}
+          onLogout={logoutAdmin}
         />
       );
     }
@@ -1023,6 +1045,7 @@ export function App() {
           onNavigate={navigate}
           onUpdateOrderStatus={updateOrderStatus}
           onMarkCustomerMessageSent={markOrderCustomerMessageSent}
+          onLogout={logoutAdmin}
         />
       );
     }
@@ -1036,12 +1059,13 @@ export function App() {
           onNavigate={navigate}
           onUpdateOrderStatus={updateOrderStatus}
           onMarkCustomerMessageSent={markOrderCustomerMessageSent}
+          onLogout={logoutAdmin}
         />
       );
     }
 
     if (route === '#/admin/settings') {
-      return <ShadcnAdminSettingsPage settings={settings} products={adminProducts} route={route} onSave={saveStoreSettings} onNavigate={navigate} />;
+      return <ShadcnAdminSettingsPage settings={settings} products={adminProducts} route={route} onSave={saveStoreSettings} onNavigate={navigate} onLogout={logoutAdmin} />;
     }
 
     if (productSlug) {
