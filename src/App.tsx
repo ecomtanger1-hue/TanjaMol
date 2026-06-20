@@ -343,23 +343,11 @@ export function App() {
     setIsAdminDataReady(false);
 
     void import('./lib/supabaseAdmin')
-      .then(async ({ fetchAdminOrders, restoreAdminSession }) => {
+      .then(async ({ restoreAdminSession }) => {
         const restored = await restoreAdminSession();
         if (!active) return;
         setIsAdminLoggedIn(restored);
-        if (restored) {
-          const [{ fetchProductsFromSupabase }, nextOrders] = await Promise.all([
-            import('./lib/supabaseProducts'),
-            fetchAdminOrders(),
-          ]);
-          if (!active) return;
-          setOrders(nextOrders);
-          const nextProducts = await fetchProductsFromSupabase(true);
-          if (!active) return;
-          setRemoteProducts(nextProducts);
-          setProductDetailsBySlug(Object.fromEntries(nextProducts.map(product => [product.slug, product])));
-          setIsAdminDataReady(true);
-        }
+        if (!restored) setIsAdminDataReady(false);
       })
       .catch(() => undefined)
       .finally(() => {
@@ -372,7 +360,7 @@ export function App() {
   }, [isAdminLoggedIn, route]);
 
   useEffect(() => {
-    if (!isAdminLoggedIn || !route.startsWith('#/admin')) return;
+    if (!isAdminLoggedIn || isAdminDataReady) return;
 
     let active = true;
     setIsAdminDataReady(false);
@@ -404,7 +392,7 @@ export function App() {
     return () => {
       active = false;
     };
-  }, [isAdminLoggedIn, route]);
+  }, [isAdminDataReady, isAdminLoggedIn]);
 
   useEffect(() => {
     if (!notice) return;
@@ -647,25 +635,9 @@ export function App() {
     setIsAdminLoading(true);
     setIsAdminDataReady(false);
     try {
-      const { fetchAdminOrders, signInAdmin } = await import('./lib/supabaseAdmin');
+      const { signInAdmin } = await import('./lib/supabaseAdmin');
       await signInAdmin(email, password);
       setIsAdminLoggedIn(true);
-      try {
-        const [{ fetchProductsFromSupabase }, nextOrders] = await Promise.all([
-          import('./lib/supabaseProducts'),
-          fetchAdminOrders(),
-        ]);
-        setOrders(nextOrders);
-        const nextProducts = await fetchProductsFromSupabase(true);
-        setRemoteProducts(nextProducts);
-        setProductDetailsBySlug(Object.fromEntries(nextProducts.map(product => [product.slug, product])));
-        setIsAdminDataReady(true);
-      } catch (error) {
-        console.error('Failed to load admin data after login', error);
-        setRemoteProducts([]);
-        setIsAdminDataReady(true);
-        setNotice('تم تسجيل الدخول، لكن تعذر تحميل بيانات الإدارة');
-      }
       navigate('#/admin');
     } catch {
       setAdminLoginError('بيانات الدخول غير صحيحة أو الحساب ليس مديراً');
@@ -942,7 +914,7 @@ export function App() {
     const isAdminRouteLoading = route.startsWith('#/admin') && (isAdminLoading || (isAdminLoggedIn && !isAdminDataReady));
 
     if (isAdminRouteLoading) {
-      return <ShadcnAdminLogin error="" loading onLogin={loginAdmin} />;
+      return <AdminRouteLoading />;
     }
 
     if (route.startsWith('#/admin') && !isAdminLoggedIn) {
