@@ -502,12 +502,12 @@ export const TanjaMolArabicCODProductPage = ({
                 </div>
               </> : null}
 
-              <div className="mx-auto grid w-full max-w-[1120px] gap-7 sm:gap-9 lg:gap-12">
+              <div className="grid w-full gap-7 sm:gap-9 lg:gap-12">
                 {productDetails.map((detail, index) => {
                   const reverse = detail.reverse ?? index % 2 === 1;
-                  return <article key={detail.id} dir="ltr" className="grid gap-4 lg:min-h-[280px] lg:grid-cols-2 lg:items-center lg:gap-8 xl:min-h-[320px] xl:gap-10">
-                    <div dir="rtl" className={`order-2 flex min-w-0 flex-col justify-center px-1 sm:px-2 lg:px-0 ${reverse ? 'lg:order-1 lg:justify-self-end' : 'lg:order-2 lg:justify-self-start'}`}>
-                      <div className="min-w-0 max-w-[560px]">
+                  return <article key={detail.id} dir="ltr" className="grid gap-4 lg:min-h-[280px] lg:grid-cols-[minmax(420px,520px)_minmax(0,1fr)] lg:items-center lg:gap-10 xl:min-h-[320px] xl:grid-cols-[minmax(460px,560px)_minmax(0,1fr)] xl:gap-12">
+                    <div dir="rtl" className={`order-2 flex min-w-0 flex-col justify-center px-1 sm:px-2 lg:w-full lg:px-0 ${reverse ? 'lg:order-1 lg:justify-self-end' : 'lg:order-2 lg:justify-self-start'}`}>
+                      <div className="min-w-0 lg:w-full lg:max-w-[780px]">
                         {detail.title?.trim() ? <ProductDetailTitle detail={detail} /> : null}
                         <ProductDetailRichText detail={detail} />
                       </div>
