@@ -515,8 +515,8 @@ export const TanjaMolArabicCODProductPage = ({
                         <ProductDetailRichText detail={detail} />
                       </div>
                     </div>
-                    <figure className={`relative order-1 h-auto min-h-[260px] overflow-hidden rounded-[22px] bg-white shadow-[0_28px_70px_-40px_rgba(23,32,27,0.55)] outline outline-1 outline-[rgba(0,0,0,0.1)] sm:min-h-[340px] lg:h-[280px] lg:min-h-0 lg:rounded-[28px] xl:h-[320px] ${reverse ? 'lg:order-2' : 'lg:order-1'}`}>
-                      <ProductDetailMedia detail={detail} src={detail.mediaUrl || productGallery[(index + 1) % productGallery.length]?.src || productGallery[0].src} className="h-full min-h-[260px] w-full object-cover sm:min-h-[340px] lg:min-h-0 xl:min-h-0" />
+                    <figure className={`relative order-1 min-h-[260px] overflow-hidden rounded-[22px] bg-white shadow-[0_28px_70px_-40px_rgba(23,32,27,0.55)] outline outline-1 outline-[rgba(0,0,0,0.1)] sm:min-h-[340px] lg:min-h-[280px] lg:rounded-[28px] xl:min-h-[320px] ${reverse ? 'lg:order-2' : 'lg:order-1'}`}>
+                      <ProductDetailMedia detail={detail} src={detail.mediaUrl || productGallery[(index + 1) % productGallery.length]?.src || productGallery[0].src} className="h-full min-h-[260px] w-full object-cover sm:min-h-[340px] lg:min-h-[280px] xl:min-h-[320px]" />
                       <span className="tm-num absolute left-4 top-4 grid h-10 min-w-10 place-items-center rounded-full bg-[#131921]/92 px-3 text-sm font-black text-white shadow-[0_12px_30px_-18px_rgba(19,25,33,0.8)] backdrop-blur">
                         {String(index + 1).padStart(2, '0')}
                       </span>
