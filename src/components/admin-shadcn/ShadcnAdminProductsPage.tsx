@@ -143,7 +143,7 @@ export function ShadcnAdminProductsPage({
 
   const openProductEditor = (slug: string) => {
     if (longPressHandled.current.delete(slug)) return;
-    onNavigate(`#/admin/products/${encodeURIComponent(slug)}/edit`);
+    onNavigate(`#/tm-office-07/products/${encodeURIComponent(slug)}/edit`);
   };
 
   const handleMobileCardClick = (slug: string) => {
@@ -193,7 +193,7 @@ export function ShadcnAdminProductsPage({
       <Button type="button" variant="ghost" size="icon" disabled={disabledForSelection} className={buttonClassName} onClick={() => onNavigate(productRoute(product.slug))} aria-label="فتح في المتجر" title="فتح في المتجر">
         <ArrowUpLeft className="size-4" />
       </Button>
-      <Button type="button" variant="ghost" size="icon" disabled={disabledForSelection} className={buttonClassName} onClick={() => onNavigate(`#/admin/products/${encodeURIComponent(product.slug)}/edit`)} aria-label="تعديل" title="تعديل">
+      <Button type="button" variant="ghost" size="icon" disabled={disabledForSelection} className={buttonClassName} onClick={() => onNavigate(`#/tm-office-07/products/${encodeURIComponent(product.slug)}/edit`)} aria-label="تعديل" title="تعديل">
         <Edit className="size-4" />
       </Button>
       <Button type="button" variant="ghost" size="icon" disabled={disabledForSelection} className={buttonClassName} onClick={() => onToggleVisibility(product.slug)} aria-label={hidden ? 'إظهار' : 'إخفاء'} title={hidden ? 'إظهار' : 'إخفاء'}>
@@ -216,7 +216,7 @@ export function ShadcnAdminProductsPage({
           <Button type="button" variant="outline" className="border-white/10 bg-white/5 text-zinc-100 hover:bg-white/10" onClick={onSyncProducts}>
             مزامنة
           </Button>
-          <Button type="button" className="bg-orange-500 text-zinc-950 hover:bg-orange-400" onClick={() => onNavigate('#/admin/products/new')}>
+          <Button type="button" className="bg-orange-500 text-zinc-950 hover:bg-orange-400" onClick={() => onNavigate('#/tm-office-07/products/new')}>
             <PackagePlus className="size-4" />
             منتج جديد
           </Button>
@@ -381,7 +381,7 @@ export function ShadcnAdminProductsPage({
                     <input type="checkbox" checked={selected.includes(product.slug)} onChange={() => toggleSelected(product.slug)} className="size-4 accent-orange-500" aria-label={`تحديد ${product.title}`} />
                   </TableCell>
                   <TableCell>
-                    <button type="button" onClick={() => onNavigate(`#/admin/products/${encodeURIComponent(product.slug)}/edit`)} className="flex items-center gap-3 text-right">
+                    <button type="button" onClick={() => onNavigate(`#/tm-office-07/products/${encodeURIComponent(product.slug)}/edit`)} className="flex items-center gap-3 text-right">
                       <img src={product.image} alt="" width={56} height={56} loading="lazy" decoding="async" className="size-14 rounded-md object-cover" />
                       <span className="min-w-0">
                         <span className="block max-w-[420px] truncate font-black text-zinc-50">{product.title}</span>

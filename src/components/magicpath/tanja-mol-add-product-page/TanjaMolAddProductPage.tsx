@@ -1643,7 +1643,7 @@ function BlockMediaPicker({
 
 function AdminRail({ onOpenDashboard }: { onOpenDashboard: () => void }) {
   return <AdminSidebar onNavigate={route => {
-    if (route === '#/admin') {
+    if (route === '#/tm-office-07') {
       onOpenDashboard();
       return;
     }

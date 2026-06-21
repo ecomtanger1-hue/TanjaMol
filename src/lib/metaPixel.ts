@@ -109,7 +109,7 @@ function itemParams(item: CartItem) {
 }
 
 export function trackPageView(route: string) {
-  if (route.startsWith('#/admin')) return;
+  if (route.startsWith('#/tm-office-07')) return;
 
   const currentPage = `${window.location.pathname}${window.location.search}${route}`;
   if (lastPageView === currentPage) return;

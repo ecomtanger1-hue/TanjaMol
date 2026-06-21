@@ -1001,7 +1001,7 @@ export function AdminOrdersPage({
         <div className="grid gap-2 p-3 md:hidden">
           {visibleOrders.map(order => (
             <article key={order.id} className="rounded-md bg-[#fbfaf6] p-2 shadow-[inset_0_0_0_1px_rgba(23,32,27,0.08)]">
-              <button type="button" onClick={() => onNavigate(`#/admin/orders/${order.id}`)} className="tm-admin-press w-full rounded-md bg-white p-3 text-right">
+              <button type="button" onClick={() => onNavigate(`#/tm-office-07/orders/${order.id}`)} className="tm-admin-press w-full rounded-md bg-white p-3 text-right">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <p className="tm-admin-num font-heading text-lg font-black">{order.id}</p>
@@ -1042,14 +1042,14 @@ export function AdminOrdersPage({
               {visibleOrders.map(order => (
                 <tr key={order.id} className="border-t border-[#e4e9e4] align-middle">
                   <td className="px-4 py-3">
-                    <button type="button" onClick={() => onNavigate(`#/admin/orders/${order.id}`)} className="tm-admin-press rounded-md px-2 py-1 text-right">
+                    <button type="button" onClick={() => onNavigate(`#/tm-office-07/orders/${order.id}`)} className="tm-admin-press rounded-md px-2 py-1 text-right">
                       <span className="tm-admin-num block font-heading text-base font-black">{order.id}</span>
                       <span className="block text-xs font-bold text-[#65716a]">{order.source}</span>
                     </button>
                   </td>
                   <td className="px-4 py-3">
                     <p className="font-black">{order.name}</p>
-                    <button type="button" onClick={() => onNavigate(`#/admin/customers/${encodeURIComponent(order.phone)}`)} className="tm-admin-num mt-1 text-xs font-bold text-[#b45309]">{order.phone}</button>
+                    <button type="button" onClick={() => onNavigate(`#/tm-office-07/customers/${encodeURIComponent(order.phone)}`)} className="tm-admin-num mt-1 text-xs font-bold text-[#b45309]">{order.phone}</button>
                   </td>
                   <td className="max-w-[280px] px-4 py-3 text-xs font-bold leading-5 text-[#65716a]">{orderItemsSummary(order)}</td>
                   <td className="px-4 py-3"><OrderStatusBadge status={order.status} /></td>
@@ -1145,7 +1145,7 @@ export function AdminOrderDetailPage({
             </div>
             <div className="grid grid-cols-[36px_1fr] items-start gap-3">
               <span className="grid h-9 w-9 place-items-center rounded-md bg-[#fff3df] text-[#b45309]"><Phone className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} /></span>
-              <button className="tm-admin-num text-right font-black text-[#b45309]" type="button" onClick={() => onNavigate(`#/admin/customers/${encodeURIComponent(order.phone)}`)}>{order.phone}</button>
+              <button className="tm-admin-num text-right font-black text-[#b45309]" type="button" onClick={() => onNavigate(`#/tm-office-07/customers/${encodeURIComponent(order.phone)}`)}>{order.phone}</button>
             </div>
             <div className="grid grid-cols-[36px_1fr] items-start gap-3">
               <span className="grid h-9 w-9 place-items-center rounded-md bg-[#fff3df] text-[#b45309]"><MapPin className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} /></span>
@@ -1454,7 +1454,7 @@ function AdminOrdersPageContent({
     <section className="grid gap-3">
       {orders.map(order => (
         <article key={order.id} className="tm-admin-surface grid gap-3 rounded-md bg-white p-4 lg:grid-cols-[1fr_auto] lg:items-center">
-          <button type="button" onClick={() => onNavigate(`#/admin/orders/${order.id}`)} className="tm-admin-press rounded-md text-right">
+          <button type="button" onClick={() => onNavigate(`#/tm-office-07/orders/${order.id}`)} className="tm-admin-press rounded-md text-right">
             <div className="flex flex-wrap items-center gap-2">
               <p className="tm-admin-num font-heading text-xl font-black">{order.id}</p>
               <OrderStatusBadge status={order.status} />

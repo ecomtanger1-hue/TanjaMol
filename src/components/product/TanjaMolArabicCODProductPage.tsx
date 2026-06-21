@@ -463,7 +463,7 @@ export const TanjaMolArabicCODProductPage = ({
                     </label>
                   </div>
                   <label className="grid gap-1" htmlFor="product-order-address">
-                    <span className="tm-field-label">الحي أو العنوان داخل طنجة *</span>
+                    <span className="tm-field-label">العنوان</span>
                     <input id="product-order-address" required name="address" className="tm-field" autoComplete="address-line1" enterKeyHint="send" />
                   </label>
                   <button className="tm-press tm-button-primary min-h-[52px] px-5 text-base disabled:cursor-not-allowed disabled:opacity-60" type="submit" disabled={isResolvedSoldOut || isOrderSubmitting}>

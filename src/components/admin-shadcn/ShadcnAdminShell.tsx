@@ -10,10 +10,10 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { label: 'لوحة التحكم', route: '#/admin', icon: Home },
-  { label: 'الطلبات', route: '#/admin/orders', icon: ShoppingBag },
-  { label: 'المنتجات', route: '#/admin/products', icon: Package },
-  { label: 'الإعدادات', route: '#/admin/settings', icon: Settings },
+  { label: 'لوحة التحكم', route: '#/tm-office-07', icon: Home },
+  { label: 'الطلبات', route: '#/tm-office-07/orders', icon: ShoppingBag },
+  { label: 'المنتجات', route: '#/tm-office-07/products', icon: Package },
+  { label: 'الإعدادات', route: '#/tm-office-07/settings', icon: Settings },
 ];
 
 type ShadcnAdminShellProps = {
@@ -33,7 +33,7 @@ export function ShadcnAdminShell({ title, description, route, children, actions,
         <div className="flex h-full w-56 flex-col">
           <button
             type="button"
-            onClick={() => onNavigate('#/admin')}
+            onClick={() => onNavigate('#/tm-office-07')}
             className="flex min-h-12 w-full items-center gap-3 rounded-lg px-2 text-right"
             title="TanjaMall"
           >
@@ -49,7 +49,7 @@ export function ShadcnAdminShell({ title, description, route, children, actions,
           <nav className="mt-8 grid gap-1">
             {navItems.map(item => {
               const Icon = item.icon;
-              const active = route === item.route || (item.route !== '#/admin' && route.startsWith(item.route));
+              const active = route === item.route || (item.route !== '#/tm-office-07' && route.startsWith(item.route));
               return (
                 <button
                   key={item.route}
@@ -115,7 +115,7 @@ export function ShadcnAdminShell({ title, description, route, children, actions,
         <div className="grid grid-cols-4 gap-2">
           {navItems.map(item => {
             const Icon = item.icon;
-            const active = route === item.route || (item.route !== '#/admin' && route.startsWith(item.route));
+            const active = route === item.route || (item.route !== '#/tm-office-07' && route.startsWith(item.route));
             return (
               <button
                 key={item.route}

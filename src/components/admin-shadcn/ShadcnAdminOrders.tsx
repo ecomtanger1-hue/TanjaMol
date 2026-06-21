@@ -257,7 +257,7 @@ function MobileOrderCard({ order, onNavigate }: { order: StoredOrder; onNavigate
     <article className="rounded-lg border border-white/10 bg-zinc-900/70 p-3 text-zinc-50">
       <button
         type="button"
-        onClick={() => onNavigate(`#/admin/orders/${encodeURIComponent(order.id)}`)}
+        onClick={() => onNavigate(`#/tm-office-07/orders/${encodeURIComponent(order.id)}`)}
         className="grid w-full grid-cols-[84px_minmax(0,1fr)] gap-2 text-right sm:grid-cols-[112px_minmax(0,1fr)] sm:gap-3"
       >
         <span className="grid aspect-square min-h-[84px] place-items-center overflow-hidden rounded-md border border-white/10 bg-zinc-950/80 text-center text-xs font-black leading-5 text-zinc-400 sm:min-h-[112px] sm:text-sm sm:leading-6">
@@ -393,7 +393,7 @@ export function ShadcnAdminOrdersPage({ orders, settings, route, onNavigate, onU
             {filteredOrders.map(order => (
               <TableRow key={order.id} className="border-white/10 hover:bg-white/5">
                 <TableCell>
-                  <button type="button" onClick={() => onNavigate(`#/admin/orders/${encodeURIComponent(order.id)}`)} className="flex items-center gap-3 text-right">
+                  <button type="button" onClick={() => onNavigate(`#/tm-office-07/orders/${encodeURIComponent(order.id)}`)} className="flex items-center gap-3 text-right">
                     {order.items?.[0]?.image ? (
                       <img
                         src={order.items[0].image}
@@ -412,7 +412,7 @@ export function ShadcnAdminOrdersPage({ orders, settings, route, onNavigate, onU
                   </button>
                 </TableCell>
                 <TableCell>
-                  <button type="button" onClick={() => onNavigate(`#/admin/customers/${encodeURIComponent(order.phone)}`)} className="max-w-[220px] text-right">
+                  <button type="button" onClick={() => onNavigate(`#/tm-office-07/customers/${encodeURIComponent(order.phone)}`)} className="max-w-[220px] text-right">
                     <span className="block truncate font-black text-zinc-100">{order.name || 'عميل بدون اسم'}</span>
                     <span className="block truncate text-xs text-zinc-500">{order.phone}</span>
                   </button>
@@ -446,7 +446,7 @@ export function ShadcnAdminOrdersPage({ orders, settings, route, onNavigate, onU
 }
 
 export function ShadcnAdminOrderDetailPage({ orders, settings, route, onNavigate, onUpdateOrderStatus, onMarkCustomerMessageSent }: OrdersProps) {
-  const id = decodeURIComponent(route.replace('#/admin/orders/', ''));
+  const id = decodeURIComponent(route.replace('#/tm-office-07/orders/', ''));
   const order = orders.find(item => item.id === id);
 
   if (!order) {
@@ -471,7 +471,7 @@ export function ShadcnAdminOrderDetailPage({ orders, settings, route, onNavigate
       actions={
         <div className="flex w-full items-center justify-between gap-3 sm:w-auto sm:justify-start">
           <span className="text-sm font-bold text-zinc-400 sm:hidden">{formatDate(order.createdAt)}</span>
-          <Button type="button" variant="outline" className="border-white/10 bg-white/5 text-zinc-100 hover:bg-white/10" onClick={() => onNavigate('#/admin/orders')}><ArrowRight className="size-4" /> رجوع</Button>
+          <Button type="button" variant="outline" className="border-white/10 bg-white/5 text-zinc-100 hover:bg-white/10" onClick={() => onNavigate('#/tm-office-07/orders')}><ArrowRight className="size-4" /> رجوع</Button>
         </div>
       }
     >
@@ -528,7 +528,7 @@ export function ShadcnAdminOrderDetailPage({ orders, settings, route, onNavigate
           <div className="grid gap-3">
             {customerOrders.slice(0, 5).map((item, index) => (
               <div key={item.id}>
-                <button type="button" onClick={() => onNavigate(`#/admin/orders/${encodeURIComponent(item.id)}`)} className="w-full text-right text-sm">
+                <button type="button" onClick={() => onNavigate(`#/tm-office-07/orders/${encodeURIComponent(item.id)}`)} className="w-full text-right text-sm">
                   <span className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
                     <span className="min-w-0">
                       <span className="block truncate font-black">{item.id}</span>
@@ -578,7 +578,7 @@ export function ShadcnAdminOrderDetailPage({ orders, settings, route, onNavigate
                 ) : null}
               </div>
               <div className="grid grid-cols-2 gap-2 pt-1">
-                <Button type="button" variant="outline" className="border-white/10 bg-white/5 text-zinc-100 hover:bg-white/10" onClick={() => onNavigate(`#/admin/customers/${encodeURIComponent(order.phone)}`)}>
+                <Button type="button" variant="outline" className="border-white/10 bg-white/5 text-zinc-100 hover:bg-white/10" onClick={() => onNavigate(`#/tm-office-07/customers/${encodeURIComponent(order.phone)}`)}>
                   طلبات العميل
                 </Button>
                 <Button type="button" variant="secondary" className="bg-white/10 text-zinc-100 hover:bg-white/15" onClick={copyOrderDetails}>
@@ -598,7 +598,7 @@ export function ShadcnAdminOrderDetailPage({ orders, settings, route, onNavigate
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => onNavigate(`#/admin/orders/${encodeURIComponent(item.id)}`)}
+                  onClick={() => onNavigate(`#/tm-office-07/orders/${encodeURIComponent(item.id)}`)}
                   className="w-full rounded-md border border-white/10 bg-zinc-950/60 px-3 py-3 text-right text-sm transition hover:bg-white/5"
                 >
                   <span className="grid grid-cols-[auto_auto_auto_minmax(0,1fr)] items-center gap-3">
@@ -697,7 +697,7 @@ export function ShadcnAdminOrderDetailPage({ orders, settings, route, onNavigate
 }
 
 export function ShadcnAdminCustomerDetailPage({ orders, settings, route, onNavigate, onUpdateOrderStatus, onMarkCustomerMessageSent }: OrdersProps) {
-  const phone = decodeURIComponent(route.replace('#/admin/customers/', ''));
+  const phone = decodeURIComponent(route.replace('#/tm-office-07/customers/', ''));
   const customerOrders = orders.filter(order => order.phone === phone);
   const firstOrder = customerOrders[0];
   const total = customerOrders.reduce((sum, order) => sum + order.total, 0);
@@ -713,7 +713,7 @@ export function ShadcnAdminCustomerDetailPage({ orders, settings, route, onNavig
         {customerOrders.map(order => (
           <article key={order.id} className="rounded-lg border border-white/10 bg-zinc-900/70 p-3">
             <div className="grid gap-3 lg:grid-cols-[1fr_360px]">
-              <button type="button" onClick={() => onNavigate(`#/admin/orders/${encodeURIComponent(order.id)}`)} className="min-w-0 text-right">
+              <button type="button" onClick={() => onNavigate(`#/tm-office-07/orders/${encodeURIComponent(order.id)}`)} className="min-w-0 text-right">
                 <div className="mb-2 flex items-center gap-2">
                   <span className="shrink-0 font-black text-zinc-50">{order.id}</span>
                   <Badge variant="outline" className={statusStyles[order.status]}>{statusLabels[order.status]}</Badge>

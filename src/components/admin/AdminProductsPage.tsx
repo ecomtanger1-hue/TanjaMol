@@ -144,7 +144,7 @@ export function AdminProductsPage({
               مزامنة
             </button>
           ) : null}
-          <button type="button" onClick={() => onNavigate('#/admin/products/new')} className="tm-admin-press inline-flex min-h-[44px] items-center gap-2 rounded-md bg-[#ff9900] px-3 text-xs font-black text-[#131921]">
+          <button type="button" onClick={() => onNavigate('#/tm-office-07/products/new')} className="tm-admin-press inline-flex min-h-[44px] items-center gap-2 rounded-md bg-[#ff9900] px-3 text-xs font-black text-[#131921]">
             <PackagePlus className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
             إضافة منتج
           </button>
@@ -243,7 +243,7 @@ export function AdminProductsPage({
                   <button type="button" onClick={() => onNavigate(productRoute(product.slug))} className="tm-admin-press grid min-h-[44px] place-items-center rounded-md border border-[#cfd8d1] bg-white text-[#17201b]" aria-label={`Open ${product.title}`}>
                     <Eye className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
                   </button>
-                  <button type="button" onClick={() => onNavigate(`#/admin/products/${encodeURIComponent(product.slug)}/edit`)} className="tm-admin-press grid min-h-[44px] place-items-center rounded-md border border-[#cfd8d1] bg-white text-[#17201b]" aria-label={`Edit ${product.title}`}>
+                  <button type="button" onClick={() => onNavigate(`#/tm-office-07/products/${encodeURIComponent(product.slug)}/edit`)} className="tm-admin-press grid min-h-[44px] place-items-center rounded-md border border-[#cfd8d1] bg-white text-[#17201b]" aria-label={`Edit ${product.title}`}>
                     <Edit className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
                   </button>
                   <button type="button" onClick={() => onToggleVisibility(product.slug)} className="tm-admin-press grid min-h-[44px] place-items-center rounded-md border border-[#cfd8d1] bg-white text-[#17201b]" aria-label={hidden ? `Show ${product.title}` : `Hide ${product.title}`}>
@@ -319,7 +319,7 @@ export function AdminProductsPage({
                         <button type="button" onClick={() => onNavigate(productRoute(product.slug))} className="tm-admin-press grid h-11 w-11 place-items-center rounded-md border border-[#cfd8d1] bg-white text-[#17201b]" aria-label={`فتح ${product.title}`}>
                           <Eye className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
                         </button>
-                        <button type="button" onClick={() => onNavigate(`#/admin/products/${encodeURIComponent(product.slug)}/edit`)} className="tm-admin-press grid h-11 w-11 place-items-center rounded-md border border-[#cfd8d1] bg-white text-[#17201b]" aria-label={`تعديل ${product.title}`}>
+                        <button type="button" onClick={() => onNavigate(`#/tm-office-07/products/${encodeURIComponent(product.slug)}/edit`)} className="tm-admin-press grid h-11 w-11 place-items-center rounded-md border border-[#cfd8d1] bg-white text-[#17201b]" aria-label={`تعديل ${product.title}`}>
                           <Edit className="h-4 w-4" aria-hidden="true" strokeWidth={2.4} />
                         </button>
                         <button type="button" onClick={() => onToggleVisibility(product.slug)} className="tm-admin-press grid h-11 w-11 place-items-center rounded-md border border-[#cfd8d1] bg-white text-[#17201b]" aria-label={hidden ? `إظهار ${product.title}` : `إخفاء ${product.title}`}>

@@ -12,10 +12,10 @@ type AdminShellProps = {
 };
 
 const adminNav = [
-  { label: '\u0644\u0648\u062d\u0629 \u0627\u0644\u062a\u062d\u0643\u0645', route: '#/admin', icon: LayoutDashboard },
-  { label: '\u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a', route: '#/admin/products', icon: Package },
-  { label: '\u0627\u0644\u0637\u0644\u0628\u0627\u062a', route: '#/admin/orders', icon: ShoppingBag },
-  { label: '\u0627\u0644\u0625\u0639\u062f\u0627\u062f\u0627\u062a', route: '#/admin/settings', icon: Settings },
+  { label: '\u0644\u0648\u062d\u0629 \u0627\u0644\u062a\u062d\u0643\u0645', route: '#/tm-office-07', icon: LayoutDashboard },
+  { label: '\u0627\u0644\u0645\u0646\u062a\u062c\u0627\u062a', route: '#/tm-office-07/products', icon: Package },
+  { label: '\u0627\u0644\u0637\u0644\u0628\u0627\u062a', route: '#/tm-office-07/orders', icon: ShoppingBag },
+  { label: '\u0627\u0644\u0625\u0639\u062f\u0627\u062f\u0627\u062a', route: '#/tm-office-07/settings', icon: Settings },
 ];
 
 const adminMobileNav = [
@@ -30,7 +30,7 @@ function defaultNavigate(route: string) {
 }
 
 function isActive(route: string, currentRoute: string) {
-  if (route === '#/admin') return currentRoute === '#/admin';
+  if (route === '#/tm-office-07') return currentRoute === '#/tm-office-07';
   return currentRoute.startsWith(route);
 }
 

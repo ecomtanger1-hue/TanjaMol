@@ -266,7 +266,7 @@ export function App() {
   const [isOrderSubmitting, setIsOrderSubmitting] = useState(false);
   const [notice, setNotice] = useState('');
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
-  const [isAdminLoading, setIsAdminLoading] = useState(() => getRoute().startsWith('#/admin'));
+  const [isAdminLoading, setIsAdminLoading] = useState(() => getRoute().startsWith('#/tm-office-07'));
   const [isAdminDataReady, setIsAdminDataReady] = useState(false);
   const [adminLoginError, setAdminLoginError] = useState('');
 
@@ -329,7 +329,7 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    if (!route.startsWith('#/admin')) {
+    if (!route.startsWith('#/tm-office-07')) {
       setIsAdminLoading(false);
       return;
     }
@@ -638,7 +638,7 @@ export function App() {
       const { signInAdmin } = await import('./lib/supabaseAdmin');
       await signInAdmin(email, password);
       setIsAdminLoggedIn(true);
-      navigate('#/admin');
+      navigate('#/tm-office-07');
     } catch {
       setAdminLoginError('بيانات الدخول غير صحيحة أو الحساب ليس مديراً');
     } finally {
@@ -658,7 +658,7 @@ export function App() {
       setIsAdminDataReady(false);
       setIsAdminLoading(false);
       setAdminLoginError('');
-      navigate('#/admin/login');
+      navigate('#/tm-office-07/login');
     }
   };
 
@@ -923,21 +923,21 @@ export function App() {
   };
 
   const renderedPage = useMemo(() => {
-    if (route === '#/admin/login') {
+    if (route === '#/tm-office-07/login') {
       return <ShadcnAdminLogin error={adminLoginError} loading={isAdminLoading} onLogin={loginAdmin} />;
     }
 
-    const isAdminRouteLoading = route.startsWith('#/admin') && (isAdminLoading || (isAdminLoggedIn && !isAdminDataReady));
+    const isAdminRouteLoading = route.startsWith('#/tm-office-07') && (isAdminLoading || (isAdminLoggedIn && !isAdminDataReady));
 
     if (isAdminRouteLoading) {
       return <AdminRouteLoading />;
     }
 
-    if (route.startsWith('#/admin') && !isAdminLoggedIn) {
+    if (route.startsWith('#/tm-office-07') && !isAdminLoggedIn) {
       return <ShadcnAdminLogin error={adminLoginError} loading={false} onLogin={loginAdmin} />;
     }
 
-    if (route === '#/admin') {
+    if (route === '#/tm-office-07') {
       return (
         <ShadcnAdminDashboard
           products={adminProducts}
@@ -951,7 +951,7 @@ export function App() {
       );
     }
 
-    if (route === '#/admin/products') {
+    if (route === '#/tm-office-07/products') {
       return (
         <ShadcnAdminProductsPage
           products={adminProducts}
@@ -969,8 +969,8 @@ export function App() {
       );
     }
 
-    if (route.startsWith('#/admin/products/') && route.endsWith('/edit')) {
-      const slug = decodeURIComponent(route.replace('#/admin/products/', '').replace('/edit', ''));
+    if (route.startsWith('#/tm-office-07/products/') && route.endsWith('/edit')) {
+      const slug = decodeURIComponent(route.replace('#/tm-office-07/products/', '').replace('/edit', ''));
       const editProduct = adminProducts.find(product => product.slug === slug);
       if (!editProduct) {
         return (
@@ -978,7 +978,7 @@ export function App() {
             products={adminProducts}
             orders={orders}
             hiddenSlugs={effectiveHiddenProductSlugs}
-            route="#/admin/products"
+            route="#/tm-office-07/products"
             onNavigate={navigate}
             onDeleteProduct={deleteProduct}
             onDeleteProducts={deleteProducts}
@@ -996,29 +996,29 @@ export function App() {
           product={editProduct}
           products={adminProducts}
           categories={activeCategories}
-          onBack={() => navigate('#/admin/products')}
-          onOpenDashboard={() => navigate('#/admin')}
+          onBack={() => navigate('#/tm-office-07/products')}
+          onOpenDashboard={() => navigate('#/tm-office-07')}
           onOpenProduct={(nextSlug) => navigate(productRoute(nextSlug))}
           onCreateProduct={saveProduct}
         />
       );
     }
 
-    if (route === '#/admin/products/new') {
+    if (route === '#/tm-office-07/products/new') {
       return (
         <TanjaMolAddProductPage
           key="new-product"
           products={adminProducts}
           categories={activeCategories}
-          onBack={() => navigate('#/admin/products')}
-          onOpenDashboard={() => navigate('#/admin')}
+          onBack={() => navigate('#/tm-office-07/products')}
+          onOpenDashboard={() => navigate('#/tm-office-07')}
           onOpenProduct={(slug) => navigate(productRoute(slug))}
           onCreateProduct={saveProduct}
         />
       );
     }
 
-    if (route === '#/admin/orders') {
+    if (route === '#/tm-office-07/orders') {
       return (
         <ShadcnAdminOrdersPage
           orders={orders}
@@ -1031,7 +1031,7 @@ export function App() {
       );
     }
 
-    if (route.startsWith('#/admin/orders/')) {
+    if (route.startsWith('#/tm-office-07/orders/')) {
       return (
         <ShadcnAdminOrderDetailPage
           orders={orders}
@@ -1044,7 +1044,7 @@ export function App() {
       );
     }
 
-    if (route.startsWith('#/admin/customers/')) {
+    if (route.startsWith('#/tm-office-07/customers/')) {
       return (
         <ShadcnAdminCustomerDetailPage
           orders={orders}
@@ -1057,7 +1057,7 @@ export function App() {
       );
     }
 
-    if (route === '#/admin/settings') {
+    if (route === '#/tm-office-07/settings') {
       return <ShadcnAdminSettingsPage settings={settings} products={adminProducts} route={route} onSave={saveStoreSettings} onNavigate={navigate} />;
     }
 
@@ -1130,7 +1130,7 @@ export function App() {
 
   return (
     <>
-      <Suspense fallback={route.startsWith('#/admin') ? <AdminRouteLoading /> : null}>
+      <Suspense fallback={route.startsWith('#/tm-office-07') ? <AdminRouteLoading /> : null}>
         {renderedPage}
       </Suspense>
       <CartPopup

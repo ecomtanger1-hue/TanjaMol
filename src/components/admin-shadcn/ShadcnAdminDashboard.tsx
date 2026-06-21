@@ -77,7 +77,7 @@ export function ShadcnAdminDashboard({
       onLogout={onLogout}
       actions={
         <>
-          <Button type="button" className="bg-orange-500 text-zinc-950 hover:bg-orange-400" onClick={() => onNavigate('#/admin/products/new')}>
+          <Button type="button" className="bg-orange-500 text-zinc-950 hover:bg-orange-400" onClick={() => onNavigate('#/tm-office-07/products/new')}>
             <PackagePlus className="size-4" />
             منتج جديد
           </Button>
@@ -101,7 +101,7 @@ export function ShadcnAdminDashboard({
         <Card className="border-white/10 bg-zinc-900/70 text-zinc-50 shadow-none">
           <CardHeader className="!flex !flex-row items-center justify-between gap-3">
             <CardTitle className="text-lg font-black">الطلبات الأخيرة</CardTitle>
-            <Button type="button" variant="outline" size="sm" className="border-white/10 bg-white/5 text-zinc-100 hover:bg-white/10" onClick={() => onNavigate('#/admin/orders')}>
+            <Button type="button" variant="outline" size="sm" className="border-white/10 bg-white/5 text-zinc-100 hover:bg-white/10" onClick={() => onNavigate('#/tm-office-07/orders')}>
               الكل
               <ArrowUpLeft className="size-4" />
             </Button>
@@ -111,7 +111,7 @@ export function ShadcnAdminDashboard({
               <button
                 key={order.id}
                 type="button"
-                onClick={() => onNavigate(`#/admin/orders/${encodeURIComponent(order.id)}`)}
+                onClick={() => onNavigate(`#/tm-office-07/orders/${encodeURIComponent(order.id)}`)}
                 className="flex min-h-[58px] items-center gap-3 rounded-lg border border-white/10 bg-zinc-950/70 px-3 py-2 text-right transition hover:border-orange-400/50"
               >
                 <div className="min-w-0 flex flex-1 items-center gap-2">
@@ -136,7 +136,7 @@ export function ShadcnAdminDashboard({
               <button
                 key={order.id}
                 type="button"
-                onClick={() => onNavigate(`#/admin/orders/${encodeURIComponent(order.id)}`)}
+                onClick={() => onNavigate(`#/tm-office-07/orders/${encodeURIComponent(order.id)}`)}
                 className="grid gap-2 rounded-lg border border-white/10 bg-zinc-950/70 p-2.5 text-right transition hover:border-orange-400/50"
               >
                 <span className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
