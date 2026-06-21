@@ -280,7 +280,11 @@ export const TanjaMolArabicCODProductPage = ({
     variant: resolvedVariantLabel,
   };
 
-  const relatedItems = products.filter(item => item.id !== orderItem.id).slice(0, relatedProducts.length);
+  const manualSimilarSlugs = product?.similarProductSlugs?.map(item => item.trim()).filter(Boolean) ?? [];
+  const relatedLimit = relatedProducts.length;
+  const relatedItems = manualSimilarSlugs.length
+    ? manualSimilarSlugs.flatMap(slug => products.find(item => item.slug === slug || item.id === slug) || []).filter(item => item.id !== orderItem.id && item.slug !== orderItem.slug).slice(0, relatedLimit)
+    : products.filter(item => item.id !== orderItem.id && item.slug !== orderItem.slug && item.category === productCategory).slice(0, relatedLimit);
 
   const selectMobileImage = (index: number) => {
     setSelectedImage(index);
@@ -357,7 +361,7 @@ export const TanjaMolArabicCODProductPage = ({
               }}>
                   {productGallery.map((image, index) => (
                     <button key={image.src} type="button" onClick={() => selectMobileImage(index)} className="tm-press flex-none snap-center rounded-lg" aria-label={`عرض الصورة ${index + 1}`}>
-                      <img src={image.src} alt={image.alt} className="tm-image h-[320px] w-[82vw] max-w-[360px] rounded-lg object-cover sm:h-[390px]" fetchPriority={index === 0 ? 'high' : undefined} loading={index === 0 ? 'eager' : 'lazy'} decoding={index === 0 ? 'sync' : 'async'} width="720" height="780" sizes="82vw" />
+                      <img src={image.src} alt={image.alt} className="tm-image h-[320px] w-[82vw] max-w-[360px] rounded-lg bg-white object-contain sm:h-[390px]" fetchPriority={index === 0 ? 'high' : undefined} loading={index === 0 ? 'eager' : 'lazy'} decoding={index === 0 ? 'sync' : 'async'} width="720" height="780" sizes="82vw" />
                     </button>
                   ))}
                 </div>
@@ -371,10 +375,10 @@ export const TanjaMolArabicCODProductPage = ({
               <div className="hidden grid-cols-[92px_minmax(0,1fr)] gap-4 md:grid">
                 <div className="grid content-start gap-3">
                   {productGallery.map((image, index) => <button key={image.src} type="button" aria-label={`عرض الصورة ${index + 1}`} onClick={() => setSelectedImage(index)} className={`tm-press overflow-hidden rounded-lg border bg-white/10 p-1 ${selectedImage === index ? 'border-[#ffb84d]' : 'border-white/16'}`}>
-                      <img src={image.src} alt={image.alt} className="tm-image h-[82px] w-full rounded-md object-cover" loading={index === 0 ? 'eager' : 'lazy'} decoding={index === 0 ? 'sync' : 'async'} width="184" height="164" sizes="92px" />
+                      <img src={image.src} alt={image.alt} className="tm-image h-[82px] w-full rounded-md bg-white object-contain" loading={index === 0 ? 'eager' : 'lazy'} decoding={index === 0 ? 'sync' : 'async'} width="184" height="164" sizes="92px" />
                     </button>)}
                 </div>
-                <img src={productGallery[selectedImage]?.src ?? productGallery[0].src} alt={productGallery[selectedImage]?.alt ?? productGallery[0].alt} className="tm-image h-[600px] w-full rounded-lg object-cover" fetchPriority="high" loading="eager" decoding="sync" width="1040" height="1200" sizes="58vw" />
+                <img src={productGallery[selectedImage]?.src ?? productGallery[0].src} alt={productGallery[selectedImage]?.alt ?? productGallery[0].alt} className="tm-image h-[600px] w-full rounded-lg bg-white object-contain" fetchPriority="high" loading="eager" decoding="sync" width="1040" height="1200" sizes="58vw" />
               </div>
 
               <div className="mt-4 hidden max-w-[680px] gap-2 md:grid md:grid-cols-1">
@@ -566,14 +570,14 @@ export const TanjaMolArabicCODProductPage = ({
           </div>
         </section>
 
-        {showRelated ? <section className="bg-white py-6 sm:py-8 lg:py-10">
+        {showRelated && relatedItems.length ? <section className="bg-white py-6 sm:py-8 lg:py-10">
           <div className="mx-auto w-full max-w-[1180px] px-4 sm:px-6 lg:px-8">
             <div className="flex items-end justify-between gap-4">
               <div>
-                <p className="tm-kicker text-[#b45309]">منتجات مناسبة معها</p>
+                <p className="tm-kicker text-[#b45309]">similar products</p>
               </div>
               <button className="tm-press hidden min-h-[44px] rounded-md bg-[#17201b] px-5 font-extrabold text-white sm:block" type="button">
-                عرض الكل
+                View all
               </button>
             </div>
 

@@ -337,6 +337,7 @@ export const TanjaMolAddProductPage = ({
   const [reviewsEnabled, setReviewsEnabled] = useState(true);
   const [manualReviewsEnabled, setManualReviewsEnabled] = useState(true);
   const [showRelated, setShowRelated] = useState(true);
+  const [similarProductSlugs, setSimilarProductSlugs] = useState<string[]>([]);
   const [showPolicies, setShowPolicies] = useState(true);
   const [rating, setRating] = useState('');
   const [reviewCount, setReviewCount] = useState('');
@@ -378,6 +379,7 @@ export const TanjaMolAddProductPage = ({
       setReviewsEnabled(true);
       setManualReviewsEnabled(true);
       setShowRelated(true);
+      setSimilarProductSlugs([]);
       setShowPolicies(true);
       setRating('');
       setReviewCount('');
@@ -413,6 +415,7 @@ export const TanjaMolAddProductPage = ({
     setReviewsEnabled(product.reviewsEnabled ?? true);
     setManualReviewsEnabled(product.manualReviewsEnabled ?? true);
     setShowRelated(product.showRelated ?? true);
+    setSimilarProductSlugs(product.similarProductSlugs || []);
     setShowPolicies(product.showPolicies ?? true);
     setRating(product.rating ? String(product.rating) : '4.8');
     setReviewCount(product.reviewCount ? String(product.reviewCount) : '127');
@@ -450,6 +453,17 @@ export const TanjaMolAddProductPage = ({
     if (!category || categories.some(item => item.title === category)) return categories;
     return [{ id: `current-${category}`, title: category, count: '', image: '' }, ...categories];
   }, [categories, category]);
+  const currentProductKey = slug.trim() || product?.slug || product?.id || '';
+  const availableSimilarProducts = useMemo(() => products.filter(item => {
+    const itemKey = item.slug || item.id;
+    return itemKey && itemKey !== currentProductKey && item.isDraft !== true && item.isVisible !== false;
+  }), [currentProductKey, products]);
+  const selectedSimilarProducts = useMemo(() => similarProductSlugs
+    .map(selectedSlug => availableSimilarProducts.find(item => item.slug === selectedSlug || item.id === selectedSlug))
+    .filter(Boolean) as Product[], [availableSimilarProducts, similarProductSlugs]);
+  const similarProductsSummary = selectedSimilarProducts.length
+    ? `${selectedSimilarProducts.length} selected manually`
+    : 'Same category fallback';
   const formattedDetails = useMemo(() => details.map(withDefaultDetailFormat), [details]);
   const formattedDetailsIntro = useMemo<DetailIntroDraft>(() => ({
     kicker: detailsIntro.kicker.trim(),
@@ -478,6 +492,7 @@ export const TanjaMolAddProductPage = ({
     rating: Number(rating) || 4.8,
     reviewCount: Number(reviewCount) || 0,
     showRelated,
+    similarProductSlugs,
     showPolicies,
     detailsIntro: formattedDetailsIntro,
     details: formattedDetails,
@@ -485,7 +500,7 @@ export const TanjaMolAddProductPage = ({
     variantsEnabled,
     variantOptions,
     variants,
-  }), [badge, category, cleanGallery, delivery, formattedDetails, formattedDetailsIntro, manualReviewsEnabled, oldPrice, price, rating, reviewCount, reviewsEnabled, shortDescription, showPolicies, showRelated, slug, specs, stock, title, variantOptions, variants, variantsEnabled]);
+  }), [badge, category, cleanGallery, delivery, formattedDetails, formattedDetailsIntro, manualReviewsEnabled, oldPrice, price, rating, reviewCount, reviewsEnabled, shortDescription, showPolicies, showRelated, similarProductSlugs, slug, specs, stock, title, variantOptions, variants, variantsEnabled]);
 
   const hasStartedListing = useMemo(() => (
     Boolean(title.trim()) ||
@@ -498,11 +513,12 @@ export const TanjaMolAddProductPage = ({
     Boolean(badge.trim()) ||
     gallery.some(item => item.trim()) ||
     variantsEnabled ||
+    similarProductSlugs.length > 0 ||
     variantOptions.some(group => group.label.trim() || group.values.some(value => value.label.trim())) ||
     variants.some(variant => variant.name.trim() || variant.sku.trim()) ||
     details.some(detail => detail.title.trim() || detail.text.trim() || detail.mediaUrl.trim()) ||
     specs.some(spec => spec.label.trim() || spec.value.trim())
-  ), [badge, delivery, details, gallery, oldPrice, price, shortDescription, slug, specs, stock, title, variantOptions, variants, variantsEnabled]);
+  ), [badge, delivery, details, gallery, oldPrice, price, shortDescription, similarProductSlugs, slug, specs, stock, title, variantOptions, variants, variantsEnabled]);
 
   const autoSaveEnabled = !product || Boolean(product.isDraft);
 
@@ -903,7 +919,7 @@ export const TanjaMolAddProductPage = ({
 
             <AdminSection title="معرض المنتج" summary={gallerySummary} status={cleanGallery.length ? 'done' : 'missing'} defaultOpen={false} action={
               <>
-                <input id={uploadInputId} ref={uploadInputRef} type="file" accept="image/*" multiple disabled={uploadingImages || publishing} className="sr-only" onChange={event => void handleImageUpload(event.target.files)} />
+                <input id={uploadInputId} ref={uploadInputRef} type="file" accept="image/*,.gif" multiple disabled={uploadingImages || publishing} className="sr-only" onChange={event => void handleImageUpload(event.target.files)} />
                 <label htmlFor={uploadInputId} aria-disabled={uploadingImages || publishing} className={`tm-admin-press inline-grid min-h-[44px] place-items-center rounded-md bg-[#3f4a43] px-3 text-xs font-black text-white ${uploadingImages || publishing ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
                   رفع صور
                 </label>
@@ -1407,6 +1423,48 @@ export const TanjaMolAddProductPage = ({
               </div>
             </AdminSection>
 
+            <AdminSection title="Similar products" summary={similarProductsSummary} status="neutral" defaultOpen={false}>
+              <div className="grid gap-3">
+                <p className="text-sm font-bold leading-6 text-[#65716a]">
+                  Select products manually for this product page. If nothing is selected, the storefront will show products from the same category only.
+                </p>
+
+                <div className="grid max-h-[360px] gap-2 overflow-auto rounded-md border border-[#dfe5df] bg-[#fbfaf6] p-2">
+                  {availableSimilarProducts.length ? availableSimilarProducts.map(item => {
+                    const itemSlug = item.slug || item.id;
+                    const checked = similarProductSlugs.includes(itemSlug);
+                    return (
+                      <label key={itemSlug} className={`grid min-h-[72px] cursor-pointer grid-cols-[18px_56px_minmax(0,1fr)] items-center gap-3 rounded-md border p-2 text-right transition-colors ${checked ? 'border-[#ff9900] bg-[#fff3df]' : 'border-[#dfe5df] bg-white hover:bg-[#eef3ef]'}`}>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={event => {
+                            setSimilarProductSlugs(current => event.target.checked
+                              ? [...current.filter(slug => slug !== itemSlug), itemSlug]
+                              : current.filter(slug => slug !== itemSlug));
+                          }}
+                          className="h-4 w-4 accent-[#ff9900]"
+                        />
+                        <img src={item.image || item.gallery?.[0] || fallbackImage} alt={item.title} className="h-14 w-14 rounded-md bg-white object-contain" loading="lazy" decoding="async" width="112" height="112" />
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-black text-[#17201b]">{item.title}</span>
+                          <span className="mt-1 block truncate text-xs font-bold text-[#65716a]">{item.category} · {item.priceLabel}</span>
+                        </span>
+                      </label>
+                    );
+                  }) : (
+                    <div className="rounded-md bg-white p-4 text-sm font-bold text-[#65716a]">No other products are available yet.</div>
+                  )}
+                </div>
+
+                {selectedSimilarProducts.length ? (
+                  <button type="button" onClick={() => setSimilarProductSlugs([])} className="tm-admin-press min-h-[44px] w-fit rounded-md border border-[#cfd8d1] bg-white px-3 text-xs font-black text-[#17201b]">
+                    Clear manual selection
+                  </button>
+                ) : null}
+              </div>
+            </AdminSection>
+
             <AdminSection title="معاينة مصغرة" status="neutral" defaultOpen={false}>
               <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
                 <div className="grid aspect-[4/3] place-items-center overflow-hidden rounded-md bg-[#eef3ef] text-sm font-black text-[#65716a]">
@@ -1621,7 +1679,7 @@ function BlockMediaPicker({
         <label htmlFor={inputId} aria-disabled={uploadDisabled} className={`tm-admin-press mt-[17px] grid min-h-[44px] place-items-center rounded-md bg-[#3f4a43] px-3 text-xs font-black text-white ${uploadDisabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
           رفع جديد
         </label>
-        <input id={inputId} type="file" accept="image/*" disabled={uploadDisabled} className="sr-only" onChange={event => {
+        <input id={inputId} type="file" accept="image/*,.gif" disabled={uploadDisabled} className="sr-only" onChange={event => {
           const files = Array.from(event.currentTarget.files || []);
           onFocus();
           if (files.length) onUpload(files);

@@ -125,6 +125,7 @@ function mapProduct(row: ProductRow): Product {
     rating: row.rating === null ? undefined : Number(row.rating),
     reviewCount: row.review_count ?? undefined,
     showRelated: row.show_related ?? true,
+    similarProductSlugs: jsonArray<string>(data.similarProductSlugs, []).filter(Boolean),
     showPolicies: row.show_policies ?? true,
     detailsIntro: mapDetailsIntro(data.detailsIntro),
     details: jsonArray<ProductDetailBlock>(row.details, []),
@@ -151,6 +152,7 @@ function productPayload(product: Product, isVisible = product.isVisible ?? true)
       highlights: product.detailsIntro?.highlights || [],
       hidden: product.detailsIntro?.hidden ?? false,
     },
+    similarProductSlugs: product.similarProductSlugs || [],
   };
 
   return {

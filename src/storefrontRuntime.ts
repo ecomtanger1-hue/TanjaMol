@@ -19,6 +19,7 @@ export type Product = {
   rating?: number;
   reviewCount?: number;
   showRelated?: boolean;
+  similarProductSlugs?: string[];
   showPolicies?: boolean;
   detailsIntro?: ProductDetailsIntro;
   details?: ProductDetailBlock[];

@@ -38,6 +38,7 @@ export async function uploadProductImages(files: File[], folder = 'product') {
       .from(PRODUCT_IMAGES_BUCKET)
       .upload(path, file, {
         cacheControl: '31536000',
+        contentType: file.type || undefined,
         upsert: false,
       });
 
