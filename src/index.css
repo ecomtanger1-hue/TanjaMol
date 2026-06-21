@@ -1689,12 +1689,22 @@ body {
 
 @media (min-width: 1024px) {
   .tm-product-detail-title {
-    font-size: clamp(2.25rem, 2.2vw, 3.05rem) !important;
+    font-size: clamp(1.95rem, 1.85vw, 2.28rem) !important;
     line-height: 1.22 !important;
   }
 
+  .tm-product-rich-text :where(h1, h2) {
+    font-size: clamp(1.95rem, 1.85vw, 2.28rem) !important;
+    line-height: 1.22 !important;
+  }
+
+  .tm-product-rich-text :where(h3, h4) {
+    font-size: clamp(1.88rem, 1.78vw, 2.18rem) !important;
+    line-height: 1.26 !important;
+  }
+
   .tm-product-detail-copy {
-    font-size: clamp(1.42rem, 1.34vw, 1.72rem) !important;
+    font-size: clamp(1.72rem, 1.62vw, 2.02rem) !important;
     line-height: 2.05 !important;
   }
 

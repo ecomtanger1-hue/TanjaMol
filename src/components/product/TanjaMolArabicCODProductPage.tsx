@@ -450,7 +450,7 @@ export const TanjaMolArabicCODProductPage = ({
               <form id="product-order-details" className="tm-panel-white mt-4 grid scroll-mt-24 gap-3 p-3" onSubmit={submitOrder}>
                   <div>
                     <p className="tm-modal-title">معلومات الطلب</p>
-                    <p className="tm-small-copy tm-text-muted mt-1">نؤكد التفاصيل على واتساب قبل الإرسال. لا يوجد دفع مسبق.</p>
+                    <p className="tm-small-copy tm-text-muted mt-1">نؤكد التفاصيل بالاتصال أو واتساب قبل الإرسال. لا يوجد دفع مسبق.</p>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
                     <label className="grid gap-1" htmlFor="product-order-name">
@@ -502,18 +502,18 @@ export const TanjaMolArabicCODProductPage = ({
                 </div>
               </> : null}
 
-              <div className="grid gap-7 sm:gap-9 lg:gap-12 xl:gap-14">
+              <div className="mx-auto grid w-full max-w-[1120px] gap-7 sm:gap-9 lg:gap-12">
                 {productDetails.map((detail, index) => {
                   const reverse = detail.reverse ?? index % 2 === 1;
-                  return <article key={detail.id} dir="ltr" className="grid gap-4 lg:min-h-[420px] lg:grid-cols-[minmax(0,1.12fr)_minmax(380px,0.88fr)] lg:items-center lg:gap-9 xl:min-h-[480px] xl:gap-12">
+                  return <article key={detail.id} dir="ltr" className="grid gap-4 lg:min-h-[280px] lg:grid-cols-2 lg:items-center lg:gap-8 xl:min-h-[320px] xl:gap-10">
                     <div dir="rtl" className={`order-2 flex min-w-0 flex-col justify-center px-1 sm:px-2 lg:px-0 ${reverse ? 'lg:order-1 lg:justify-self-end' : 'lg:order-2 lg:justify-self-start'}`}>
                       <div className="min-w-0 max-w-[560px]">
                         {detail.title?.trim() ? <ProductDetailTitle detail={detail} /> : null}
                         <ProductDetailRichText detail={detail} />
                       </div>
                     </div>
-                    <figure className={`relative order-1 min-h-[260px] overflow-hidden rounded-[22px] bg-white shadow-[0_28px_70px_-40px_rgba(23,32,27,0.55)] outline outline-1 outline-[rgba(0,0,0,0.1)] sm:min-h-[340px] lg:min-h-[420px] lg:rounded-[28px] xl:min-h-[480px] ${reverse ? 'lg:order-2' : 'lg:order-1'}`}>
-                      <ProductDetailMedia detail={detail} src={detail.mediaUrl || productGallery[(index + 1) % productGallery.length]?.src || productGallery[0].src} className="h-full min-h-[260px] w-full object-cover sm:min-h-[340px] lg:min-h-[420px] xl:min-h-[480px]" />
+                    <figure className={`relative order-1 min-h-[260px] overflow-hidden rounded-[22px] bg-white shadow-[0_28px_70px_-40px_rgba(23,32,27,0.55)] outline outline-1 outline-[rgba(0,0,0,0.1)] sm:min-h-[340px] lg:min-h-[280px] lg:rounded-[28px] xl:min-h-[320px] ${reverse ? 'lg:order-2' : 'lg:order-1'}`}>
+                      <ProductDetailMedia detail={detail} src={detail.mediaUrl || productGallery[(index + 1) % productGallery.length]?.src || productGallery[0].src} className="h-full min-h-[260px] w-full object-cover sm:min-h-[340px] lg:min-h-[280px] xl:min-h-[320px]" />
                       <span className="tm-num absolute left-4 top-4 grid h-10 min-w-10 place-items-center rounded-full bg-[#131921]/92 px-3 text-sm font-black text-white shadow-[0_12px_30px_-18px_rgba(19,25,33,0.8)] backdrop-blur">
                         {String(index + 1).padStart(2, '0')}
                       </span>
