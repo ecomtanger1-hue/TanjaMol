@@ -505,15 +505,18 @@ export const TanjaMolArabicCODProductPage = ({
               <div className="grid w-full gap-7 sm:gap-9 lg:gap-12">
                 {productDetails.map((detail, index) => {
                   const reverse = detail.reverse ?? index % 2 === 1;
-                  return <article key={detail.id} dir="ltr" className="grid gap-4 lg:min-h-[280px] lg:grid-cols-[minmax(420px,520px)_minmax(0,1fr)] lg:items-center lg:gap-10 xl:min-h-[320px] xl:grid-cols-[minmax(460px,560px)_minmax(0,1fr)] xl:gap-12">
+                  const desktopColumns = reverse
+                    ? 'lg:grid-cols-[minmax(0,1fr)_minmax(420px,520px)] xl:grid-cols-[minmax(0,1fr)_minmax(460px,560px)]'
+                    : 'lg:grid-cols-[minmax(420px,520px)_minmax(0,1fr)] xl:grid-cols-[minmax(460px,560px)_minmax(0,1fr)]';
+                  return <article key={detail.id} dir="ltr" className={`grid gap-4 lg:min-h-[280px] ${desktopColumns} lg:items-center lg:gap-10 xl:min-h-[320px] xl:gap-12`}>
                     <div dir="rtl" className={`order-2 flex min-w-0 flex-col justify-center px-1 sm:px-2 lg:w-full lg:px-0 ${reverse ? 'lg:order-1 lg:justify-self-end' : 'lg:order-2 lg:justify-self-start'}`}>
                       <div className="min-w-0 lg:w-full lg:max-w-[780px]">
                         {detail.title?.trim() ? <ProductDetailTitle detail={detail} /> : null}
                         <ProductDetailRichText detail={detail} />
                       </div>
                     </div>
-                    <figure className={`relative order-1 min-h-[260px] overflow-hidden rounded-[22px] bg-white shadow-[0_28px_70px_-40px_rgba(23,32,27,0.55)] outline outline-1 outline-[rgba(0,0,0,0.1)] sm:min-h-[340px] lg:min-h-[280px] lg:rounded-[28px] xl:min-h-[320px] ${reverse ? 'lg:order-2' : 'lg:order-1'}`}>
-                      <ProductDetailMedia detail={detail} src={detail.mediaUrl || productGallery[(index + 1) % productGallery.length]?.src || productGallery[0].src} className="h-full min-h-[260px] w-full object-cover sm:min-h-[340px] lg:min-h-[280px] xl:min-h-[320px]" />
+                    <figure className={`relative order-1 h-auto min-h-[260px] overflow-hidden rounded-[22px] bg-white shadow-[0_28px_70px_-40px_rgba(23,32,27,0.55)] outline outline-1 outline-[rgba(0,0,0,0.1)] sm:min-h-[340px] lg:h-[280px] lg:min-h-0 lg:rounded-[28px] xl:h-[320px] ${reverse ? 'lg:order-2' : 'lg:order-1'}`}>
+                      <ProductDetailMedia detail={detail} src={detail.mediaUrl || productGallery[(index + 1) % productGallery.length]?.src || productGallery[0].src} className="h-full min-h-[260px] w-full object-cover sm:min-h-[340px] lg:min-h-0 xl:min-h-0" />
                       <span className="tm-num absolute left-4 top-4 grid h-10 min-w-10 place-items-center rounded-full bg-[#131921]/92 px-3 text-sm font-black text-white shadow-[0_12px_30px_-18px_rgba(19,25,33,0.8)] backdrop-blur">
                         {String(index + 1).padStart(2, '0')}
                       </span>

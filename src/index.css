@@ -1709,13 +1709,13 @@ body {
     line-height: 2 !important;
   }
 
-  .tm-product-rich-text > :where(p, div):first-child {
+  .tm-product-rich-text > p:first-child {
     font-size: clamp(1.72rem, 1.58vw, 1.92rem) !important;
-    font-weight: 800 !important;
+    font-weight: inherit;
     line-height: 1.48 !important;
   }
 
-  .tm-product-detail-copy :where(p, div, span, li, strong, b, em, u, font) {
+  .tm-product-detail-copy :where(p, div, li, strong, b, em, u) {
     font-size: inherit !important;
     line-height: inherit !important;
   }
