@@ -1665,6 +1665,7 @@ body {
 .tm-product-rich-text kbd,
 .tm-product-rich-text samp {
   background: transparent !important;
+  color: inherit !important;
   overflow: visible;
   white-space: normal;
   font-family: inherit !important;
