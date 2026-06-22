@@ -360,8 +360,8 @@ export const TanjaMolArabicCODProductPage = ({
                 setSelectedImage(nextIndex);
               }}>
                   {productGallery.map((image, index) => (
-                    <button key={image.src} type="button" onClick={() => selectMobileImage(index)} className="tm-press flex-none snap-center rounded-lg" aria-label={`عرض الصورة ${index + 1}`}>
-                      <img src={image.src} alt={image.alt} className="tm-image h-[320px] w-[82vw] max-w-[360px] rounded-lg object-contain sm:h-[390px]" fetchPriority={index === 0 ? 'high' : undefined} loading={index === 0 ? 'eager' : 'lazy'} decoding={index === 0 ? 'sync' : 'async'} width="720" height="780" sizes="82vw" />
+                    <button key={image.src} type="button" onClick={() => selectMobileImage(index)} className="tm-press flex-none snap-center rounded-xl" aria-label={`عرض الصورة ${index + 1}`}>
+                      <img src={image.src} alt={image.alt} className="tm-image h-[320px] w-[82vw] max-w-[360px] rounded-xl object-contain sm:h-[390px]" fetchPriority={index === 0 ? 'high' : undefined} loading={index === 0 ? 'eager' : 'lazy'} decoding={index === 0 ? 'sync' : 'async'} width="720" height="780" sizes="82vw" />
                     </button>
                   ))}
                 </div>
@@ -374,11 +374,11 @@ export const TanjaMolArabicCODProductPage = ({
 
               <div className="hidden grid-cols-[92px_minmax(0,1fr)] gap-4 md:grid">
                 <div className="grid content-start gap-3">
-                  {productGallery.map((image, index) => <button key={image.src} type="button" aria-label={`عرض الصورة ${index + 1}`} onClick={() => setSelectedImage(index)} className={`tm-press overflow-hidden rounded-lg border bg-white/10 p-1 ${selectedImage === index ? 'border-[#ffb84d]' : 'border-white/16'}`}>
-                      <img src={image.src} alt={image.alt} className="tm-image h-[82px] w-full rounded-md object-contain" loading={index === 0 ? 'eager' : 'lazy'} decoding={index === 0 ? 'sync' : 'async'} width="184" height="164" sizes="92px" />
+                  {productGallery.map((image, index) => <button key={image.src} type="button" aria-label={`عرض الصورة ${index + 1}`} onClick={() => setSelectedImage(index)} className={`tm-press overflow-hidden rounded-xl border bg-white/10 p-1 ${selectedImage === index ? 'border-[#ffb84d]' : 'border-white/16'}`}>
+                      <img src={image.src} alt={image.alt} className="tm-image h-[82px] w-full rounded-lg object-contain" loading={index === 0 ? 'eager' : 'lazy'} decoding={index === 0 ? 'sync' : 'async'} width="184" height="164" sizes="92px" />
                     </button>)}
                 </div>
-                <img src={productGallery[selectedImage]?.src ?? productGallery[0].src} alt={productGallery[selectedImage]?.alt ?? productGallery[0].alt} className="tm-image h-[600px] w-full rounded-lg object-contain" fetchPriority="high" loading="eager" decoding="sync" width="1040" height="1200" sizes="58vw" />
+                <img src={productGallery[selectedImage]?.src ?? productGallery[0].src} alt={productGallery[selectedImage]?.alt ?? productGallery[0].alt} className="tm-image h-[600px] w-full rounded-xl object-contain" fetchPriority="high" loading="eager" decoding="sync" width="1040" height="1200" sizes="58vw" />
               </div>
 
               <div className="mt-4 hidden max-w-[680px] gap-2 md:grid md:grid-cols-1">
