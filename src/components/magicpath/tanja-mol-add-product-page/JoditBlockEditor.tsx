@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { Jodit } from 'jodit';
 import JoditEditor from 'jodit-react';
+import { ColorPickerWidget } from 'jodit/esm/modules/widget/index.js';
 import type { IJodit } from 'jodit/esm/types/jodit';
 import 'jodit/es2021/jodit.min.css';
 import type { ProductDetailBlock } from '../../../storefrontRuntime';
@@ -8,7 +9,7 @@ import type { ProductDetailBlock } from '../../../storefrontRuntime';
 const joditButtons = [
   'undo', 'redo', '|',
   'paragraph', 'font', 'fontsize', '|',
-  'bold', 'italic', 'underline', 'strikethrough', 'brush', 'eraser', '|',
+  'bold', 'italic', 'underline', 'strikethrough', 'textColor', 'eraser', '|',
   'ul', 'ol', 'outdent', 'indent', 'align', '|',
   'link', 'uploadInlineImage', 'image', 'video', 'table', 'hr', '|',
   'source', 'fullsize',
@@ -30,16 +31,41 @@ const orderedListOptions = {
 } as const;
 
 const fontOptions = {
+  '': 'Default',
   'Cairo, Arial, sans-serif': 'Cairo',
   'Tajawal, Cairo, sans-serif': 'Tajawal',
   '"Noto Sans Arabic Variable", Cairo, Arial, sans-serif': 'Noto Sans Arabic',
 } as const;
+
+const fontSizeOptions = Array.from({ length: 65 }, (_, index) => index + 8);
 
 function plainTextToHtml(text: string) {
   return text
     .split('\n')
     .map(line => line.trim() ? `<p>${line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p>` : '<p><br></p>')
     .join('');
+}
+
+function stripEditorBackgrounds(html: string) {
+  if (!html.trim() || typeof document === 'undefined') return html;
+
+  const element = document.createElement('div');
+  element.innerHTML = html;
+  element.querySelectorAll<HTMLElement>('[style], [bgcolor]').forEach(node => {
+    node.removeAttribute('bgcolor');
+    node.style.removeProperty('background');
+    node.style.removeProperty('background-color');
+    node.style.removeProperty('background-image');
+    node.style.removeProperty('background-position');
+    node.style.removeProperty('background-repeat');
+    node.style.removeProperty('background-size');
+
+    if (!node.getAttribute('style')?.trim()) {
+      node.removeAttribute('style');
+    }
+  });
+
+  return element.innerHTML;
 }
 
 function htmlToPlainText(html: string) {
@@ -59,20 +85,31 @@ function readableUploadError(error: unknown) {
 }
 
 function getCurrentFontSize(editor: IJodit) {
-  const anyEditor = editor as any;
   const current = editor.s.current();
-  const ownerWindow = anyEditor.ow || window;
   let element = current?.nodeType === Node.ELEMENT_NODE
     ? current as HTMLElement
     : current?.parentElement;
 
-  while (element && element !== editor.editor && ownerWindow.getComputedStyle(element).fontSize === '') {
+  while (element && element !== editor.editor) {
+    const inlineSize = element.style.fontSize;
+    if (inlineSize) {
+      const parsed = Number.parseFloat(inlineSize);
+      return Number.isFinite(parsed) ? Math.round(parsed) : undefined;
+    }
     element = element.parentElement;
   }
 
-  const rawSize = ownerWindow.getComputedStyle(element || editor.editor).fontSize || '16px';
-  const parsed = Number.parseFloat(rawSize);
-  return Number.isFinite(parsed) ? Math.round(parsed) : 16;
+  return undefined;
+}
+
+function getCurrentTextColor(editor: IJodit) {
+  const current = editor.s.current();
+  const ownerWindow = (editor as any).ow || window;
+  const element = current?.nodeType === Node.ELEMENT_NODE
+    ? current as HTMLElement
+    : current?.parentElement;
+
+  return ownerWindow.getComputedStyle(element || editor.editor).color || '#000000';
 }
 
 function applyListStyle(editor: IJodit, element: 'ul' | 'ol', listStyleType: string) {
@@ -99,10 +136,11 @@ export function JoditBlockEditor({
   const editorRef = useRef<IJodit | null>(null);
   const uploadInputRef = useRef<HTMLInputElement | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const value = detail.richTextHtml || plainTextToHtml(detail.text);
+  const value = stripEditorBackgrounds(detail.richTextHtml || plainTextToHtml(detail.text));
 
   const syncValue = (html: string) => {
-    onChange(html, htmlToPlainText(html));
+    const cleanHtml = stripEditorBackgrounds(html);
+    onChange(cleanHtml, htmlToPlainText(cleanHtml));
   };
 
   const insertInlineImages = async (files: FileList | null) => {
@@ -152,30 +190,45 @@ export function JoditBlockEditor({
     toolbarButtonSize: 'large',
     buttons: joditButtons,
     buttonsMD: joditButtons,
-    buttonsSM: ['undo', 'redo', '|', 'paragraph', 'font', 'fontsize', '|', 'bold', 'italic', 'underline', 'brush', 'eraser', '|', 'ul', 'ol', 'align', '|', 'link', 'uploadInlineImage', 'table', 'source'],
-    buttonsXS: ['undo', 'redo', '|', 'bold', 'italic', 'underline', 'brush', '|', 'ul', 'ol', '|', 'link', 'uploadInlineImage', 'source'],
+    buttonsSM: ['undo', 'redo', '|', 'paragraph', 'font', 'fontsize', '|', 'bold', 'italic', 'underline', 'textColor', 'eraser', '|', 'ul', 'ol', 'align', '|', 'link', 'uploadInlineImage', 'table', 'source'],
+    buttonsXS: ['undo', 'redo', '|', 'bold', 'italic', 'underline', 'textColor', '|', 'ul', 'ol', '|', 'link', 'uploadInlineImage', 'source'],
     uploader: {
       insertImageAsBase64URI: false,
     },
     style: {
-      fontFamily: 'Cairo, Arial, sans-serif',
-      fontSize: '16px',
       lineHeight: '2.13',
       textAlign: 'right',
     },
     controls: {
       font: {
         list: Jodit.atom(fontOptions),
-        childTemplate: (_editor: IJodit, _key: string, value: string) => `<span style="font-family:${value}">${fontOptions[value as keyof typeof fontOptions] || value}</span>`,
+        childTemplate: (_editor: IJodit, _key: string, value: string) => value
+          ? `<span style="font-family:${value}">${fontOptions[value as keyof typeof fontOptions] || value}</span>`
+          : '<span>Default</span>',
       },
       fontsize: {
         icon: 'tm-fontsize-text',
-        text: '16px',
-        list: [12, 14, 16, 18, 20, 24, 28, 32, 36, 44, 52],
-        textTemplate: (_editor: IJodit, value: string) => `${value || 16}px`,
+        text: 'Size',
+        list: fontSizeOptions,
+        textTemplate: (_editor: IJodit, value: string) => value ? `${value}px` : 'Size',
         childTemplate: (_editor: IJodit, _key: string, value: string) => `<span style="font-size:${value}px;line-height:1.4">${value}px</span>`,
         update: (editor: IJodit, button: any) => {
-          button.state.text = `${getCurrentFontSize(editor)}px`;
+          const currentSize = getCurrentFontSize(editor);
+          button.state.text = currentSize ? `${currentSize}px` : 'Size';
+          return false;
+        },
+      },
+      textColor: {
+        icon: 'brush',
+        tooltip: 'Text color',
+        popup: (editor: IJodit, _current: unknown, close: () => void, button: any) => ColorPickerWidget(editor, (color: string) => {
+          editor.execCommand('forecolor', false, color || '#000000');
+          button.state.icon.fill = color || '#000000';
+          syncValue(editor.value);
+          close?.();
+        }, getCurrentTextColor(editor)),
+        update: (editor: IJodit, button: any) => {
+          button.state.icon.fill = getCurrentTextColor(editor) || '#000000';
           return false;
         },
       },
@@ -211,7 +264,7 @@ export function JoditBlockEditor({
   } as any), [folder]);
 
   return (
-    <div className="tm-jodit-editor relative rounded-md border border-[#cfd8d1] bg-[#e7ebe5] shadow-none [&_.jodit-container]:!border-0 [&_.jodit-container]:!rounded-md [&_.jodit-icon]:!h-[18px] [&_.jodit-icon]:!w-[18px] [&_.jodit-icon]:!text-[#17201b] [&_.jodit-status-bar]:!hidden [&_.jodit-toolbar-editor-collection]:!flex-wrap [&_.jodit-toolbar__box]:!overflow-visible [&_.jodit-toolbar__box]:!border-[#cfd8d1] [&_.jodit-toolbar__box]:!bg-[#e7ebe5] [&_.jodit-ui-button]:!min-h-[44px] [&_.jodit-ui-button]:!min-w-[44px] [&_.jodit-ui-button]:!px-2 [&_.jodit-ui-button]:!text-[#17201b] [&_.jodit-ui-button__text]:!hidden [&_.jodit-toolbar-button_fontsize_.jodit-ui-button__text]:!inline-flex [&_.jodit-toolbar-button_fontsize_.jodit-ui-button__text]:!min-w-[44px] [&_.jodit-toolbar-button_fontsize_.jodit-ui-button__text]:!text-[13px] [&_.jodit-toolbar-button_fontsize_.jodit-ui-button__text]:!font-black [&_.jodit-wysiwyg]:!bg-[#f6f5ef] [&_.jodit-wysiwyg]:!text-[#17201b] [&_.jodit-wysiwyg]:!caret-[#17201b] [&_.jodit-wysiwyg]:!px-4 [&_.jodit-wysiwyg]:!py-4 [&_.jodit-wysiwyg]:!leading-[2.13] [&_.jodit-wysiwyg_p]:!leading-[2.13] [&_.jodit-wysiwyg_span]:!leading-[2.13] [&_.jodit-wysiwyg_h1]:!my-4 [&_.jodit-wysiwyg_h1]:!text-4xl [&_.jodit-wysiwyg_h1]:!font-black [&_.jodit-wysiwyg_h1]:!leading-[1.25] [&_.jodit-wysiwyg_h2]:!my-3 [&_.jodit-wysiwyg_h2]:!text-3xl [&_.jodit-wysiwyg_h2]:!font-black [&_.jodit-wysiwyg_h2]:!leading-[1.32] [&_.jodit-wysiwyg_h3]:!my-3 [&_.jodit-wysiwyg_h3]:!text-2xl [&_.jodit-wysiwyg_h3]:!font-extrabold [&_.jodit-wysiwyg_h3]:!leading-[1.34] [&_.jodit-wysiwyg_h4]:!my-2 [&_.jodit-wysiwyg_h4]:!text-xl [&_.jodit-wysiwyg_h4]:!font-extrabold [&_.jodit-wysiwyg_h4]:!leading-[1.4] [&_.jodit-wysiwyg_blockquote]:!rounded-md [&_.jodit-wysiwyg_blockquote]:!border [&_.jodit-wysiwyg_blockquote]:!border-[#ead6b8] [&_.jodit-wysiwyg_blockquote]:!bg-[#fff7e8] [&_.jodit-wysiwyg_blockquote]:!px-4 [&_.jodit-wysiwyg_blockquote]:!py-3 [&_.jodit-wysiwyg_blockquote]:!font-bold [&_.jodit-wysiwyg_img]:!max-w-full [&_.jodit-wysiwyg_li]:!my-1 [&_.jodit-wysiwyg_li]:!leading-[2.13] [&_.jodit-wysiwyg_ol]:!pr-6 [&_.jodit-wysiwyg_ul]:!pr-6">
+    <div className="tm-jodit-editor relative rounded-md border border-[#cfd8d1] bg-[#e7ebe5] shadow-none [&_.jodit-container]:!border-0 [&_.jodit-container]:!rounded-md [&_.jodit-icon]:!h-[18px] [&_.jodit-icon]:!w-[18px] [&_.jodit-icon]:!text-[#17201b] [&_.jodit-status-bar]:!hidden [&_.jodit-toolbar-editor-collection]:!flex-wrap [&_.jodit-toolbar__box]:!overflow-visible [&_.jodit-toolbar__box]:!border-[#cfd8d1] [&_.jodit-toolbar__box]:!bg-[#e7ebe5] [&_.jodit-ui-button]:!min-h-[44px] [&_.jodit-ui-button]:!min-w-[44px] [&_.jodit-ui-button]:!px-2 [&_.jodit-ui-button]:!text-[#17201b] [&_.jodit-ui-button__text]:!hidden [&_.jodit-toolbar-button_fontsize_.jodit-ui-button__text]:!inline-flex [&_.jodit-toolbar-button_fontsize_.jodit-ui-button__text]:!min-w-[44px] [&_.jodit-toolbar-button_fontsize_.jodit-ui-button__text]:!text-[13px] [&_.jodit-toolbar-button_fontsize_.jodit-ui-button__text]:!font-black [&_.jodit-wysiwyg]:!bg-[#f6f5ef] [&_.jodit-wysiwyg]:!text-[#000000] [&_.jodit-wysiwyg]:!caret-[#000000] [&_.jodit-wysiwyg]:!px-4 [&_.jodit-wysiwyg]:!py-4 [&_.jodit-wysiwyg]:!leading-[2.13] [&_.jodit-wysiwyg_p]:!leading-[2.13] [&_.jodit-wysiwyg_span]:!leading-[2.13] [&_.jodit-wysiwyg_h1]:!my-4 [&_.jodit-wysiwyg_h1]:!text-4xl [&_.jodit-wysiwyg_h1]:!font-black [&_.jodit-wysiwyg_h1]:!leading-[1.25] [&_.jodit-wysiwyg_h2]:!my-3 [&_.jodit-wysiwyg_h2]:!text-3xl [&_.jodit-wysiwyg_h2]:!font-black [&_.jodit-wysiwyg_h2]:!leading-[1.32] [&_.jodit-wysiwyg_h3]:!my-3 [&_.jodit-wysiwyg_h3]:!text-2xl [&_.jodit-wysiwyg_h3]:!font-extrabold [&_.jodit-wysiwyg_h3]:!leading-[1.34] [&_.jodit-wysiwyg_h4]:!my-2 [&_.jodit-wysiwyg_h4]:!text-xl [&_.jodit-wysiwyg_h4]:!font-extrabold [&_.jodit-wysiwyg_h4]:!leading-[1.4] [&_.jodit-wysiwyg_blockquote]:!rounded-md [&_.jodit-wysiwyg_blockquote]:!border [&_.jodit-wysiwyg_blockquote]:!border-[#ead6b8] [&_.jodit-wysiwyg_blockquote]:!bg-[#fff7e8] [&_.jodit-wysiwyg_blockquote]:!px-4 [&_.jodit-wysiwyg_blockquote]:!py-3 [&_.jodit-wysiwyg_blockquote]:!font-bold [&_.jodit-wysiwyg_img]:!max-w-full [&_.jodit-wysiwyg_li]:!my-1 [&_.jodit-wysiwyg_li]:!leading-[2.13] [&_.jodit-wysiwyg_ol]:!pr-6 [&_.jodit-wysiwyg_ul]:!pr-6">
       <JoditEditor
         ref={editorRef}
         value={value}
