@@ -360,8 +360,8 @@ export const TanjaMolArabicCODProductPage = ({
                 setSelectedImage(nextIndex);
               }}>
                   {productGallery.map((image, index) => (
-                    <button key={image.src} type="button" onClick={() => selectMobileImage(index)} className="tm-press flex-none snap-center overflow-hidden rounded-2xl" aria-label={`عرض الصورة ${index + 1}`}>
-                      <img src={image.src} alt={image.alt} className="tm-image block h-[320px] w-[82vw] max-w-[360px] object-contain sm:h-[390px]" fetchPriority={index === 0 ? 'high' : undefined} loading={index === 0 ? 'eager' : 'lazy'} decoding={index === 0 ? 'sync' : 'async'} width="720" height="780" sizes="82vw" />
+                    <button key={image.src} type="button" onClick={() => selectMobileImage(index)} className="tm-press flex h-[320px] w-[82vw] max-w-[360px] flex-none snap-center items-center justify-center sm:h-[390px]" aria-label={`عرض الصورة ${index + 1}`}>
+                      <img src={image.src} alt={image.alt} className="tm-image block max-h-full max-w-full rounded-2xl object-contain" fetchPriority={index === 0 ? 'high' : undefined} loading={index === 0 ? 'eager' : 'lazy'} decoding={index === 0 ? 'sync' : 'async'} width="720" height="780" sizes="82vw" />
                     </button>
                   ))}
                 </div>
@@ -378,8 +378,8 @@ export const TanjaMolArabicCODProductPage = ({
                       <img src={image.src} alt={image.alt} className="tm-image h-[82px] w-full rounded-lg object-contain" loading={index === 0 ? 'eager' : 'lazy'} decoding={index === 0 ? 'sync' : 'async'} width="184" height="164" sizes="92px" />
                     </button>)}
                 </div>
-                <div className="overflow-hidden rounded-2xl">
-                  <img src={productGallery[selectedImage]?.src ?? productGallery[0].src} alt={productGallery[selectedImage]?.alt ?? productGallery[0].alt} className="tm-image block h-[600px] w-full object-contain" fetchPriority="high" loading="eager" decoding="sync" width="1040" height="1200" sizes="58vw" />
+                <div className="flex h-[600px] w-full items-center justify-center">
+                  <img src={productGallery[selectedImage]?.src ?? productGallery[0].src} alt={productGallery[selectedImage]?.alt ?? productGallery[0].alt} className="tm-image block max-h-full max-w-full rounded-2xl object-contain" fetchPriority="high" loading="eager" decoding="sync" width="1040" height="1200" sizes="58vw" />
                 </div>
               </div>
 
