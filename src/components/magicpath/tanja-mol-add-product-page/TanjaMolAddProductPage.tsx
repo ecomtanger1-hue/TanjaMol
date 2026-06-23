@@ -1,4 +1,5 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type DragEvent, type FormEvent, type KeyboardEvent, type ReactNode } from 'react';
+import { GripVertical } from 'lucide-react';
 import { defaultProductDetailsIntro, type Category, type Product, type ProductBundleOffer, type ProductDetailBlock, type ProductDetailsIntro, type ProductVariant, type ProductVariantOption } from '../../../storefrontRuntime';
 import { AdminSidebar } from '../../admin/AdminLayout';
 import { TanjaMallLogo } from '../../brand/TanjaMallLogo';
@@ -365,6 +366,7 @@ export const TanjaMolAddProductPage = ({
   const [detailsEditorReady, setDetailsEditorReady] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [draggingGalleryIndex, setDraggingGalleryIndex] = useState<number | null>(null);
 
   useEffect(() => {
     onCreateProductRef.current = onCreateProduct;
@@ -405,6 +407,7 @@ export const TanjaMolAddProductPage = ({
       setLastAutoSavedAt('');
       setUploadingImages(false);
       setPublishing(false);
+      setDraggingGalleryIndex(null);
       return;
     }
 
@@ -801,6 +804,32 @@ export const TanjaMolAddProductPage = ({
     setGallery(current => current.filter((_, imageIndex) => imageIndex !== index));
   };
 
+  const reorderGalleryImage = (fromIndex: number, toIndex: number) => {
+    if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0) return;
+    setGallery(current => {
+      if (fromIndex >= current.length || toIndex >= current.length) return current;
+      const next = [...current];
+      const [image] = next.splice(fromIndex, 1);
+      next.splice(toIndex, 0, image);
+      return next;
+    });
+  };
+
+  const handleGalleryDragStart = (event: DragEvent<HTMLDivElement>, index: number) => {
+    setDraggingGalleryIndex(index);
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', String(index));
+  };
+
+  const handleGalleryDrop = (event: DragEvent<HTMLDivElement>, index: number) => {
+    event.preventDefault();
+    const rawIndex = event.dataTransfer.getData('text/plain');
+    const droppedIndex = rawIndex ? Number(rawIndex) : Number.NaN;
+    const fromIndex = Number.isFinite(droppedIndex) ? droppedIndex : draggingGalleryIndex;
+    if (fromIndex !== null) reorderGalleryImage(fromIndex, index);
+    setDraggingGalleryIndex(null);
+  };
+
   const handleImageUpload = async (files: FileList | null) => {
     const fileArray = normalizeUploadFiles(files);
     if (!fileArray.length) return;
@@ -1008,13 +1037,29 @@ export const TanjaMolAddProductPage = ({
               ) : null}
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {gallery.map((image, index) => (
-                  <div key={`${image}-${index}`} className="rounded-md border border-dashed border-[#bfcac1] bg-[#fbfaf6] p-3 text-right">
+                  <div
+                    key={`${image}-${index}`}
+                    draggable={gallery.length > 1}
+                    onDragStart={event => handleGalleryDragStart(event, index)}
+                    onDragOver={event => {
+                      event.preventDefault();
+                      event.dataTransfer.dropEffect = 'move';
+                    }}
+                    onDrop={event => handleGalleryDrop(event, index)}
+                    onDragEnd={() => setDraggingGalleryIndex(null)}
+                    className={`rounded-md border border-dashed border-[#bfcac1] bg-[#fbfaf6] p-3 text-right transition ${gallery.length > 1 ? 'cursor-grab active:cursor-grabbing' : ''} ${draggingGalleryIndex === index ? 'opacity-60 ring-2 ring-[#ff9900]' : ''}`}
+                  >
                     <div className="grid aspect-[4/3] place-items-center overflow-hidden rounded-md bg-[#eef3ef] text-sm font-black text-[#65716a]">
-                      <img src={image} alt={`صورة المنتج ${index + 1}`} className="h-full w-full object-cover" loading="lazy" decoding="async" width="320" height="320" />
+                      <img src={image} alt={`صورة المنتج ${index + 1}`} className="h-full w-full object-cover" loading="lazy" decoding="async" width="320" height="320" draggable={false} />
                     </div>
                     <div className="mt-3 flex items-center justify-between gap-2">
-                      <p className="text-sm font-black">{index === 0 ? 'الصورة الرئيسية' : `صورة ${index + 1}`}</p>
-                      <button type="button" onClick={() => removeGalleryImage(index)} className="tm-admin-press min-h-[44px] rounded-md bg-[#fff1d5] px-2 text-xs font-black text-[#9a5a00]">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <span className="grid size-11 shrink-0 place-items-center rounded-md border border-[#cfd8d1] bg-white text-[#65716a]" title="اسحب لترتيب الصورة" aria-hidden="true">
+                          <GripVertical className="size-5" strokeWidth={2.5} />
+                        </span>
+                        <p className="min-w-0 text-sm font-black">{index === 0 ? 'الصورة الرئيسية' : `صورة ${index + 1}`}</p>
+                      </div>
+                      <button type="button" onClick={() => removeGalleryImage(index)} className="tm-admin-press min-h-[44px] shrink-0 rounded-md bg-[#fff1d5] px-2 text-xs font-black text-[#9a5a00]">
                         حذف
                       </button>
                     </div>
