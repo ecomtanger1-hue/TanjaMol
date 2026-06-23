@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from 'react';
-import { defaultProductDetailsIntro, type Category, type Product, type ProductDetailBlock, type ProductDetailsIntro, type ProductVariant, type ProductVariantOption } from '../../../storefrontRuntime';
+import { defaultProductDetailsIntro, type Category, type Product, type ProductBundleOffer, type ProductDetailBlock, type ProductDetailsIntro, type ProductVariant, type ProductVariantOption } from '../../../storefrontRuntime';
 import { AdminSidebar } from '../../admin/AdminLayout';
 import { TanjaMallLogo } from '../../brand/TanjaMallLogo';
 import { navigateToRoute } from '../../../lib/routing';
@@ -22,6 +22,7 @@ type SpecDraft = {
 
 type DetailDraft = ProductDetailBlock;
 type VariantOptionDraft = ProductVariantOption;
+type BundleOfferDraft = ProductBundleOffer;
 type DetailIntroDraft = Required<ProductDetailsIntro>;
 
 const fallbackImage = 'https://images.unsplash.com/photo-1607083206968-13611e3d76db?auto=format&fit=crop&w=1200&q=85';
@@ -218,6 +219,20 @@ function inferVariantOptionsFromVariants(variants: ProductVariant[]): VariantOpt
   }));
 }
 
+function withDefaultBundleOffers(offers?: ProductBundleOffer[]): BundleOfferDraft[] {
+  return (offers || []).map((offer, index) => ({
+    id: offer.id || `bundle-${Date.now()}-${index}`,
+    enabled: offer.enabled ?? true,
+    title: offer.title || offer.bundledProductTitle || 'عرض باقة',
+    bundledProductSlug: offer.bundledProductSlug || '',
+    bundledProductTitle: offer.bundledProductTitle || '',
+    bundledProductImage: offer.bundledProductImage || '',
+    variantLabel: offer.variantLabel || '',
+    packagePrice: Number(offer.packagePrice) || parsePrice(offer.packagePriceLabel || ''),
+    packagePriceLabel: offer.packagePriceLabel || priceLabel(String(offer.packagePrice || '')),
+  }));
+}
+
 type UploadFileSource = FileList | File[] | null;
 
 function normalizeUploadFiles(files: UploadFileSource) {
@@ -338,6 +353,7 @@ export const TanjaMolAddProductPage = ({
   const [manualReviewsEnabled, setManualReviewsEnabled] = useState(true);
   const [showRelated, setShowRelated] = useState(true);
   const [similarProductSlugs, setSimilarProductSlugs] = useState<string[]>([]);
+  const [bundleOffers, setBundleOffers] = useState<BundleOfferDraft[]>([]);
   const [showPolicies, setShowPolicies] = useState(true);
   const [rating, setRating] = useState('');
   const [reviewCount, setReviewCount] = useState('');
@@ -380,6 +396,7 @@ export const TanjaMolAddProductPage = ({
       setManualReviewsEnabled(true);
       setShowRelated(true);
       setSimilarProductSlugs([]);
+      setBundleOffers([]);
       setShowPolicies(true);
       setRating('');
       setReviewCount('');
@@ -416,6 +433,7 @@ export const TanjaMolAddProductPage = ({
     setManualReviewsEnabled(product.manualReviewsEnabled ?? true);
     setShowRelated(product.showRelated ?? true);
     setSimilarProductSlugs(product.similarProductSlugs || []);
+    setBundleOffers(withDefaultBundleOffers(product.bundleOffers));
     setShowPolicies(product.showPolicies ?? true);
     setRating(product.rating ? String(product.rating) : '4.8');
     setReviewCount(product.reviewCount ? String(product.reviewCount) : '127');
@@ -464,6 +482,11 @@ export const TanjaMolAddProductPage = ({
   const similarProductsSummary = selectedSimilarProducts.length
     ? `${selectedSimilarProducts.length} selected manually`
     : 'Same category fallback';
+  const availableBundleProducts = availableSimilarProducts;
+  const activeBundleOffers = bundleOffers.filter(offer => offer.enabled && offer.bundledProductSlug && parsePrice(offer.packagePriceLabel || String(offer.packagePrice)) > 0);
+  const bundleOffersSummary = bundleOffers.length
+    ? `${activeBundleOffers.length}/${bundleOffers.length} مفعلة`
+    : 'لا توجد باقات';
   const formattedDetails = useMemo(() => details.map(withDefaultDetailFormat), [details]);
   const formattedDetailsIntro = useMemo<DetailIntroDraft>(() => ({
     kicker: detailsIntro.kicker.trim(),
@@ -472,6 +495,21 @@ export const TanjaMolAddProductPage = ({
     highlights: detailsIntro.highlights.map(item => item.trim()).filter(Boolean),
     hidden: detailsIntro.hidden,
   }), [detailsIntro]);
+  const formattedBundleOffers = useMemo<BundleOfferDraft[]>(() => bundleOffers
+    .map(offer => {
+      const packagePriceValue = parsePrice(offer.packagePriceLabel || String(offer.packagePrice));
+      return {
+        ...offer,
+        title: offer.title.trim(),
+        bundledProductSlug: offer.bundledProductSlug.trim(),
+        bundledProductTitle: offer.bundledProductTitle.trim(),
+        bundledProductImage: offer.bundledProductImage.trim(),
+        variantLabel: offer.variantLabel?.trim() || '',
+        packagePrice: packagePriceValue,
+        packagePriceLabel: priceLabel(offer.packagePriceLabel || String(offer.packagePrice)),
+      };
+    })
+    .filter(offer => offer.bundledProductSlug && offer.bundledProductTitle && offer.packagePrice > 0), [bundleOffers]);
 
   const previewProduct = useMemo<Product>(() => ({
     id: slug || makeSlug(title),
@@ -493,6 +531,7 @@ export const TanjaMolAddProductPage = ({
     reviewCount: Number(reviewCount) || 0,
     showRelated,
     similarProductSlugs,
+    bundleOffers: formattedBundleOffers,
     showPolicies,
     detailsIntro: formattedDetailsIntro,
     details: formattedDetails,
@@ -500,7 +539,7 @@ export const TanjaMolAddProductPage = ({
     variantsEnabled,
     variantOptions,
     variants,
-  }), [badge, category, cleanGallery, delivery, formattedDetails, formattedDetailsIntro, manualReviewsEnabled, oldPrice, price, rating, reviewCount, reviewsEnabled, shortDescription, showPolicies, showRelated, similarProductSlugs, slug, specs, stock, title, variantOptions, variants, variantsEnabled]);
+  }), [badge, category, cleanGallery, delivery, formattedBundleOffers, formattedDetails, formattedDetailsIntro, manualReviewsEnabled, oldPrice, price, rating, reviewCount, reviewsEnabled, shortDescription, showPolicies, showRelated, similarProductSlugs, slug, specs, stock, title, variantOptions, variants, variantsEnabled]);
 
   const hasStartedListing = useMemo(() => (
     Boolean(title.trim()) ||
@@ -514,11 +553,12 @@ export const TanjaMolAddProductPage = ({
     gallery.some(item => item.trim()) ||
     variantsEnabled ||
     similarProductSlugs.length > 0 ||
+    bundleOffers.some(offer => offer.title.trim() || offer.bundledProductSlug.trim() || offer.packagePriceLabel.trim()) ||
     variantOptions.some(group => group.label.trim() || group.values.some(value => value.label.trim())) ||
     variants.some(variant => variant.name.trim() || variant.sku.trim()) ||
     details.some(detail => detail.title.trim() || detail.text.trim() || detail.mediaUrl.trim()) ||
     specs.some(spec => spec.label.trim() || spec.value.trim())
-  ), [badge, delivery, details, gallery, oldPrice, price, shortDescription, similarProductSlugs, slug, specs, stock, title, variantOptions, variants, variantsEnabled]);
+  ), [badge, bundleOffers, delivery, details, gallery, oldPrice, price, shortDescription, similarProductSlugs, slug, specs, stock, title, variantOptions, variants, variantsEnabled]);
 
   const autoSaveEnabled = !product || Boolean(product.isDraft);
 
@@ -555,6 +595,7 @@ export const TanjaMolAddProductPage = ({
           setDetails(productToSave.details || []);
           setVariants(productToSave.variants || []);
           setVariantOptions(productToSave.variantOptions || []);
+          setBundleOffers(withDefaultBundleOffers(productToSave.bundleOffers));
           setLastAutoSavedAt(new Date().toLocaleTimeString('fr-MA', { hour: '2-digit', minute: '2-digit' }));
           setAutoSaveStatus('saved');
         })
@@ -627,6 +668,39 @@ export const TanjaMolAddProductPage = ({
 
   const removeVariant = (id: string) => {
     setVariants(current => current.length > 1 ? current.filter(variant => variant.id !== id) : current);
+  };
+
+  const addBundleOffer = () => {
+    const bundledProduct = availableBundleProducts[0];
+    setBundleOffers(current => [...current, {
+      id: `bundle-${Date.now()}`,
+      enabled: true,
+      title: bundledProduct ? `باقة مع ${bundledProduct.title}` : 'عرض باقة',
+      bundledProductSlug: bundledProduct?.slug || '',
+      bundledProductTitle: bundledProduct?.title || '',
+      bundledProductImage: bundledProduct?.image || bundledProduct?.gallery?.[0] || '',
+      variantLabel: '',
+      packagePrice: parsePrice(price),
+      packagePriceLabel: priceLabel(price),
+    }]);
+  };
+
+  const updateBundleOffer = (id: string, next: Partial<BundleOfferDraft>) => {
+    setBundleOffers(current => current.map(offer => offer.id === id ? { ...offer, ...next } : offer));
+  };
+
+  const selectBundleProduct = (offerId: string, productKey: string) => {
+    const bundledProduct = availableBundleProducts.find(item => item.slug === productKey || item.id === productKey);
+    updateBundleOffer(offerId, {
+      bundledProductSlug: bundledProduct?.slug || '',
+      bundledProductTitle: bundledProduct?.title || '',
+      bundledProductImage: bundledProduct?.image || bundledProduct?.gallery?.[0] || '',
+      title: bundledProduct ? `باقة مع ${bundledProduct.title}` : '',
+    });
+  };
+
+  const removeBundleOffer = (id: string) => {
+    setBundleOffers(current => current.filter(offer => offer.id !== id));
   };
 
   const setDetailsWithHistory = (updater: (current: DetailDraft[]) => DetailDraft[]) => {
@@ -781,6 +855,7 @@ export const TanjaMolAddProductPage = ({
       setDetails(productToPublish.details || []);
       setVariants(productToPublish.variants || []);
       setVariantOptions(productToPublish.variantOptions || []);
+      setBundleOffers(withDefaultBundleOffers(productToPublish.bundleOffers));
       await onCreateProduct(productToPublish, draftBaseSlug || originalSlug);
       setDraftBaseSlug(productToPublish.slug);
       setAutoSaveStatus('idle');
@@ -815,6 +890,7 @@ export const TanjaMolAddProductPage = ({
       setDetails(productToSave.details || []);
       setVariants(productToSave.variants || []);
       setVariantOptions(productToSave.variantOptions || []);
+      setBundleOffers(withDefaultBundleOffers(productToSave.bundleOffers));
       await onCreateProduct(productToSave, draftBaseSlug || originalSlug || draftSlug, { isDraft: true });
       setDraftBaseSlug(productToSave.slug);
       setAutoSaveStatus('saved');
@@ -1267,6 +1343,100 @@ export const TanjaMolAddProductPage = ({
                     </article>
                   );
                 })}
+              </div>
+            </AdminSection>
+
+            <AdminSection title="عروض الباقات" summary={bundleOffersSummary} status={activeBundleOffers.length ? 'done' : 'neutral'} defaultOpen={false} action={
+              <button type="button" onClick={addBundleOffer} className="tm-admin-press min-h-[44px] rounded-md bg-[#ff9900] px-3 text-xs font-black text-[#131921]">
+                إضافة باقة
+              </button>
+            }>
+              <div className="grid gap-3">
+                <p className="text-sm font-bold leading-6 text-[#65716a]">
+                  أنشئ عروض باقات لهذا المنتج. سعر الباقة هو السعر النهائي الذي يدفعه الزبون للمنتج الأساسي مع المنتج المضاف.
+                </p>
+
+                {bundleOffers.length ? bundleOffers.map((offer, index) => (
+                  <article key={offer.id} className="grid gap-3 rounded-md border border-[#dfe5df] bg-[#fbfaf6] p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-md bg-white">
+                          {offer.bundledProductImage ? (
+                            <img src={offer.bundledProductImage} alt={offer.bundledProductTitle || offer.title} className="h-full w-full object-cover" loading="lazy" decoding="async" width="112" height="112" />
+                          ) : (
+                            <span className="text-[10px] font-black text-[#65716a]">باقة</span>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-heading text-base font-black text-[#17201b]">باقة {index + 1}</p>
+                          <p className="truncate text-xs font-bold text-[#65716a]">{offer.bundledProductTitle || 'اختر المنتج المضاف'}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <label className={`flex min-h-[44px] items-center gap-2 rounded-md px-3 text-xs font-black ${offer.enabled ? 'bg-[#fff3df] text-[#b45309]' : 'bg-[#eef3ef] text-[#65716a]'}`}>
+                          <input type="checkbox" checked={offer.enabled} onChange={event => updateBundleOffer(offer.id, { enabled: event.target.checked })} className="h-4 w-4 accent-[#ff9900]" />
+                          مفعلة
+                        </label>
+                        <button type="button" onClick={() => removeBundleOffer(offer.id)} className="tm-admin-press min-h-[44px] rounded-md bg-[#fff1d5] px-3 text-xs font-black text-[#9a5a00]">
+                          حذف
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+                      <label className="grid gap-1">
+                        <span className="text-xs font-black text-[#65716a]">عنوان العرض</span>
+                        <input
+                          value={offer.title}
+                          onChange={event => updateBundleOffer(offer.id, { title: event.target.value })}
+                          className="tm-admin-field px-3 text-sm font-bold"
+                          placeholder="باقة مع ستائر السيارة"
+                        />
+                      </label>
+
+                      <label className="grid gap-1">
+                        <span className="text-xs font-black text-[#65716a]">المنتج المضاف</span>
+                        <select
+                          value={offer.bundledProductSlug}
+                          onChange={event => selectBundleProduct(offer.id, event.target.value)}
+                          className="tm-admin-field px-3 text-sm font-bold"
+                        >
+                          <option value="">اختر منتجا</option>
+                          {availableBundleProducts.map(item => (
+                            <option key={item.slug || item.id} value={item.slug || item.id}>{item.title}</option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <label className="grid gap-1">
+                        <span className="text-xs font-black text-[#65716a]">تفصيل أو متغير جاهز</span>
+                        <input
+                          value={offer.variantLabel || ''}
+                          onChange={event => updateBundleOffer(offer.id, { variantLabel: event.target.value })}
+                          className="tm-admin-field px-3 text-sm font-bold"
+                          placeholder="ستائر سوداء، 4 قطع"
+                        />
+                      </label>
+
+                      <label className="grid gap-1">
+                        <span className="text-xs font-black text-[#65716a]">السعر النهائي للباقة</span>
+                        <input
+                          value={offer.packagePriceLabel}
+                          onChange={event => updateBundleOffer(offer.id, {
+                            packagePriceLabel: event.target.value,
+                            packagePrice: parsePrice(event.target.value),
+                          })}
+                          className="tm-admin-field tm-admin-num px-3 text-sm font-black"
+                          placeholder="200 درهم"
+                        />
+                      </label>
+                    </div>
+                  </article>
+                )) : (
+                  <button type="button" onClick={addBundleOffer} className="tm-admin-press min-h-[64px] rounded-md border border-dashed border-[#bfcac1] bg-[#fbfaf6] px-3 text-sm font-black text-[#65716a]">
+                    إضافة أول باقة
+                  </button>
+                )}
               </div>
             </AdminSection>
 

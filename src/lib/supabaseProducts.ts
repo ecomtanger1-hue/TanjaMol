@@ -1,4 +1,4 @@
-import type { Product, ProductDetailBlock, ProductDetailsIntro, ProductVariant, ProductVariantOption } from '../storefrontRuntime';
+import type { Product, ProductBundleOffer, ProductDetailBlock, ProductDetailsIntro, ProductVariant, ProductVariantOption } from '../storefrontRuntime';
 import { supabase } from './supabase';
 
 type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
@@ -126,6 +126,7 @@ function mapProduct(row: ProductRow): Product {
     reviewCount: row.review_count ?? undefined,
     showRelated: row.show_related ?? true,
     similarProductSlugs: jsonArray<string>(data.similarProductSlugs, []).filter(Boolean),
+    bundleOffers: jsonArray<ProductBundleOffer>(data.bundleOffers, []),
     showPolicies: row.show_policies ?? true,
     detailsIntro: mapDetailsIntro(data.detailsIntro),
     details: jsonArray<ProductDetailBlock>(row.details, []),
@@ -153,6 +154,7 @@ function productPayload(product: Product, isVisible = product.isVisible ?? true)
       hidden: product.detailsIntro?.hidden ?? false,
     },
     similarProductSlugs: product.similarProductSlugs || [],
+    bundleOffers: product.bundleOffers || [],
   };
 
   return {

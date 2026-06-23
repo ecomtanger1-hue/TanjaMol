@@ -20,6 +20,7 @@ export type Product = {
   reviewCount?: number;
   showRelated?: boolean;
   similarProductSlugs?: string[];
+  bundleOffers?: ProductBundleOffer[];
   showPolicies?: boolean;
   detailsIntro?: ProductDetailsIntro;
   details?: ProductDetailBlock[];
@@ -33,6 +34,18 @@ export type Product = {
   createdAt?: string;
   updatedAt?: string;
   data?: Record<string, unknown>;
+};
+
+export type ProductBundleOffer = {
+  id: string;
+  enabled: boolean;
+  title: string;
+  bundledProductSlug: string;
+  bundledProductTitle: string;
+  bundledProductImage: string;
+  variantLabel?: string;
+  packagePrice: number;
+  packagePriceLabel: string;
 };
 
 export type ProductDetailsIntro = {

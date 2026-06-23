@@ -32,6 +32,7 @@ const getPriceFromLabel = (label: string, fallback: number) => {
   const match = label.replace(',', '.').match(/\d+(?:\.\d+)?/);
   return match ? Number(match[0]) : fallback;
 };
+const formatPriceLabel = (value: number) => `${Math.max(0, value).toLocaleString('fr-MA')} درهم`;
 const specs = [['الشحن', 'من 1 إلى 2 أيام داخل طنجة'], ['الدفع', 'الدفع عند الاستلام'], ['الضمان', 'استبدال خلال 7 أيام'], ['المحتوى', 'ساعة، شاحن، كتيب استعمال']];
 const relatedProducts = [{
   title: 'سماعات بلوتوث صغيرة',
@@ -74,6 +75,7 @@ export const TanjaMolArabicCODProductPage = ({
   categories,
 }: ProductPageProps) => {
   const [selectedVariantIds, setSelectedVariantIds] = useState<Record<string, string>>({});
+  const [selectedBundleOfferIds, setSelectedBundleOfferIds] = useState<string[]>([]);
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [showStickyOrderBar, setShowStickyOrderBar] = useState(false);
@@ -216,6 +218,30 @@ export const TanjaMolArabicCODProductPage = ({
   const resolvedImageVariant = resolvedCombinationVariant?.image ? resolvedCombinationVariant : resolvedValueVariants.find(variant => variant.image);
   const resolvedVariantPriceLabel = resolvedPriceVariant?.priceLabel || productPriceLabel;
   const resolvedVariantPrice = getPriceFromLabel(resolvedVariantPriceLabel, product?.price ?? 249);
+  const baseProductPrice = product?.price || getPriceFromLabel(productPriceLabel, resolvedVariantPrice);
+  const bundleOffers = (product?.bundleOffers || []).filter(offer =>
+    offer.enabled &&
+    offer.bundledProductSlug.trim() &&
+    offer.bundledProductTitle.trim() &&
+    (Number(offer.packagePrice) > 0 || getPriceFromLabel(offer.packagePriceLabel, 0) > 0)
+  );
+  const selectedBundleOffers = selectedBundleOfferIds
+    .map(offerId => bundleOffers.find(offer => offer.id === offerId))
+    .filter(Boolean) as typeof bundleOffers;
+  const bundledUnitPrice = selectedBundleOffers.length === 1
+    ? (selectedBundleOffers[0].packagePrice || getPriceFromLabel(selectedBundleOffers[0].packagePriceLabel, resolvedVariantPrice))
+    : selectedBundleOffers.length > 1
+      ? resolvedVariantPrice + selectedBundleOffers.reduce((sum, offer) => {
+        const packagePrice = offer.packagePrice || getPriceFromLabel(offer.packagePriceLabel, baseProductPrice);
+        return sum + Math.max(0, packagePrice - baseProductPrice);
+      }, 0)
+      : resolvedVariantPrice;
+  const displayPriceLabel = selectedBundleOffers.length ? formatPriceLabel(bundledUnitPrice) : resolvedVariantPriceLabel;
+  const bundleSelectionLabel = selectedBundleOffers.map(offer => {
+    const detail = offer.variantLabel?.trim() ? ` (${offer.variantLabel.trim()})` : '';
+    return `${offer.title || offer.bundledProductTitle}: + ${offer.bundledProductTitle}${detail}`;
+  }).join('، ');
+  const orderVariantLabel = [resolvedVariantLabel, bundleSelectionLabel ? `باقة: ${bundleSelectionLabel}` : ''].filter(Boolean).join('، ');
   const resolvedVariantStock = hasRealVariants
     ? resolvedCombinationVariant?.stock ?? (resolvedValueVariants.length ? Math.min(...resolvedValueVariants.map(variant => variant.stock)) : product?.stock ?? 0)
     : product?.stock ?? 99;
@@ -237,9 +263,14 @@ export const TanjaMolArabicCODProductPage = ({
       if (firstAvailable) nextSelected[group.id] = firstAvailable.id;
     });
     setSelectedVariantIds(nextSelected);
+    setSelectedBundleOfferIds([]);
     setSelectedImage(0);
     setQuantity(1);
   }, [product?.id]);
+
+  useEffect(() => {
+    setSelectedBundleOfferIds(current => current.filter(offerId => bundleOffers.some(offer => offer.id === offerId)));
+  }, [product?.id, bundleOffers.length]);
 
   useEffect(() => {
     if (resolvedVariantStock > 0 && quantity > resolvedVariantStock) {
@@ -273,11 +304,11 @@ export const TanjaMolArabicCODProductPage = ({
     id: product?.id ?? 'smart-watch',
     slug: product?.slug ?? 'smart-watch',
     title: productTitle,
-    price: resolvedVariantPrice,
-    priceLabel: resolvedVariantPriceLabel,
+    price: bundledUnitPrice,
+    priceLabel: displayPriceLabel,
     quantity,
     image: resolvedImageVariant?.image ?? product?.image ?? productGallery[0].src,
-    variant: resolvedVariantLabel,
+    variant: orderVariantLabel,
   };
 
   const manualSimilarSlugs = product?.similarProductSlugs?.map(item => item.trim()).filter(Boolean) ?? [];
@@ -407,7 +438,7 @@ export const TanjaMolArabicCODProductPage = ({
 
               <div className="mt-4 flex items-center border-y border-[#dde6df] py-3">
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                  <p className="tm-num tm-price text-3xl text-[#b45309] sm:text-[2.15rem]">{resolvedVariantPriceLabel}</p>
+                  <p className="tm-num tm-price text-3xl text-[#b45309] sm:text-[2.15rem]">{displayPriceLabel}</p>
                   {productOldPrice ? <p className="tm-num text-sm font-semibold text-[#939a95] line-through">{productOldPrice}</p> : null}
                 </div>
                 {showReviews ? <div className="mr-auto text-left">
@@ -442,6 +473,41 @@ export const TanjaMolArabicCODProductPage = ({
                     </div>
                   );
                 })}
+
+                {bundleOffers.length ? (
+                  <div className="grid gap-2 rounded-lg border border-[#f0d8b4] bg-[#fff7e8] p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="tm-variant-label">عرض الباقة</p>
+                      <p className="text-xs font-black text-[#b45309]">اختياري</p>
+                    </div>
+                    <div className="grid gap-2">
+                      {bundleOffers.map(offer => {
+                        const isSelected = selectedBundleOfferIds.includes(offer.id);
+                        return (
+                          <button
+                            key={offer.id}
+                            type="button"
+                            aria-pressed={isSelected}
+                            onClick={() => setSelectedBundleOfferIds(current => current.includes(offer.id) ? current.filter(id => id !== offer.id) : [...current, offer.id])}
+                            className={`tm-press grid min-h-[76px] grid-cols-[56px_minmax(0,1fr)_auto] items-center gap-3 rounded-md border p-2 text-right transition-colors ${isSelected ? 'border-[#b45309] bg-white text-[#17201b]' : 'border-[#ead6b8] bg-[#fffdf8] text-[#17201b] hover:border-[#d8b782]'}`}
+                          >
+                            <img src={offer.bundledProductImage || productGallery[0].src} alt={offer.bundledProductTitle} className="h-14 w-14 rounded-md bg-white object-cover" loading="lazy" decoding="async" width="112" height="112" />
+                            <span className="min-w-0">
+                              <span className="block truncate text-sm font-black">{offer.title || offer.bundledProductTitle}</span>
+                              <span className="mt-1 block truncate text-xs font-bold text-[#65716a]">{offer.bundledProductTitle}{offer.variantLabel ? ` · ${offer.variantLabel}` : ''}</span>
+                            </span>
+                            <span className="grid justify-items-end gap-1">
+                              <span className="tm-num whitespace-nowrap text-sm font-black text-[#b45309]">{offer.packagePriceLabel || formatPriceLabel(offer.packagePrice)}</span>
+                              <span className={`grid h-6 min-w-12 place-items-center rounded-full px-2 text-[11px] font-black ${isSelected ? 'bg-[#b45309] text-white' : 'bg-[#fff3df] text-[#b45309]'}`}>
+                                {isSelected ? 'مضاف' : 'أضف'}
+                              </span>
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
               </div>
 
               <div className="mt-4">
@@ -616,7 +682,7 @@ export const TanjaMolArabicCODProductPage = ({
         }}>
           <div className="tm-mobile-order-bar pointer-events-auto mx-auto flex max-w-[520px] items-center gap-3 rounded-lg p-2">
             <div className="min-w-0 flex-1">
-              <p className="tm-num font-heading text-xl font-black text-[#b45309]">{resolvedVariantPriceLabel}</p>
+              <p className="tm-num font-heading text-xl font-black text-[#b45309]">{displayPriceLabel}</p>
               <p className="truncate text-[11px] font-extrabold text-[#68736c]">{'\u0627\u0644\u062f\u0641\u0639 \u0639\u0646\u062f \u0627\u0644\u0627\u0633\u062a\u0644\u0627\u0645'}</p>
             </div>
             <button className="tm-press tm-order-cta min-h-[52px] min-w-[138px] overflow-hidden rounded-md bg-[#ff9900] px-5 text-sm font-black text-[#131921] shadow-[0_16px_34px_-18px_rgba(255,153,0,0.95)] disabled:cursor-not-allowed disabled:opacity-60" type="button" disabled={isResolvedSoldOut} onClick={scrollToOrderForm}>
