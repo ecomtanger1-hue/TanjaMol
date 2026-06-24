@@ -1,4 +1,5 @@
 import type { Product, ProductBundleOffer, ProductDetailBlock, ProductDetailsIntro, ProductVariant, ProductVariantOption } from '../storefrontRuntime';
+import { cleanProductDetails } from './productDetails';
 import { supabase } from './supabase';
 
 type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
@@ -129,7 +130,7 @@ function mapProduct(row: ProductRow): Product {
     bundleOffers: jsonArray<ProductBundleOffer>(data.bundleOffers, []),
     showPolicies: row.show_policies ?? true,
     detailsIntro: mapDetailsIntro(data.detailsIntro),
-    details: jsonArray<ProductDetailBlock>(row.details, []),
+    details: cleanProductDetails(jsonArray<ProductDetailBlock>(row.details, [])),
     specs: jsonArray<Array<string>>(row.specs, []).flatMap(item => item.length >= 2 ? [[String(item[0]), String(item[1])] as [string, string]] : []),
     variantsEnabled: row.variants_enabled ?? inferredVariantsEnabled,
     variantOptions,
@@ -177,7 +178,7 @@ function productPayload(product: Product, isVisible = product.isVisible ?? true)
     review_count: product.reviewCount ?? null,
     show_related: product.showRelated ?? true,
     show_policies: product.showPolicies ?? true,
-    details: product.details || [],
+    details: cleanProductDetails(product.details || []),
     specs: product.specs || [],
     variants_enabled: product.variantsEnabled ?? Boolean(product.variantOptions?.length || product.variants?.length),
     variant_options: product.variantOptions || [],

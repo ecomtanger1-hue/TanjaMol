@@ -4,6 +4,7 @@ import { defaultProductDetailsIntro, type Category, type Product, type ProductBu
 import { AdminSidebar } from '../../admin/AdminLayout';
 import { TanjaMallLogo } from '../../brand/TanjaMallLogo';
 import { navigateToRoute } from '../../../lib/routing';
+import { cleanProductDetailBlock, cleanProductDetails, hasProductDetailContent } from '../../../lib/productDetails';
 
 type AddProductProps = {
   product?: Product;
@@ -66,25 +67,6 @@ const commonVariantTypes = [
   { type: 'scent', label: 'الرائحة', examples: ['ورد', 'فانيلا'] },
   { type: 'bundle', label: 'الحزمة', examples: ['قطعة', 'قطعتان'] },
 ] as const;
-const initialDetails: DetailDraft[] = [
-  {
-    id: 'detail-1',
-    title: 'شاشة وتنبيهات تساعدك طوال اليوم',
-    text: 'اكتب النص الكامل لهذا البلوك. سيظهر بجانب الصورة في صفحة المنتج بنفس الاتجاه المحدد هنا.',
-    mediaUrl: '',
-    mediaType: 'image',
-    reverse: false,
-  },
-  {
-    id: 'detail-2',
-    title: 'بطارية مناسبة للاستعمال اليومي',
-    text: 'أضف تفاصيل إضافية عن المنتج، ويمكنك استخدام صورة أو فيديو مع النص.',
-    mediaUrl: '',
-    mediaType: 'image',
-    reverse: true,
-  },
-];
-
 const defaultDetailFormat = {
   textAlign: 'right',
   textSize: 'base',
@@ -100,18 +82,13 @@ function withDefaultDetailsIntro(intro?: ProductDetailsIntro): DetailIntroDraft 
   };
 }
 
-function isPlaceholderDetailTitle(value: string) {
-  return /^بلوك\s+\d+$/.test(value.trim());
-}
-
 function withDefaultDetailFormat(detail: DetailDraft, index = 0): DetailDraft {
+  const cleanDetail = cleanProductDetailBlock(detail, index);
   return {
-    ...detail,
-    title: isPlaceholderDetailTitle(detail.title) ? '' : detail.title,
-    textAlign: detail.textAlign ?? defaultDetailFormat.textAlign,
-    textSize: detail.textSize ?? defaultDetailFormat.textSize,
-    headingSize: detail.headingSize ?? defaultDetailFormat.headingSize,
-    reverse: detail.reverse ?? index % 2 === 1,
+    ...cleanDetail,
+    textAlign: cleanDetail.textAlign ?? defaultDetailFormat.textAlign,
+    textSize: cleanDetail.textSize ?? defaultDetailFormat.textSize,
+    headingSize: cleanDetail.headingSize ?? defaultDetailFormat.headingSize,
   };
 }
 
@@ -428,7 +405,7 @@ export const TanjaMolAddProductPage = ({
     setVariantOptions(nextVariantOptions);
     setVariants(product.variants?.length ? generateVariantsFromOptions(nextVariantOptions, product.variants, product.priceLabel) : []);
     setDetailsIntro(withDefaultDetailsIntro(product.detailsIntro));
-    setDetails((product.details?.length ? product.details : initialDetails).map(withDefaultDetailFormat));
+    setDetails((product.details || []).map(withDefaultDetailFormat));
     detailHistoryRef.current = [];
     detailFutureRef.current = [];
     setSpecs(product.specs?.length ? product.specs.map(([label, value], index) => ({ id: `spec-${index + 1}`, label, value })) : initialSpecs);
@@ -454,7 +431,7 @@ export const TanjaMolAddProductPage = ({
     parsePrice(price) > 0,
     cleanGallery.length > 0,
     !variantsEnabled || variants.some(variant => variant.enabled),
-    details.some(detail => detail.text.trim()),
+    details.some(hasProductDetailContent),
     specs.some(spec => spec.label.trim() && spec.value.trim()),
   ];
   const readiness = Math.round((readinessItems.filter(Boolean).length / readinessItems.length) * 100);
@@ -462,7 +439,8 @@ export const TanjaMolAddProductPage = ({
   const coreSummary = title.trim() ? `${title.trim()} · ${category} · ${priceLabel(price)}` : basicSummary;
   const gallerySummary = cleanGallery.length ? `${cleanGallery.length} صورة مضافة` : 'أضف صورة واحدة على الأقل';
   const variantsSummary = variantsEnabled ? `${variantOptions.length} نوع · ${variants.length} قيمة` : 'المتغيرات غير مفعلة';
-  const detailsSummary = details.length ? `${details.length} بلوك مصور` : 'أضف بلوكات الشرح المصور';
+  const realDetailCount = details.filter(hasProductDetailContent).length;
+  const detailsSummary = realDetailCount ? `${realDetailCount} بلوك مصور` : 'أضف بلوكات الشرح المصور';
   const specsSummary = `${specs.filter(spec => spec.label.trim() && spec.value.trim()).length} مواصفة`;
   const reviewsSummary = reviewsEnabled ? `مفعلة · ${rating} من ${reviewCount} تقييم` : 'التقييمات مخفية';
   const visibilitySummary = [
@@ -490,7 +468,7 @@ export const TanjaMolAddProductPage = ({
   const bundleOffersSummary = bundleOffers.length
     ? `${activeBundleOffers.length}/${bundleOffers.length} مفعلة`
     : 'لا توجد باقات';
-  const formattedDetails = useMemo(() => details.map(withDefaultDetailFormat), [details]);
+  const formattedDetails = useMemo(() => cleanProductDetails(details.map(withDefaultDetailFormat)), [details]);
   const formattedDetailsIntro = useMemo<DetailIntroDraft>(() => ({
     kicker: detailsIntro.kicker.trim(),
     title: detailsIntro.title.trim(),
@@ -559,7 +537,7 @@ export const TanjaMolAddProductPage = ({
     bundleOffers.some(offer => offer.title.trim() || offer.bundledProductSlug.trim() || offer.packagePriceLabel.trim()) ||
     variantOptions.some(group => group.label.trim() || group.values.some(value => value.label.trim())) ||
     variants.some(variant => variant.name.trim() || variant.sku.trim()) ||
-    details.some(detail => detail.title.trim() || detail.text.trim() || detail.mediaUrl.trim()) ||
+    details.some(hasProductDetailContent) ||
     specs.some(spec => spec.label.trim() || spec.value.trim())
   ), [badge, bundleOffers, delivery, details, gallery, oldPrice, price, shortDescription, similarProductSlugs, slug, specs, stock, title, variantOptions, variants, variantsEnabled]);
 
@@ -1485,7 +1463,7 @@ export const TanjaMolAddProductPage = ({
               </div>
             </AdminSection>
 
-            <AdminSection title="تفاصيل المنتج المصورة" summary={detailsSummary} status={details.some(detail => detail.text.trim()) ? 'done' : 'missing'} defaultOpen={false} onOpen={() => setDetailsEditorReady(true)} action={<button type="button" onClick={addDetailBlock} className="tm-admin-press min-h-[44px] rounded-md bg-[#ff9900] px-3 text-xs font-black text-[#131921]">إضافة بلوك</button>}>
+            <AdminSection title="تفاصيل المنتج المصورة" summary={detailsSummary} status={details.some(hasProductDetailContent) ? 'done' : 'missing'} defaultOpen={false} onOpen={() => setDetailsEditorReady(true)} action={<button type="button" onClick={addDetailBlock} className="tm-admin-press min-h-[44px] rounded-md bg-[#ff9900] px-3 text-xs font-black text-[#131921]">إضافة بلوك</button>}>
               <div className="grid gap-3 rounded-md border border-[#dfe5df] bg-[#fbfaf6] p-3">
                 <div className="grid gap-3 rounded-md border border-[#dfe5df] bg-white p-3">
                   <label className="flex min-h-[44px] items-center gap-3 text-sm font-extrabold text-[#17201b]">

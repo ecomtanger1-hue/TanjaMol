@@ -27,13 +27,13 @@ import {
   type Category,
   type OrderDraft,
   type Product,
-  type ProductDetailBlock,
   type StoreSettings,
   type StoredOrder,
 } from './storefrontRuntime';
 import { getCurrentRoute, replaceLegacyHashRoute, routeToPath } from './lib/routing';
 import { trackAddToCart, trackInitiateCheckout, trackPageView, trackPurchase, trackSearch, trackViewContent } from './lib/metaPixel';
 import { TanjaMallLogo } from './components/brand/TanjaMallLogo';
+import { hasProductDetailContent } from './lib/productDetails';
 
 const TanjaMolAddProductPage = lazy(() => import('./components/magicpath/tanja-mol-add-product-page/TanjaMolAddProductPage').then(module => ({
   default: module.TanjaMolAddProductPage,
@@ -100,15 +100,6 @@ function getRoute() {
 
 function cleanText(value: string, maxLength: number) {
   return value.replace(/\s+/g, ' ').trim().slice(0, maxLength);
-}
-
-function hasDetailContent(detail: ProductDetailBlock) {
-  return Boolean(
-    detail.title?.trim() ||
-    detail.text?.trim() ||
-    detail.richTextHtml?.trim() ||
-    detail.mediaUrl?.trim()
-  );
 }
 
 function absoluteAssetUrl(src: string) {
@@ -703,7 +694,7 @@ export function App() {
     const incomingGallery = product.gallery?.filter(Boolean) ?? [];
     const protectedProduct = previousProduct && !isDraft ? {
       ...product,
-      details: previousDetails.some(hasDetailContent) && !incomingDetails.some(hasDetailContent)
+      details: previousDetails.some(hasProductDetailContent) && !incomingDetails.some(hasProductDetailContent)
         ? previousDetails
         : product.details,
       gallery: previousGallery.length > 1 && incomingGallery.length <= 1

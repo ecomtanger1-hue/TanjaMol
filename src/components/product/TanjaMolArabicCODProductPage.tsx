@@ -5,6 +5,7 @@ import { ProductCard } from '../storefront/ProductCard';
 import { SiteFooter, SiteHeader } from '../storefront/StorefrontPages';
 import { navigateToRoute } from '../../lib/routing';
 import { trackInitiateCheckout } from '../../lib/metaPixel';
+import { cleanProductDetails } from '../../lib/productDetails';
 const gallery = [{
   src: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?auto=format&fit=crop&w=1200&q=85',
   alt: 'ساعة ذكية سوداء على مكتب مرتب'
@@ -91,7 +92,7 @@ export const TanjaMolArabicCODProductPage = ({
     alt: index === 0 ? productTitle : `${productTitle} - ${index + 1}`,
   }));
   const productSpecs = product?.specs?.length ? product.specs : specs;
-  const productDetails = product?.details?.length ? product.details : [];
+  const productDetails = product?.details?.length ? cleanProductDetails(product.details) : [];
   const productDetailsIntro = {
     ...defaultProductDetailsIntro,
     ...(product?.detailsIntro || {}),
