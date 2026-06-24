@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react';
-import { Plus, Save, Trash2 } from 'lucide-react';
+import { ImagePlus, Loader2, Plus, Save, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Separator } from '@/components/ui/separator';
 import { ShadcnAdminShell } from './ShadcnAdminShell';
+import { uploadProductImages } from '../../lib/supabaseStorage';
 import type { Category, Product, StoreSettings } from '../../storefrontRuntime';
 
 type ShadcnAdminSettingsPageProps = {
@@ -30,6 +31,8 @@ export function ShadcnAdminSettingsPage({ settings, products, route, onSave, onN
     ...settings,
     categories: settings.categories || [],
   }));
+  const [uploadingCategoryId, setUploadingCategoryId] = useState('');
+  const [uploadError, setUploadError] = useState('');
 
   const visibleProducts = useMemo(() => products.filter(product => !product.isDraft), [products]);
   const categories = draft.categories || [];
@@ -51,6 +54,23 @@ export function ShadcnAdminSettingsPage({ settings, products, route, onSave, onN
 
   const deleteCategory = (id: string) => {
     setDraft(current => ({ ...current, categories: (current.categories || []).filter(category => category.id !== id) }));
+  };
+
+  const uploadCategoryImage = async (category: Category, files: FileList | null) => {
+    const file = files?.[0];
+    if (!file) return;
+
+    setUploadingCategoryId(category.id);
+    setUploadError('');
+    try {
+      const [imageUrl] = await uploadProductImages([file], `category-${category.id || category.title || 'image'}`);
+      if (imageUrl) updateCategory(category.id, 'image', imageUrl);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to upload image.';
+      setUploadError(message.replace(/^Supabase Storage upload failed:\s*/i, ''));
+    } finally {
+      setUploadingCategoryId('');
+    }
   };
 
   const saveDraft = () => {
@@ -141,6 +161,11 @@ export function ShadcnAdminSettingsPage({ settings, products, route, onSave, onN
               </Button>
             </CardHeader>
             <CardContent className="grid gap-3">
+              {uploadError ? (
+                <div className="rounded-md border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm font-bold text-red-100" role="alert">
+                  {uploadError}
+                </div>
+              ) : null}
               {categories.map((category, index) => (
                 <div key={category.id} className="grid gap-3 rounded-lg border border-white/10 bg-zinc-950/70 p-3 md:grid-cols-[88px_minmax(0,1fr)_minmax(0,1.25fr)_44px] md:items-end">
                   <div className="overflow-hidden rounded-md border border-white/10 bg-zinc-900">
@@ -154,10 +179,31 @@ export function ShadcnAdminSettingsPage({ settings, products, route, onSave, onN
                     اسم القسم
                     <Input value={category.title} autoFocus={index === 0 && !category.title} onChange={event => updateCategory(category.id, 'title', event.target.value)} className="h-11 border-white/10 bg-zinc-900 text-zinc-100" />
                   </label>
-                  <label className="grid gap-2 text-sm font-bold text-zinc-300">
-                    رابط الصورة
-                    <Input value={category.image} onChange={event => updateCategory(category.id, 'image', event.target.value)} className="h-11 border-white/10 bg-zinc-900 text-zinc-100" />
-                  </label>
+                  <div className="grid gap-2 text-sm font-bold text-zinc-300">
+                    <span>رابط الصورة</span>
+                    <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                      <Input value={category.image} onChange={event => updateCategory(category.id, 'image', event.target.value)} className="h-11 border-white/10 bg-zinc-900 text-zinc-100" />
+                      <input
+                        id={`category-image-upload-${category.id}`}
+                        type="file"
+                        accept="image/*,.gif"
+                        className="sr-only"
+                        disabled={uploadingCategoryId === category.id}
+                        onChange={event => {
+                          void uploadCategoryImage(category, event.target.files);
+                          event.target.value = '';
+                        }}
+                      />
+                      <label
+                        htmlFor={`category-image-upload-${category.id}`}
+                        aria-disabled={uploadingCategoryId === category.id}
+                        className={`inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-md border border-white/10 px-3 text-xs font-black text-zinc-100 transition hover:bg-white/10 ${uploadingCategoryId === category.id ? 'pointer-events-none opacity-60' : ''}`}
+                      >
+                        {uploadingCategoryId === category.id ? <Loader2 className="size-4 animate-spin" /> : <ImagePlus className="size-4" />}
+                        {uploadingCategoryId === category.id ? 'جار الرفع' : 'رفع صورة'}
+                      </label>
+                    </div>
+                  </div>
                   <Button type="button" size="icon" variant="ghost" className="text-red-300 hover:bg-red-500/10 hover:text-red-200" onClick={() => deleteCategory(category.id)} aria-label="حذف القسم">
                     <Trash2 className="size-4" />
                   </Button>
