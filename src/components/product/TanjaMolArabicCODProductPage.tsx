@@ -91,7 +91,7 @@ export const TanjaMolArabicCODProductPage = ({
     src,
     alt: index === 0 ? productTitle : `${productTitle} - ${index + 1}`,
   }));
-  const productSpecs = product?.specs?.length ? product.specs : specs;
+  const productSpecs = product ? (product.specs || []) : specs;
   const productDetails = product?.details?.length ? cleanProductDetails(product.details) : [];
   const productDetailsIntro = {
     ...defaultProductDetailsIntro,
@@ -599,15 +599,17 @@ export const TanjaMolArabicCODProductPage = ({
               </div>
             </section> : null}
 
-            <details className="tm-surface rounded-lg bg-white p-4 open:bg-[#fffdf8] sm:p-5 lg:p-6" open>
-              <summary className="cursor-pointer font-heading text-xl font-black sm:text-2xl">المواصفات</summary>
-              <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-                {productSpecs.map(([label, value]) => <div key={label} className="rounded-md bg-[#f8fafc] px-4 py-3 text-sm">
-                    <span className="block font-extrabold text-[#17201b]">{label}</span>
-                    <span className="mt-1 block font-bold leading-6 text-[#5f6861]">{value}</span>
-                  </div>)}
-              </div>
-            </details>
+            {productSpecs.length ? (
+              <details className="tm-surface rounded-lg bg-white p-4 open:bg-[#fffdf8] sm:p-5 lg:p-6" open>
+                <summary className="cursor-pointer font-heading text-xl font-black sm:text-2xl">المواصفات</summary>
+                <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                  {productSpecs.map(([label, value]) => <div key={label} className="rounded-md bg-[#f8fafc] px-4 py-3 text-sm">
+                      <span className="block font-extrabold text-[#17201b]">{label}</span>
+                      <span className="mt-1 block font-bold leading-6 text-[#5f6861]">{value}</span>
+                    </div>)}
+                </div>
+              </details>
+            ) : null}
 
             {showReviews ? <section className="tm-surface rounded-lg bg-white p-4 sm:p-5 lg:p-6">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">

@@ -92,13 +92,6 @@ function withDefaultDetailFormat(detail: DetailDraft, index = 0): DetailDraft {
   };
 }
 
-const initialSpecs: SpecDraft[] = [
-  { id: 'spec-1', label: 'الشحن', value: '24 إلى 48 ساعة داخل طنجة' },
-  { id: 'spec-2', label: 'الدفع', value: 'الدفع عند الاستلام' },
-  { id: 'spec-3', label: 'الضمان', value: 'استبدال خلال 7 أيام' },
-  { id: 'spec-4', label: 'المحتوى', value: 'ساعة، شاحن، كتيب استعمال' },
-];
-
 function makeSlug(value: string) {
   const cleaned = value
     .trim()
@@ -408,7 +401,7 @@ export const TanjaMolAddProductPage = ({
     setDetails((product.details || []).map(withDefaultDetailFormat));
     detailHistoryRef.current = [];
     detailFutureRef.current = [];
-    setSpecs(product.specs?.length ? product.specs.map(([label, value], index) => ({ id: `spec-${index + 1}`, label, value })) : initialSpecs);
+    setSpecs((product.specs || []).map(([label, value], index) => ({ id: `spec-${index + 1}`, label, value })));
     setReviewsEnabled(product.reviewsEnabled ?? true);
     setManualReviewsEnabled(product.manualReviewsEnabled ?? true);
     setShowRelated(product.showRelated ?? true);
@@ -767,7 +760,7 @@ export const TanjaMolAddProductPage = ({
   };
 
   const removeSpec = (id: string) => {
-    setSpecs(current => current.length > 1 ? current.filter(spec => spec.id !== id) : current);
+    setSpecs(current => current.filter(spec => spec.id !== id));
   };
 
   const setPrimaryImage = (index: number) => {
