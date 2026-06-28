@@ -698,43 +698,45 @@ export const TanjaMolArabicCODProductPage = ({
 
       <SiteFooter categories={categoryList} onNavigate={navigateToRoute} />
 
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 bg-transparent px-3 py-3 md:hidden" style={{
-        paddingBottom: 'max(14px, env(safe-area-inset-bottom))'
-      }}>
-        <div className={`tm-mobile-order-bar pointer-events-auto mx-auto flex items-center gap-2 rounded-lg p-2 transition-all duration-200 ${showStickyOrderBar ? 'max-w-[520px]' : 'w-fit'}`}>
-          {showStickyOrderBar ? (
+      {showStickyOrderBar ? (
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 bg-transparent py-3 pl-[76px] pr-3 md:hidden" style={{
+          paddingBottom: 'max(14px, env(safe-area-inset-bottom))'
+        }}>
+          <div className="tm-mobile-order-bar pointer-events-auto ml-auto flex w-full max-w-[520px] items-center gap-2 rounded-lg p-2 transition-all duration-200">
             <div className="min-w-0 flex-1">
               <p className="tm-num font-heading text-xl font-black text-[#b45309]">{displayPriceLabel}</p>
               <p className="truncate text-[11px] font-extrabold text-[#68736c]">{'\u0627\u0644\u062f\u0641\u0639 \u0639\u0646\u062f \u0627\u0644\u0627\u0633\u062a\u0644\u0627\u0645'}</p>
             </div>
-          ) : null}
-          <a
-            href={productWhatsAppUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="tm-press grid size-[52px] shrink-0 place-items-center rounded-full bg-white shadow-[0_16px_34px_-18px_rgba(37,211,102,1)]"
-            aria-label={`تواصل واتساب بخصوص ${productTitle}`}
-            title="واتساب"
-          >
-            <WhatsAppLogo className="size-12" />
-          </a>
-          {showStickyOrderBar ? (
             <button className="tm-press tm-order-cta min-h-[52px] min-w-[138px] overflow-hidden rounded-md bg-[#ff9900] px-5 text-sm font-black text-[#131921] shadow-[0_16px_34px_-18px_rgba(255,153,0,0.95)] disabled:cursor-not-allowed disabled:opacity-60" type="button" disabled={isResolvedSoldOut} onClick={scrollToOrderForm}>
               {isResolvedSoldOut ? '\u063a\u064a\u0631 \u0645\u062a\u0648\u0641\u0631' : '\u0627\u0637\u0644\u0628 \u0627\u0644\u0622\u0646'}
             </button>
-          ) : null}
+          </div>
         </div>
-      </div>
+      ) : null}
 
       <a
         href={productWhatsAppUrl}
         target="_blank"
         rel="noreferrer"
-        className="tm-press fixed bottom-6 left-6 z-50 hidden size-16 items-center justify-center rounded-full bg-white shadow-[0_18px_38px_-16px_rgba(37,211,102,0.95)] md:inline-flex"
+        className="tm-press fixed left-3 z-50 grid size-14 place-items-center md:hidden"
+        style={{
+          bottom: 'max(14px, env(safe-area-inset-bottom))'
+        }}
         aria-label={`تواصل واتساب بخصوص ${productTitle}`}
         title="واتساب"
       >
-        <WhatsAppLogo className="size-14" />
+        <WhatsAppLogo className="size-14 drop-shadow-[0_12px_16px_rgba(37,211,102,0.35)]" />
+      </a>
+
+      <a
+        href={productWhatsAppUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="tm-press fixed bottom-6 left-6 z-50 hidden size-16 items-center justify-center md:inline-flex"
+        aria-label={`تواصل واتساب بخصوص ${productTitle}`}
+        title="واتساب"
+      >
+        <WhatsAppLogo className="size-16 drop-shadow-[0_14px_18px_rgba(37,211,102,0.35)]" />
       </a>
     </div>;
 };
