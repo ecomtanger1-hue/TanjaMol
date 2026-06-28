@@ -1,5 +1,4 @@
 import { type FormEvent, useEffect, useRef, useState } from 'react';
-import { MessageCircle } from 'lucide-react';
 import { categories as defaultCategories, categoryRoute, defaultProductDetailsIntro, defaultSettings, parseOrderForm, productRoute, type CartItem, type Category, type OrderDraft, type Product, type ProductVariant, type StoreSettings } from '../../storefrontRuntime';
 import { ProductDetailMedia, ProductDetailRichText, ProductDetailTitle } from './ProductDetailRichText';
 import { ProductCard } from '../storefront/ProductCard';
@@ -39,9 +38,17 @@ const cleanPhoneNumber = (value: string) => value.replace(/[^\d]/g, '');
 const buildProductWhatsAppUrl = (title: string, slug: string, settings: StoreSettings) => {
   const phone = cleanPhoneNumber(settings.whatsappNumber || defaultSettings.whatsappNumber) || defaultSettings.whatsappNumber;
   const productUrl = `${window.location.origin}${routeToPath(productRoute(slug))}`;
-  const message = `Hi, I want to know more about ${title}.\n${productUrl}`;
+  const message = `السلام عليكم، أريد معرفة المزيد عن ${title}.\n${productUrl}`;
   return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
 };
+function WhatsAppLogo({ className = 'size-12' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 32 32" className={className} aria-hidden="true" focusable="false">
+      <circle cx="16" cy="16" r="15" fill="#25D366" />
+      <path fill="#fff" d="M23.04 8.92A9.76 9.76 0 0 0 7.68 20.69L6.34 25.6l5.03-1.32a9.72 9.72 0 0 0 4.66 1.19h.01a9.76 9.76 0 0 0 7-16.55Zm-7 14.9h-.01a8.1 8.1 0 0 1-4.13-1.13l-.3-.18-2.98.78.8-2.9-.2-.3a8.1 8.1 0 1 1 6.82 3.73Zm4.44-6.07c-.24-.12-1.44-.71-1.66-.79-.23-.08-.39-.12-.55.12-.16.24-.63.79-.77.95-.14.16-.28.18-.52.06-.24-.12-1.02-.38-1.94-1.2-.72-.64-1.2-1.42-1.34-1.66-.14-.24-.01-.38.11-.5.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.55-1.33-.76-1.82-.2-.48-.4-.41-.55-.42h-.47c-.16 0-.42.06-.65.3-.22.24-.85.83-.85 2.03s.87 2.36.99 2.52c.12.16 1.71 2.62 4.16 3.67.58.25 1.03.4 1.39.51.58.18 1.11.16 1.53.1.47-.07 1.44-.59 1.64-1.15.2-.57.2-1.05.14-1.15-.06-.1-.22-.16-.46-.28Z" />
+    </svg>
+  );
+}
 const specs = [['الشحن', 'من 1 إلى 2 أيام داخل طنجة'], ['الدفع', 'الدفع عند الاستلام'], ['الضمان', 'استبدال خلال 7 أيام'], ['المحتوى', 'ساعة، شاحن، كتيب استعمال']];
 const relatedProducts = [{
   title: 'سماعات بلوتوث صغيرة',
@@ -694,7 +701,7 @@ export const TanjaMolArabicCODProductPage = ({
       <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 bg-transparent px-3 py-3 md:hidden" style={{
         paddingBottom: 'max(14px, env(safe-area-inset-bottom))'
       }}>
-        <div className={`tm-mobile-order-bar pointer-events-auto mx-auto flex items-center gap-2 rounded-lg p-2 transition-all duration-200 ${showStickyOrderBar ? 'max-w-[520px]' : 'max-w-[360px]'}`}>
+        <div className={`tm-mobile-order-bar pointer-events-auto mx-auto flex items-center gap-2 rounded-lg p-2 transition-all duration-200 ${showStickyOrderBar ? 'max-w-[520px]' : 'w-fit'}`}>
           {showStickyOrderBar ? (
             <div className="min-w-0 flex-1">
               <p className="tm-num font-heading text-xl font-black text-[#b45309]">{displayPriceLabel}</p>
@@ -705,11 +712,11 @@ export const TanjaMolArabicCODProductPage = ({
             href={productWhatsAppUrl}
             target="_blank"
             rel="noreferrer"
-            className={`tm-press inline-flex min-h-[52px] items-center justify-center gap-2 rounded-md bg-[#128c7e] px-4 text-sm font-black text-white shadow-[0_16px_34px_-18px_rgba(18,140,126,0.95)] ${showStickyOrderBar ? 'min-w-[82px] shrink-0' : 'w-full'}`}
+            className="tm-press grid size-[52px] shrink-0 place-items-center rounded-full bg-white shadow-[0_16px_34px_-18px_rgba(37,211,102,1)]"
             aria-label={`تواصل واتساب بخصوص ${productTitle}`}
+            title="واتساب"
           >
-            <MessageCircle className="size-5" aria-hidden="true" strokeWidth={2.5} />
-            <span>{showStickyOrderBar ? 'واتساب' : 'تواصل واتساب'}</span>
+            <WhatsAppLogo className="size-12" />
           </a>
           {showStickyOrderBar ? (
             <button className="tm-press tm-order-cta min-h-[52px] min-w-[138px] overflow-hidden rounded-md bg-[#ff9900] px-5 text-sm font-black text-[#131921] shadow-[0_16px_34px_-18px_rgba(255,153,0,0.95)] disabled:cursor-not-allowed disabled:opacity-60" type="button" disabled={isResolvedSoldOut} onClick={scrollToOrderForm}>
@@ -723,11 +730,11 @@ export const TanjaMolArabicCODProductPage = ({
         href={productWhatsAppUrl}
         target="_blank"
         rel="noreferrer"
-        className="tm-press fixed bottom-6 left-6 z-50 hidden size-14 items-center justify-center rounded-full bg-[#128c7e] text-white shadow-[0_18px_38px_-16px_rgba(18,140,126,0.9)] md:inline-flex"
+        className="tm-press fixed bottom-6 left-6 z-50 hidden size-16 items-center justify-center rounded-full bg-white shadow-[0_18px_38px_-16px_rgba(37,211,102,0.95)] md:inline-flex"
         aria-label={`تواصل واتساب بخصوص ${productTitle}`}
         title="واتساب"
       >
-        <MessageCircle className="size-7" aria-hidden="true" strokeWidth={2.5} />
+        <WhatsAppLogo className="size-14" />
       </a>
     </div>;
 };
