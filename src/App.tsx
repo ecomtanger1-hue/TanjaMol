@@ -1071,6 +1071,7 @@ export function App() {
           product={activeProduct}
           products={storefrontProducts}
           categories={activeCategories}
+          settings={settings}
           cartCount={cartCount}
           onOpenCart={() => {
             setSubmittedOrder(null);

@@ -1,9 +1,10 @@
 import { type FormEvent, useEffect, useRef, useState } from 'react';
-import { categories as defaultCategories, categoryRoute, defaultProductDetailsIntro, parseOrderForm, type CartItem, type Category, type OrderDraft, type Product, type ProductVariant } from '../../storefrontRuntime';
+import { MessageCircle } from 'lucide-react';
+import { categories as defaultCategories, categoryRoute, defaultProductDetailsIntro, defaultSettings, parseOrderForm, productRoute, type CartItem, type Category, type OrderDraft, type Product, type ProductVariant, type StoreSettings } from '../../storefrontRuntime';
 import { ProductDetailMedia, ProductDetailRichText, ProductDetailTitle } from './ProductDetailRichText';
 import { ProductCard } from '../storefront/ProductCard';
 import { SiteFooter, SiteHeader } from '../storefront/StorefrontPages';
-import { navigateToRoute } from '../../lib/routing';
+import { navigateToRoute, routeToPath } from '../../lib/routing';
 import { trackInitiateCheckout } from '../../lib/metaPixel';
 import { cleanProductDetails } from '../../lib/productDetails';
 const gallery = [{
@@ -34,6 +35,13 @@ const getPriceFromLabel = (label: string, fallback: number) => {
   return match ? Number(match[0]) : fallback;
 };
 const formatPriceLabel = (value: number) => `${Math.max(0, value).toLocaleString('fr-MA')} درهم`;
+const cleanPhoneNumber = (value: string) => value.replace(/[^\d]/g, '');
+const buildProductWhatsAppUrl = (title: string, slug: string, settings: StoreSettings) => {
+  const phone = cleanPhoneNumber(settings.whatsappNumber || defaultSettings.whatsappNumber) || defaultSettings.whatsappNumber;
+  const productUrl = `${window.location.origin}${routeToPath(productRoute(slug))}`;
+  const message = `Hi, I want to know more about ${title}.\n${productUrl}`;
+  return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+};
 const specs = [['الشحن', 'من 1 إلى 2 أيام داخل طنجة'], ['الدفع', 'الدفع عند الاستلام'], ['الضمان', 'استبدال خلال 7 أيام'], ['المحتوى', 'ساعة، شاحن، كتيب استعمال']];
 const relatedProducts = [{
   title: 'سماعات بلوتوث صغيرة',
@@ -60,6 +68,7 @@ type ProductPageProps = {
   product?: Product;
   products?: Product[];
   categories: Category[];
+  settings: StoreSettings;
 };
 
 export const TanjaMolArabicCODProductPage = ({
@@ -74,6 +83,7 @@ export const TanjaMolArabicCODProductPage = ({
   product,
   products = [],
   categories,
+  settings,
 }: ProductPageProps) => {
   const [selectedVariantIds, setSelectedVariantIds] = useState<Record<string, string>>({});
   const [selectedBundleOfferIds, setSelectedBundleOfferIds] = useState<string[]>([]);
@@ -87,6 +97,8 @@ export const TanjaMolArabicCODProductPage = ({
   const productPriceLabel = product?.priceLabel ?? '249 درهم';
   const productOldPrice = product?.oldPrice?.trim() ?? '360 درهم';
   const productBadge = product?.badge ?? 'متوفر الآن';
+  const productSlug = product?.slug ?? 'smart-watch';
+  const productWhatsAppUrl = buildProductWhatsAppUrl(productTitle, productSlug, settings);
   const productGallery = (product?.gallery?.length ? product.gallery : gallery.map(image => image.src)).map((src, index) => ({
     src,
     alt: index === 0 ? productTitle : `${productTitle} - ${index + 1}`,
@@ -366,7 +378,7 @@ export const TanjaMolArabicCODProductPage = ({
     };
   }, [product?.id]);
 
-  return <div dir="rtl" className={`min-h-screen w-full overflow-x-hidden bg-[#f7f5ef] pt-16 text-[#17201b] ${showStickyOrderBar ? 'pb-[calc(96px+env(safe-area-inset-bottom))] md:pb-0' : ''}`}>
+  return <div dir="rtl" className={`min-h-screen w-full overflow-x-hidden bg-[#f7f5ef] pt-16 text-[#17201b] ${showStickyOrderBar ? 'pb-[calc(104px+env(safe-area-inset-bottom))]' : 'pb-[calc(86px+env(safe-area-inset-bottom))]'} md:pb-0`}>
     <SiteHeader cartCount={cartCount} onNavigate={navigate} onOpenCart={onOpenCart} onOpenSearch={onOpenSearch} />
 
       <main>
@@ -679,20 +691,43 @@ export const TanjaMolArabicCODProductPage = ({
 
       <SiteFooter categories={categoryList} onNavigate={navigateToRoute} />
 
-      {showStickyOrderBar ? (
-        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 bg-transparent px-3 py-3 md:hidden" style={{
-          paddingBottom: 'max(14px, env(safe-area-inset-bottom))'
-        }}>
-          <div className="tm-mobile-order-bar pointer-events-auto mx-auto flex max-w-[520px] items-center gap-3 rounded-lg p-2">
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 bg-transparent px-3 py-3 md:hidden" style={{
+        paddingBottom: 'max(14px, env(safe-area-inset-bottom))'
+      }}>
+        <div className={`tm-mobile-order-bar pointer-events-auto mx-auto flex items-center gap-2 rounded-lg p-2 transition-all duration-200 ${showStickyOrderBar ? 'max-w-[520px]' : 'max-w-[360px]'}`}>
+          {showStickyOrderBar ? (
             <div className="min-w-0 flex-1">
               <p className="tm-num font-heading text-xl font-black text-[#b45309]">{displayPriceLabel}</p>
               <p className="truncate text-[11px] font-extrabold text-[#68736c]">{'\u0627\u0644\u062f\u0641\u0639 \u0639\u0646\u062f \u0627\u0644\u0627\u0633\u062a\u0644\u0627\u0645'}</p>
             </div>
+          ) : null}
+          <a
+            href={productWhatsAppUrl}
+            target="_blank"
+            rel="noreferrer"
+            className={`tm-press inline-flex min-h-[52px] items-center justify-center gap-2 rounded-md bg-[#128c7e] px-4 text-sm font-black text-white shadow-[0_16px_34px_-18px_rgba(18,140,126,0.95)] ${showStickyOrderBar ? 'min-w-[82px] shrink-0' : 'w-full'}`}
+            aria-label={`تواصل واتساب بخصوص ${productTitle}`}
+          >
+            <MessageCircle className="size-5" aria-hidden="true" strokeWidth={2.5} />
+            <span>{showStickyOrderBar ? 'واتساب' : 'تواصل واتساب'}</span>
+          </a>
+          {showStickyOrderBar ? (
             <button className="tm-press tm-order-cta min-h-[52px] min-w-[138px] overflow-hidden rounded-md bg-[#ff9900] px-5 text-sm font-black text-[#131921] shadow-[0_16px_34px_-18px_rgba(255,153,0,0.95)] disabled:cursor-not-allowed disabled:opacity-60" type="button" disabled={isResolvedSoldOut} onClick={scrollToOrderForm}>
               {isResolvedSoldOut ? '\u063a\u064a\u0631 \u0645\u062a\u0648\u0641\u0631' : '\u0627\u0637\u0644\u0628 \u0627\u0644\u0622\u0646'}
             </button>
-          </div>
+          ) : null}
         </div>
-      ) : null}
+      </div>
+
+      <a
+        href={productWhatsAppUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="tm-press fixed bottom-6 left-6 z-50 hidden size-14 items-center justify-center rounded-full bg-[#128c7e] text-white shadow-[0_18px_38px_-16px_rgba(18,140,126,0.9)] md:inline-flex"
+        aria-label={`تواصل واتساب بخصوص ${productTitle}`}
+        title="واتساب"
+      >
+        <MessageCircle className="size-7" aria-hidden="true" strokeWidth={2.5} />
+      </a>
     </div>;
 };
