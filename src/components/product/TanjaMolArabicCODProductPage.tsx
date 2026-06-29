@@ -1,5 +1,5 @@
 import { type FormEvent, type MouseEvent, useEffect, useRef, useState } from 'react';
-import { buildWhatsAppOrderUrl, categories as defaultCategories, categoryRoute, defaultProductDetailsIntro, defaultSettings, parseOrderForm, productRoute, type CartItem, type Category, type OrderDraft, type Product, type ProductVariant, type StoreSettings, type StoredOrder } from '../../storefrontRuntime';
+import { buildWhatsAppOrderUrl, categories as defaultCategories, categoryRoute, defaultProductDetailsIntro, defaultSettings, orderTotal, parseOrderForm, productRoute, type CartItem, type Category, type OrderDraft, type Product, type ProductVariant, type StoreSettings, type StoredOrder } from '../../storefrontRuntime';
 import { ProductDetailMedia, ProductDetailRichText, ProductDetailTitle } from './ProductDetailRichText';
 import { ProductCard } from '../storefront/ProductCard';
 import { SiteFooter, SiteHeader } from '../storefront/StorefrontPages';
@@ -71,6 +71,7 @@ type ProductPageProps = {
   onOrderProduct?: (item: CartItem) => void;
   onOpenProduct?: (slug: string) => void;
   onPlaceOrder: (draft: OrderDraft) => Promise<StoredOrder | null>;
+  onPlacePreparedOrder: (order: StoredOrder) => Promise<StoredOrder | null>;
   isOrderSubmitting?: boolean;
   product?: Product;
   products?: Product[];
@@ -86,6 +87,7 @@ export const TanjaMolArabicCODProductPage = ({
   onOrderProduct,
   onOpenProduct,
   onPlaceOrder,
+  onPlacePreparedOrder,
   isOrderSubmitting = false,
   product,
   products = [],
@@ -353,7 +355,7 @@ export const TanjaMolArabicCODProductPage = ({
     }
   };
 
-  const submitOrderToWhatsApp = async (event: MouseEvent<HTMLAnchorElement>) => {
+  const submitOrderToWhatsApp = (event: MouseEvent<HTMLAnchorElement>) => {
     const form = orderFormRef.current;
     if (!form || isResolvedSoldOut) return;
 
@@ -365,37 +367,34 @@ export const TanjaMolArabicCODProductPage = ({
     const hasAnyOrderDetail = Boolean(name || phone || address || note);
     if (!hasAnyOrderDetail) return;
 
-    event.preventDefault();
-    if (isOrderSubmitting || whatsappOrderSubmittingRef.current) return;
-    if (!form.reportValidity()) return;
-
-    const whatsappWindow = window.open('', '_blank');
-    whatsappOrderSubmittingRef.current = true;
-    try {
-      const order = await onPlaceOrder({
-        name,
-        phone,
-        address,
-        note,
-        source: 'product-page',
-        items: [orderItem],
-      });
-
-      if (!order) {
-        whatsappWindow?.close();
-        return;
-      }
-
-      form.reset();
-      const orderWhatsAppUrl = buildWhatsAppOrderUrl(order, settings);
-      if (whatsappWindow) {
-        whatsappWindow.location.href = orderWhatsAppUrl;
-      } else {
-        window.location.href = orderWhatsAppUrl;
-      }
-    } finally {
-      whatsappOrderSubmittingRef.current = false;
+    if (isOrderSubmitting || whatsappOrderSubmittingRef.current) {
+      event.preventDefault();
+      return;
     }
+    if (!form.reportValidity()) {
+      event.preventDefault();
+      return;
+    }
+
+    const order: StoredOrder = {
+      name,
+      phone,
+      address,
+      note,
+      source: 'product-page',
+      items: [orderItem],
+      id: `TM-${Date.now().toString().slice(-6)}`,
+      createdAt: new Date().toISOString(),
+      status: 'new',
+      total: orderTotal([orderItem]),
+    };
+    event.currentTarget.href = buildWhatsAppOrderUrl(order, settings);
+    whatsappOrderSubmittingRef.current = true;
+    void onPlacePreparedOrder(order).then(savedOrder => {
+      if (savedOrder) form.reset();
+    }).finally(() => {
+      whatsappOrderSubmittingRef.current = false;
+    });
   };
 
   const scrollToOrderForm = () => {

@@ -34,6 +34,7 @@ import { getCurrentRoute, replaceLegacyHashRoute, routeToPath } from './lib/rout
 import { trackAddToCart, trackInitiateCheckout, trackPageView, trackPurchase, trackSearch, trackViewContent } from './lib/metaPixel';
 import { TanjaMallLogo } from './components/brand/TanjaMallLogo';
 import { hasProductDetailContent } from './lib/productDetails';
+import { saveOrderToSupabase } from './lib/supabaseOrders';
 
 const TanjaMolAddProductPage = lazy(() => import('./components/magicpath/tanja-mol-add-product-page/TanjaMolAddProductPage').then(module => ({
   default: module.TanjaMolAddProductPage,
@@ -530,26 +531,18 @@ export function App() {
     setCart(current => current.filter(item => item.id !== id || item.variant !== variant));
   };
 
-  const submitOrderDraft = async (draft: OrderDraft) => {
-    if (!draft.items.length || isOrderSubmitting) return null;
+  const saveSubmittedOrder = async (order: StoredOrder) => {
+    if (!order.items.length || isOrderSubmitting) return null;
 
-    const order: StoredOrder = {
-      ...draft,
-      id: `TM-${Date.now().toString().slice(-6)}`,
-      createdAt: new Date().toISOString(),
-      status: 'new',
-      total: orderTotal(draft.items),
-    };
     setIsOrderSubmitting(true);
     try {
-      const { saveOrderToSupabase } = await import('./lib/supabaseOrders');
       await saveOrderToSupabase(order);
 
       const nextOrders = [order, ...readStored<StoredOrder[]>(ORDERS_KEY, [])];
       localStorage.setItem(ORDERS_KEY, JSON.stringify(nextOrders));
       setOrders(nextOrders);
 
-      if (draft.source === 'cart') setCart([]);
+      if (order.source === 'cart') setCart([]);
       setDirectItem(null);
       setSubmittedOrder(order);
       setIsCartOpen(true);
@@ -565,9 +558,27 @@ export function App() {
     }
   };
 
+  const submitOrderDraft = async (draft: OrderDraft) => {
+    if (!draft.items.length || isOrderSubmitting) return null;
+
+    const order: StoredOrder = {
+      ...draft,
+      id: `TM-${Date.now().toString().slice(-6)}`,
+      createdAt: new Date().toISOString(),
+      status: 'new',
+      total: orderTotal(draft.items),
+    };
+    return saveSubmittedOrder(order);
+  };
+
   const placeOrder = (draft: OrderDraft) => {
     trackInitiateCheckout(draft.items);
     return submitOrderDraft(draft);
+  };
+
+  const placePreparedOrder = (order: StoredOrder) => {
+    trackInitiateCheckout(order.items);
+    return saveSubmittedOrder(order);
   };
 
   const placeOrderFromForm = (items: CartItem[], source: string, event: FormEvent<HTMLFormElement>) => {
@@ -1083,6 +1094,7 @@ export function App() {
           onOrderProduct={orderProduct}
           onOpenProduct={(slug) => navigate(productRoute(slug))}
           onPlaceOrder={placeOrder}
+          onPlacePreparedOrder={placePreparedOrder}
           isOrderSubmitting={isOrderSubmitting}
         />
       );
