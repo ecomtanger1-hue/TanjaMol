@@ -8,7 +8,11 @@
     "encoding:check": "node scripts/check-arabic-encoding.mjs",
     "build": "npm run encoding:check && tsc -b && vite build",
     "preview": "vite preview --host 127.0.0.1",
-    "storage:check": "node scripts/check-supabase-storage.mjs"
+    "storage:check": "node scripts/check-supabase-storage.mjs",
+    "r2:setup": "node scripts/setup-cloudflare-r2.mjs",
+    "r2:migrate:dry-run": "node scripts/migrate-images-to-r2.mjs",
+    "r2:migrate": "node scripts/migrate-images-to-r2.mjs --live",
+    "r2:rollback": "node scripts/rollback-r2-image-migration.mjs"
   },
   "engines": {
     "node": ">=20.19.0"
@@ -36,6 +40,7 @@
   "devDependencies": {
     "@types/node": "^25.9.3",
     "@types/react": "^19.2.15",
-    "@types/react-dom": "^19.2.3"
+    "@types/react-dom": "^19.2.3",
+    "sharp": "^0.35.2"
   }
 }

@@ -3,6 +3,7 @@ import { supabase } from './supabase';
 const PRODUCT_IMAGES_BUCKET = 'product-images';
 const MAX_IMAGE_EDGE = 1600;
 const IMAGE_QUALITY = 0.82;
+const r2UploadEndpoint = import.meta.env.VITE_R2_UPLOAD_ENDPOINT as string | undefined;
 
 function uploadError(message: string, cause?: unknown) {
   return new Error(`Supabase Storage upload failed: ${message}`, { cause });
@@ -85,6 +86,31 @@ async function compressImageForUpload(file: File) {
   }
 }
 
+async function uploadImageToR2(file: File, folder: string, accessToken: string) {
+  if (!r2UploadEndpoint) return null;
+
+  const formData = new FormData();
+  formData.append('folder', folder);
+  formData.append('file', file);
+
+  const response = await fetch(r2UploadEndpoint, {
+    method: 'POST',
+    headers: {
+      authorization: `Bearer ${accessToken}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const message = await response.text().catch(() => '');
+    throw uploadError(`Cloudflare R2 upload failed (${response.status}). ${message}`.trim());
+  }
+
+  const data = await response.json() as { url?: string };
+  if (!data.url) throw uploadError('Cloudflare R2 upload did not return a URL.');
+  return data.url;
+}
+
 export async function uploadProductImages(files: File[], folder = 'product') {
   if (!files.length) return [];
   if (!supabase) throw uploadError('Supabase is not configured.');
@@ -98,6 +124,18 @@ export async function uploadProductImages(files: File[], folder = 'product') {
 
   for (const [index, file] of files.entries()) {
     const uploadFile = await compressImageForUpload(file);
+    if (r2UploadEndpoint && sessionData.session.access_token) {
+      try {
+        const r2Url = await uploadImageToR2(uploadFile, productFolder, sessionData.session.access_token);
+        if (r2Url) {
+          urls.push(r2Url);
+          continue;
+        }
+      } catch (error) {
+        console.warn('Cloudflare R2 upload failed. Falling back to Supabase Storage.', error);
+      }
+    }
+
     const path = `${productFolder}/${safeFileName(uploadFile, index)}`;
     const { error } = await supabase.storage
       .from(PRODUCT_IMAGES_BUCKET)
