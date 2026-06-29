@@ -1,5 +1,5 @@
-import { type FormEvent, useEffect, useRef, useState } from 'react';
-import { categories as defaultCategories, categoryRoute, defaultProductDetailsIntro, defaultSettings, parseOrderForm, productRoute, type CartItem, type Category, type OrderDraft, type Product, type ProductVariant, type StoreSettings } from '../../storefrontRuntime';
+import { type FormEvent, type MouseEvent, useEffect, useRef, useState } from 'react';
+import { buildWhatsAppOrderUrl, categories as defaultCategories, categoryRoute, defaultProductDetailsIntro, defaultSettings, parseOrderForm, productRoute, type CartItem, type Category, type OrderDraft, type Product, type ProductVariant, type StoreSettings, type StoredOrder } from '../../storefrontRuntime';
 import { ProductDetailMedia, ProductDetailRichText, ProductDetailTitle } from './ProductDetailRichText';
 import { ProductCard } from '../storefront/ProductCard';
 import { SiteFooter, SiteHeader } from '../storefront/StorefrontPages';
@@ -70,7 +70,7 @@ type ProductPageProps = {
   onAddToCart: (item: CartItem) => void;
   onOrderProduct?: (item: CartItem) => void;
   onOpenProduct?: (slug: string) => void;
-  onPlaceOrder: (draft: OrderDraft) => Promise<unknown>;
+  onPlaceOrder: (draft: OrderDraft) => Promise<StoredOrder | null>;
   isOrderSubmitting?: boolean;
   product?: Product;
   products?: Product[];
@@ -98,6 +98,8 @@ export const TanjaMolArabicCODProductPage = ({
   const [selectedImage, setSelectedImage] = useState(0);
   const [showStickyOrderBar, setShowStickyOrderBar] = useState(false);
   const mobileGalleryRef = useRef<HTMLDivElement>(null);
+  const orderFormRef = useRef<HTMLFormElement>(null);
+  const whatsappOrderSubmittingRef = useRef(false);
   const productTitle = product?.title ?? 'ساعة ذكية مقاومة للماء ببطارية طويلة';
   const productCategory = product?.category ?? 'الإلكترونيات';
   const productDescription = product?.description ?? 'تتبع النشاط والمكالمات والتنبيهات اليومية، مناسبة للاستعمال في الخدمة، الرياضة، والتنقل داخل المدينة.';
@@ -351,6 +353,51 @@ export const TanjaMolArabicCODProductPage = ({
     }
   };
 
+  const submitOrderToWhatsApp = async (event: MouseEvent<HTMLAnchorElement>) => {
+    const form = orderFormRef.current;
+    if (!form || isResolvedSoldOut) return;
+
+    const formData = new FormData(form);
+    const name = String(formData.get('name') || '').trim();
+    const phone = String(formData.get('phone') || '').trim();
+    const address = String(formData.get('address') || '').trim();
+    const note = String(formData.get('note') || '').trim();
+    const hasAnyOrderDetail = Boolean(name || phone || address || note);
+    if (!hasAnyOrderDetail) return;
+
+    event.preventDefault();
+    if (isOrderSubmitting || whatsappOrderSubmittingRef.current) return;
+    if (!form.reportValidity()) return;
+
+    const whatsappWindow = window.open('', '_blank');
+    whatsappOrderSubmittingRef.current = true;
+    try {
+      const order = await onPlaceOrder({
+        name,
+        phone,
+        address,
+        note,
+        source: 'product-page-whatsapp',
+        items: [orderItem],
+      });
+
+      if (!order) {
+        whatsappWindow?.close();
+        return;
+      }
+
+      form.reset();
+      const orderWhatsAppUrl = buildWhatsAppOrderUrl(order, settings);
+      if (whatsappWindow) {
+        whatsappWindow.location.href = orderWhatsAppUrl;
+      } else {
+        window.location.href = orderWhatsAppUrl;
+      }
+    } finally {
+      whatsappOrderSubmittingRef.current = false;
+    }
+  };
+
   const scrollToOrderForm = () => {
     trackInitiateCheckout([orderItem]);
     const target = document.getElementById('product-order-form');
@@ -539,7 +586,7 @@ export const TanjaMolArabicCODProductPage = ({
                 </div>
               </div>
 
-              <form id="product-order-details" className="tm-panel-white mt-4 grid scroll-mt-24 gap-3 p-3" onSubmit={submitOrder}>
+              <form id="product-order-details" ref={orderFormRef} className="tm-panel-white mt-4 grid scroll-mt-24 gap-3 p-3" onSubmit={submitOrder}>
                   <div>
                     <p className="tm-modal-title">معلومات الطلب</p>
                     <p className="tm-small-copy tm-text-muted mt-1">نؤكد التفاصيل بالاتصال أو واتساب قبل الإرسال. لا يوجد دفع مسبق.</p>
@@ -719,6 +766,7 @@ export const TanjaMolArabicCODProductPage = ({
         target="_blank"
         rel="noreferrer"
         className="tm-press fixed left-3 z-50 grid size-14 place-items-center md:hidden"
+        onClick={submitOrderToWhatsApp}
         style={{
           bottom: 'max(14px, env(safe-area-inset-bottom))'
         }}
@@ -733,6 +781,7 @@ export const TanjaMolArabicCODProductPage = ({
         target="_blank"
         rel="noreferrer"
         className="tm-press fixed bottom-6 left-6 z-50 hidden size-16 items-center justify-center md:inline-flex"
+        onClick={submitOrderToWhatsApp}
         aria-label={`تواصل واتساب بخصوص ${productTitle}`}
         title="واتساب"
       >
