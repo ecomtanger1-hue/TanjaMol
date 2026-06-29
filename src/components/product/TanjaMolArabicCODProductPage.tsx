@@ -377,7 +377,7 @@ export const TanjaMolArabicCODProductPage = ({
         phone,
         address,
         note,
-        source: 'product-page-whatsapp',
+        source: 'product-page',
         items: [orderItem],
       });
 
