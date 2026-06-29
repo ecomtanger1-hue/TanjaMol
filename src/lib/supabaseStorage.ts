@@ -1,6 +1,8 @@
 import { supabase } from './supabase';
 
 const PRODUCT_IMAGES_BUCKET = 'product-images';
+const MAX_IMAGE_EDGE = 1600;
+const IMAGE_QUALITY = 0.82;
 
 function uploadError(message: string, cause?: unknown) {
   return new Error(`Supabase Storage upload failed: ${message}`, { cause });
@@ -17,8 +19,70 @@ function safeSegment(value: string) {
 }
 
 function safeFileName(file: File, index: number) {
-  const extension = (file.name.includes('.') ? file.name.split('.').pop() : 'jpg')?.replace(/[^a-z0-9]/gi, '') || 'jpg';
+  const extension = mimeExtension(file.type)
+    || (file.name.includes('.') ? file.name.split('.').pop() : 'jpg')?.replace(/[^a-z0-9]/gi, '')
+    || 'jpg';
   return `${Date.now()}-${index + 1}.${extension}`;
+}
+
+function mimeExtension(type: string) {
+  if (type === 'image/webp') return 'webp';
+  if (type === 'image/jpeg') return 'jpg';
+  if (type === 'image/png') return 'png';
+  if (type === 'image/gif') return 'gif';
+  return '';
+}
+
+function canCompressImage(file: File) {
+  if (!file.type.startsWith('image/')) return false;
+  if (file.type === 'image/gif' || file.type === 'image/svg+xml') return false;
+  return typeof createImageBitmap === 'function' && typeof document !== 'undefined';
+}
+
+function canvasToBlob(canvas: HTMLCanvasElement, type: string, quality: number) {
+  return new Promise<Blob | null>(resolve => {
+    canvas.toBlob(resolve, type, quality);
+  });
+}
+
+function compressedImageName(file: File, type: string) {
+  const extension = mimeExtension(type) || 'webp';
+  const baseName = file.name.replace(/\.[^.]+$/, '') || 'image';
+  return `${baseName}.${extension}`;
+}
+
+async function compressImageForUpload(file: File) {
+  if (!canCompressImage(file)) return file;
+
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, MAX_IMAGE_EDGE / bitmap.width, MAX_IMAGE_EDGE / bitmap.height);
+    const width = Math.max(1, Math.round(bitmap.width * scale));
+    const height = Math.max(1, Math.round(bitmap.height * scale));
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+
+    const context = canvas.getContext('2d', { alpha: true });
+    if (!context) {
+      bitmap.close();
+      return file;
+    }
+
+    context.drawImage(bitmap, 0, 0, width, height);
+    bitmap.close();
+
+    const webpBlob = await canvasToBlob(canvas, 'image/webp', IMAGE_QUALITY);
+    const fallbackBlob = webpBlob || await canvasToBlob(canvas, 'image/jpeg', IMAGE_QUALITY);
+    if (!fallbackBlob || fallbackBlob.size >= file.size) return file;
+
+    return new File([fallbackBlob], compressedImageName(file, fallbackBlob.type), {
+      type: fallbackBlob.type,
+      lastModified: file.lastModified,
+    });
+  } catch {
+    return file;
+  }
 }
 
 export async function uploadProductImages(files: File[], folder = 'product') {
@@ -33,12 +97,13 @@ export async function uploadProductImages(files: File[], folder = 'product') {
   const urls: string[] = [];
 
   for (const [index, file] of files.entries()) {
-    const path = `${productFolder}/${safeFileName(file, index)}`;
+    const uploadFile = await compressImageForUpload(file);
+    const path = `${productFolder}/${safeFileName(uploadFile, index)}`;
     const { error } = await supabase.storage
       .from(PRODUCT_IMAGES_BUCKET)
-      .upload(path, file, {
+      .upload(path, uploadFile, {
         cacheControl: '31536000',
-        contentType: file.type || undefined,
+        contentType: uploadFile.type || undefined,
         upsert: false,
       });
 
