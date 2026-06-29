@@ -3,7 +3,8 @@ import { supabase } from './supabase';
 const PRODUCT_IMAGES_BUCKET = 'product-images';
 const MAX_IMAGE_EDGE = 1600;
 const IMAGE_QUALITY = 0.82;
-const r2UploadEndpoint = import.meta.env.VITE_R2_UPLOAD_ENDPOINT as string | undefined;
+const DEFAULT_R2_UPLOAD_ENDPOINT = 'https://tanjamall-r2-upload.ecomtanger1.workers.dev/upload';
+const r2UploadEndpoint = (import.meta.env.VITE_R2_UPLOAD_ENDPOINT as string | undefined) || DEFAULT_R2_UPLOAD_ENDPOINT;
 
 function uploadError(message: string, cause?: unknown) {
   return new Error(`Supabase Storage upload failed: ${message}`, { cause });
