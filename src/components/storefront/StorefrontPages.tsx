@@ -750,6 +750,7 @@ const orderStatusMeta: Record<OrderStatus, { label: string; tone: string }> = {
   confirmed: { label: 'مؤكد', tone: 'bg-[#e9f6ef] text-[#17623a]' },
   delivery: { label: 'في التوصيل', tone: 'bg-[#eaf1ff] text-[#22559c]' },
   done: { label: 'مكتمل', tone: 'bg-[#eef3ef] text-[#65716a]' },
+  canceled: { label: 'ملغي', tone: 'bg-[#fff1f2] text-[#be123c]' },
 };
 
 const orderStatusOptions: Array<{ value: OrderStatus; label: string }> = [
@@ -758,6 +759,7 @@ const orderStatusOptions: Array<{ value: OrderStatus; label: string }> = [
   { value: 'confirmed', label: 'مؤكد' },
   { value: 'delivery', label: 'في التوصيل' },
   { value: 'done', label: 'مكتمل' },
+  { value: 'canceled', label: 'ملغي' },
 ];
 
 const orderFilters: Array<{ value: OrderFilter; label: string }> = [
@@ -767,6 +769,7 @@ const orderFilters: Array<{ value: OrderFilter; label: string }> = [
   { value: 'confirmed', label: 'مؤكدة' },
   { value: 'delivery', label: 'في التوصيل' },
   { value: 'done', label: 'مكتملة' },
+  { value: 'canceled', label: 'ملغاة' },
 ];
 
 function orderDate(order: StoredOrder) {
@@ -822,6 +825,7 @@ function customerWhatsappMessage(order: StoredOrder, settings: StoreSettings) {
     confirmed: `تم تأكيد طلبك رقم ${order.id}. سنحضره للتوصيل ونتواصل معك إذا احتجنا أي توضيح.`,
     delivery: `طلبك رقم ${order.id} في طريقه للتوصيل. المرجو إبقاء الهاتف قريبا منك.`,
     done: `نتمنى أن يكون طلبك رقم ${order.id} وصل بخير. شكرا لثقتك في ${storeName}.`,
+    canceled: `تم إلغاء طلبك رقم ${order.id}. شكرا لتواصلك معنا، ومرحبا بك في أي وقت.`,
   };
   const details = [
     greeting,
@@ -936,7 +940,7 @@ export function AdminOrdersPage({
   const pendingOrders = orders.filter(order => order.status === 'new' || order.status === 'whatsapp');
   const todayOrders = orders.filter(order => new Date(order.createdAt).toDateString() === new Date().toDateString());
   const confirmedOrders = orders.filter(order => order.status === 'confirmed' || order.status === 'delivery');
-  const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
+  const totalRevenue = orders.filter(order => order.status !== 'canceled').reduce((sum, order) => sum + order.total, 0);
 
   const visibleOrders = useMemo(() => {
     const filtered = orders.filter(order => {

@@ -139,11 +139,17 @@ export type OrderDraft = {
 export type StoredOrder = OrderDraft & {
   id: string;
   createdAt: string;
-  status: 'new' | 'whatsapp' | 'confirmed' | 'delivery' | 'done';
-  customerMessageStatus?: 'new' | 'whatsapp' | 'confirmed' | 'delivery' | 'done';
+  status: 'new' | 'whatsapp' | 'confirmed' | 'delivery' | 'done' | 'canceled';
+  customerMessageStatus?: 'new' | 'whatsapp' | 'confirmed' | 'delivery' | 'done' | 'canceled';
   customerMessageSentAt?: string;
   total: number;
 };
+
+export function createOrderNumber() {
+  const timePart = Date.now().toString(36).toUpperCase();
+  const randomPart = Math.random().toString(36).slice(2, 6).toUpperCase();
+  return `TM-${timePart}-${randomPart}`;
+}
 
 export type StoreSettings = {
   storeName: string;

@@ -9,6 +9,9 @@ type MetaPixelEvent =
   | 'Search';
 
 type MetaPixelParams = Record<string, string | number | boolean | string[] | Array<Record<string, string | number>>>;
+type MetaPixelOptions = {
+  eventID?: string;
+};
 
 type Fbq = {
   (...args: unknown[]): void;
@@ -30,6 +33,7 @@ declare global {
 
 const META_PIXEL_ID = '1024192293463169';
 const CURRENCY = 'MAD';
+const PURCHASE_EVENT_IDS_KEY = 'tanjamall.meta.purchaseEventIds.v1';
 
 let initializedPixelId = '';
 let lastPageView = '';
@@ -84,9 +88,32 @@ function ensureMetaPixel() {
   return true;
 }
 
-function track(event: MetaPixelEvent, params?: MetaPixelParams) {
+function track(event: MetaPixelEvent, params?: MetaPixelParams, options?: MetaPixelOptions) {
   if (!ensureMetaPixel()) return;
-  window.fbq?.('track', event, params);
+  window.fbq?.('track', event, params, options);
+}
+
+function readTrackedPurchaseEventIds() {
+  try {
+    const raw = window.localStorage.getItem(PURCHASE_EVENT_IDS_KEY);
+    const value = raw ? JSON.parse(raw) as unknown : [];
+    return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function hasTrackedPurchaseEvent(eventId: string) {
+  return readTrackedPurchaseEventIds().includes(eventId);
+}
+
+function rememberTrackedPurchaseEvent(eventId: string) {
+  try {
+    const next = [eventId, ...readTrackedPurchaseEventIds().filter(item => item !== eventId)].slice(0, 50);
+    window.localStorage.setItem(PURCHASE_EVENT_IDS_KEY, JSON.stringify(next));
+  } catch {
+    // Tracking should never block the order flow.
+  }
 }
 
 function cartContents(items: CartItem[]) {
@@ -159,14 +186,28 @@ export function trackInitiateCheckout(items: CartItem[]) {
 }
 
 export function trackPurchase(order: StoredOrder) {
+  const eventID = `purchase-${order.id}`;
+  if (hasTrackedPurchaseEvent(eventID)) return;
+
   track('Purchase', {
     content_ids: order.items.map(item => item.id),
     content_type: 'product',
     contents: cartContents(order.items),
     currency: CURRENCY,
     num_items: order.items.reduce((sum, item) => sum + item.quantity, 0),
+    order_id: order.id,
     value: order.total,
-  });
+  }, { eventID });
+  rememberTrackedPurchaseEvent(eventID);
+}
+
+export function clearTrackedPurchaseForTesting(orderId: string) {
+  const eventID = `purchase-${orderId}`;
+  try {
+    window.localStorage.setItem(PURCHASE_EVENT_IDS_KEY, JSON.stringify(readTrackedPurchaseEventIds().filter(item => item !== eventID)));
+  } catch {
+    // Testing helper only.
+  }
 }
 
 export function trackSearch(query: string) {

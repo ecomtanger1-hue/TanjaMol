@@ -12,6 +12,7 @@ import {
 import {
   cartItemFromProduct,
   categories as defaultCategories,
+  createOrderNumber,
   defaultSettings,
   getStoreCategories,
   orderTotal,
@@ -563,7 +564,7 @@ export function App() {
 
     const order: StoredOrder = {
       ...draft,
-      id: `TM-${Date.now().toString().slice(-6)}`,
+      id: createOrderNumber(),
       createdAt: new Date().toISOString(),
       status: 'new',
       total: orderTotal(draft.items),

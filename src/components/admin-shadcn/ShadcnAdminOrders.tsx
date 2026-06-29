@@ -18,6 +18,7 @@ const statusLabels: Record<OrderStatus, string> = {
   confirmed: 'مؤكد',
   delivery: 'في التوصيل',
   done: 'مكتمل',
+  canceled: 'ملغي',
 };
 
 const statusStyles: Record<OrderStatus, string> = {
@@ -26,6 +27,7 @@ const statusStyles: Record<OrderStatus, string> = {
   confirmed: 'border-emerald-400/30 bg-emerald-500/15 text-emerald-200',
   delivery: 'border-violet-400/30 bg-violet-500/15 text-violet-200',
   done: 'border-zinc-500/30 bg-zinc-500/15 text-zinc-200',
+  canceled: 'border-red-400/30 bg-red-500/15 text-red-200',
 };
 
 function cleanPhone(phone: string) {
@@ -157,6 +159,7 @@ function OrderStatusSelect({
       <NativeSelectOption value="confirmed">مؤكد</NativeSelectOption>
       <NativeSelectOption value="delivery">في التوصيل</NativeSelectOption>
       <NativeSelectOption value="done">مكتمل</NativeSelectOption>
+      <NativeSelectOption value="canceled">ملغي</NativeSelectOption>
     </NativeSelect>
   );
 }
@@ -319,8 +322,8 @@ export function ShadcnAdminOrdersPage({ orders, settings, route, onNavigate, onU
 
   const pendingCount = orders.filter(order => order.status === 'new' || order.status === 'whatsapp').length;
   const deliveryCount = orders.filter(order => order.status === 'delivery').length;
-  const revenue = orders.filter(order => order.status !== 'done').reduce((sum, order) => sum + order.total, 0);
-  const returnsCount = 0;
+  const revenue = orders.filter(order => order.status !== 'done' && order.status !== 'canceled').reduce((sum, order) => sum + order.total, 0);
+  const canceledCount = orders.filter(order => order.status === 'canceled').length;
 
   return (
     <ShadcnAdminShell
@@ -333,7 +336,7 @@ export function ShadcnAdminOrdersPage({ orders, settings, route, onNavigate, onU
           { label: 'قيد التأكيد', value: pendingCount.toLocaleString('ar-MA'), emphasis: true },
           { label: 'في التوصيل', value: deliveryCount.toLocaleString('ar-MA') },
           { label: 'مفتوحة', value: formatMoney(revenue) },
-          { label: 'المرتجعات', value: returnsCount.toLocaleString('ar-MA') },
+          { label: 'ملغاة', value: canceledCount.toLocaleString('ar-MA') },
         ].map((metric, index) => (
           <div key={metric.label} className={`min-w-0 px-3 py-2.5 ${index % 2 ? 'border-r border-white/10' : ''} ${index > 1 ? 'border-t border-white/10 lg:border-t-0' : ''} lg:border-r lg:border-white/10 lg:last:border-r-0`}>
             <p className="truncate text-[11px] font-bold text-zinc-500 sm:text-xs">{metric.label}</p>
@@ -350,6 +353,7 @@ export function ShadcnAdminOrdersPage({ orders, settings, route, onNavigate, onU
           <NativeSelectOption value="confirmed">مؤكد</NativeSelectOption>
           <NativeSelectOption value="delivery">في التوصيل</NativeSelectOption>
           <NativeSelectOption value="done">مكتمل</NativeSelectOption>
+          <NativeSelectOption value="canceled">ملغي</NativeSelectOption>
         </NativeSelect>
         <div className="relative">
           <Button

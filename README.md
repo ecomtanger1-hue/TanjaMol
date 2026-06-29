@@ -22,6 +22,10 @@ npm.cmd run build
 npm.cmd run preview
 ```
 
+## Product Listing Guide
+
+Use `PRODUCT_LISTING_AGENT_GUIDE.md` when preparing new products for the admin dashboard. It maps the exact website fields, Arabic copy rules, media pack requirements, variants, reviews, and final quality checks.
+
 ## Meta Pixel
 
 Current live Meta Pixel dataset ID:

@@ -1,5 +1,5 @@
 import { type FormEvent, type MouseEvent, useEffect, useRef, useState } from 'react';
-import { buildWhatsAppOrderUrl, categories as defaultCategories, categoryRoute, defaultProductDetailsIntro, defaultSettings, orderTotal, parseOrderForm, productRoute, type CartItem, type Category, type OrderDraft, type Product, type ProductVariant, type StoreSettings, type StoredOrder } from '../../storefrontRuntime';
+import { buildWhatsAppOrderUrl, categories as defaultCategories, categoryRoute, createOrderNumber, defaultProductDetailsIntro, defaultSettings, orderTotal, parseOrderForm, productRoute, type CartItem, type Category, type OrderDraft, type Product, type ProductVariant, type StoreSettings, type StoredOrder } from '../../storefrontRuntime';
 import { ProductDetailMedia, ProductDetailRichText, ProductDetailTitle } from './ProductDetailRichText';
 import { ProductCard } from '../storefront/ProductCard';
 import { SiteFooter, SiteHeader } from '../storefront/StorefrontPages';
@@ -383,7 +383,7 @@ export const TanjaMolArabicCODProductPage = ({
       note,
       source: 'product-page',
       items: [orderItem],
-      id: `TM-${Date.now().toString().slice(-6)}`,
+      id: createOrderNumber(),
       createdAt: new Date().toISOString(),
       status: 'new',
       total: orderTotal([orderItem]),

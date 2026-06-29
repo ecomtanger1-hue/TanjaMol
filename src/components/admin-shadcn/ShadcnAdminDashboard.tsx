@@ -22,6 +22,7 @@ const statusLabels: Record<StoredOrder['status'], string> = {
   confirmed: 'مؤكد',
   delivery: 'في التوصيل',
   done: 'مكتمل',
+  canceled: 'ملغي',
 };
 
 const statusClassNames: Record<StoredOrder['status'], string> = {
@@ -30,6 +31,7 @@ const statusClassNames: Record<StoredOrder['status'], string> = {
   confirmed: 'border-emerald-400/30 bg-emerald-500/15 text-emerald-200',
   delivery: 'border-violet-400/30 bg-violet-500/15 text-violet-200',
   done: 'border-zinc-500/30 bg-zinc-500/15 text-zinc-200',
+  canceled: 'border-red-400/30 bg-red-500/15 text-red-200',
 };
 
 function isToday(value: string) {
@@ -56,10 +58,10 @@ export function ShadcnAdminDashboard({
   onLogout,
 }: ShadcnAdminDashboardProps) {
   const todayOrders = orders.filter(order => isToday(order.createdAt));
-  const activeOrders = orders.filter(order => order.status !== 'done');
+  const activeOrders = orders.filter(order => order.status !== 'done' && order.status !== 'canceled');
   const visibleProducts = products.filter(product => !product.isDraft && !hiddenSlugs.includes(product.slug));
   const lowStockProducts = products.filter(product => (product.stock ?? 0) < 10);
-  const todayRevenue = todayOrders.reduce((sum, order) => sum + order.total, 0);
+  const todayRevenue = todayOrders.filter(order => order.status !== 'canceled').reduce((sum, order) => sum + order.total, 0);
   const recentOrders = orders.slice(0, 6);
 
   const metrics = [
