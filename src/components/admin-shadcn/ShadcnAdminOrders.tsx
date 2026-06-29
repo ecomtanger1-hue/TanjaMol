@@ -270,8 +270,8 @@ function MobileOrderCard({ order, onNavigate }: { order: StoredOrder; onNavigate
         className="grid w-full gap-2 text-right transition hover:border-orange-400/50"
       >
         <span className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2">
-          <span className="min-w-0 truncate text-sm font-black leading-6 text-zinc-50" title={productTitle}>
-            {productTitle}
+          <span className="min-w-0 truncate text-sm font-black leading-6 text-zinc-50">
+            {order.name || 'عميل بدون اسم'}
           </span>
           <Badge variant="outline" title={statusLabels[order.status]} className={`${statusStyles[order.status]} h-6 max-w-[112px] shrink-0 truncate rounded-full px-2 text-[10px] font-black leading-none`}>
             {statusLabels[order.status]}
@@ -282,8 +282,8 @@ function MobileOrderCard({ order, onNavigate }: { order: StoredOrder; onNavigate
         </span>
 
         <span className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-          <span className="min-w-0 truncate text-xs font-bold text-zinc-300">
-            {order.name || 'عميل بدون اسم'}
+          <span className="min-w-0 truncate text-xs font-bold text-zinc-300" title={productTitle}>
+            {productTitle}
           </span>
           <span className="shrink-0 text-[11px] text-zinc-500">
             {formatTime(order.createdAt)}
