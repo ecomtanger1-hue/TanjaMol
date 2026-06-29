@@ -55,6 +55,12 @@ $env:R2_UPLOAD_ENDPOINT='https://<your-worker-url>/upload'
 npm.cmd run r2:migrate -- --only-slug=product-slug
 ```
 
+To make the one-product test touch only that product and skip category/settings images:
+
+```powershell
+npm.cmd run r2:migrate -- --only-slug=product-slug --products-only
+```
+
 Open that product page and verify all images load from `https://images.tanjamall.com/`.
 
 ## Full Migration

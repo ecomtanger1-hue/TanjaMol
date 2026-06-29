@@ -29,6 +29,7 @@ const fileEnv = readEnvFile('.env.local');
 const env = { ...fileEnv, ...process.env };
 const args = new Set(process.argv.slice(2));
 const live = args.has('--live');
+const productsOnly = args.has('--products-only');
 const onlySlug = process.argv.find(arg => arg.startsWith('--only-slug='))?.split('=').slice(1).join('=');
 const limit = Number(process.argv.find(arg => arg.startsWith('--limit='))?.split('=')[1] || 0);
 
@@ -213,7 +214,8 @@ async function main() {
 
   const found = new Map();
   const counters = { supabase: 0, external: 0, local: 0, alreadyR2: 0, missing: 0, duplicate: 0, failed: 0, migrated: 0 };
-  const scanRows = [...selectedProducts, ...settings];
+  const selectedSettings = productsOnly ? [] : settings;
+  const scanRows = [...selectedProducts, ...selectedSettings];
 
   for (const row of scanRows) {
     walkStrings(row, value => {
@@ -232,7 +234,7 @@ async function main() {
   console.log(JSON.stringify({
     mode: live ? 'live' : 'dry-run',
     productsScanned: selectedProducts.length,
-    settingsRowsScanned: settings.length,
+    settingsRowsScanned: selectedSettings.length,
     uniqueSupabaseUrls: found.size,
     counters,
     backupDir,
@@ -284,7 +286,7 @@ async function main() {
       });
     }
 
-    for (const row of settings) {
+    for (const row of selectedSettings) {
       const replaced = replaceStrings(row, replacements);
       await supabaseRest(`store_settings?id=eq.${encodeURIComponent(row.id)}`, {
         method: 'PATCH',
