@@ -41,6 +41,10 @@ function formatDate(value: string) {
   return new Intl.DateTimeFormat('ar-MA', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
 }
 
+function formatTime(value: string) {
+  return new Intl.DateTimeFormat('ar-MA', { hour: '2-digit', minute: '2-digit' }).format(new Date(value));
+}
+
 function orderTimestamp(order: StoredOrder) {
   const time = new Date(order.createdAt).getTime();
   return Number.isFinite(time) ? time : 0;
@@ -255,45 +259,43 @@ function groupOrdersByDate(orders: StoredOrder[]) {
 
 function MobileOrderCard({ order, onNavigate }: { order: StoredOrder; onNavigate: (route: string) => void }) {
   const firstItem = order.items?.[0];
+  const itemCount = order.items.reduce((sum, item) => sum + item.quantity, 0);
+  const productTitle = firstItem?.title || 'منتج بدون اسم';
 
   return (
-    <article className="rounded-lg border border-white/10 bg-zinc-900/70 p-3 text-zinc-50">
+    <article className="rounded-lg border border-white/10 bg-zinc-950/70 p-2.5 text-zinc-50">
       <button
         type="button"
         onClick={() => onNavigate(`#/tm-office-07/orders/${encodeURIComponent(order.id)}`)}
-        className="grid w-full grid-cols-[84px_minmax(0,1fr)] gap-2 text-right sm:grid-cols-[112px_minmax(0,1fr)] sm:gap-3"
+        className="grid w-full gap-2 text-right transition hover:border-orange-400/50"
       >
-        <span className="grid aspect-square min-h-[84px] place-items-center overflow-hidden rounded-md border border-white/10 bg-zinc-950/80 text-center text-xs font-black leading-5 text-zinc-400 sm:min-h-[112px] sm:text-sm sm:leading-6">
-          {firstItem?.image ? (
-            <img
-              src={firstItem.image}
-              alt=""
-              width={112}
-              height={112}
-              loading="lazy"
-              decoding="async"
-              className="size-full object-cover"
-            />
-          ) : (
-            <span className="px-2">صورة المنتج</span>
-          )}
+        <span className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2">
+          <span className="min-w-0 truncate text-sm font-black leading-6 text-zinc-50" title={productTitle}>
+            {productTitle}
+          </span>
+          <Badge variant="outline" title={statusLabels[order.status]} className={`${statusStyles[order.status]} h-6 max-w-[112px] shrink-0 truncate rounded-full px-2 text-[10px] font-black leading-none`}>
+            {statusLabels[order.status]}
+          </Badge>
+          <span className="shrink-0 text-left text-sm font-black text-orange-300">
+            {formatMoney(order.total)}
+          </span>
         </span>
 
-        <span className="grid min-w-0 grid-rows-[auto_1fr] gap-2.5 sm:gap-3">
-          <span className="grid grid-cols-[minmax(0,1fr)_62px_54px] items-center gap-1 sm:grid-cols-[minmax(0,1fr)_82px_76px] sm:gap-2">
-            <span className="min-w-0 truncate rounded-md border border-white/10 bg-zinc-950/80 px-2 py-2 text-center text-xs font-black text-zinc-50 sm:px-3 sm:text-sm">
-              {order.name || 'الاسم'}
-            </span>
-            <span className="truncate rounded-md border border-white/10 bg-zinc-950/80 px-1 py-2 text-center text-[10px] font-black text-orange-300 sm:px-2 sm:text-sm">
-              {formatMoney(order.total)}
-            </span>
-            <Badge variant="outline" title={statusLabels[order.status]} className={`${statusStyles[order.status]} h-7 max-w-full justify-self-center truncate rounded-full px-2 text-[10px] font-black leading-none sm:h-8 sm:text-xs`}>
-              {statusLabels[order.status]}
-            </Badge>
+        <span className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+          <span className="min-w-0 truncate text-xs font-bold text-zinc-300">
+            {order.name || 'عميل بدون اسم'}
           </span>
+          <span className="shrink-0 text-[11px] text-zinc-500">
+            {formatTime(order.createdAt)}
+          </span>
+        </span>
 
-          <span className="grid min-h-[48px] items-center rounded-md border border-white/10 bg-zinc-950/80 px-3 py-2 text-center text-sm font-black leading-6 text-zinc-100">
-            <span className="line-clamp-2 break-words">{order.address || 'العنوان'}</span>
+        <span className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+          <span className="min-w-0 truncate text-xs text-zinc-500">
+            {order.address || 'العنوان'}
+          </span>
+          <span className="shrink-0 text-[11px] text-zinc-500">
+            {itemCount.toLocaleString('ar-MA')} منتج
           </span>
         </span>
       </button>
