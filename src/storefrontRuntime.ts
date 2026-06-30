@@ -166,9 +166,9 @@ export const defaultSettings: StoreSettings = {
   storeName: 'TanjaMall',
   whatsappNumber: '212708012888',
   phone: '06 00 00 00 00',
-  city: 'طنجة',
+  city: 'المغرب',
   deliveryText: '24 إلى 48 ساعة',
-  address: 'طنجة',
+  address: 'المغرب',
 };
 
 export const categories: Category[] = [
@@ -377,7 +377,7 @@ export const products: Product[] = [
       ['الشحن', 'USB قابل لإعادة الشحن'],
       ['السعة', 'كأس عملي للاستعمال اليومي'],
       ['الاستعمال', 'عصائر خفيفة وفواكه طرية'],
-      ['التوصيل', 'داخل طنجة خلال 24 إلى 48 ساعة'],
+      ['التوصيل', 'داخل المغرب خلال 24 إلى 48 ساعة'],
     ],
     variants: [
       { id: 'portable-blender-white', name: 'أبيض', sku: 'TM-BLENDER-WHT', priceLabel: '159 درهم', stock: 11, enabled: true },

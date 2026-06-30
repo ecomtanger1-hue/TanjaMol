@@ -19,8 +19,8 @@ type StorefrontProps = {
   onNavigate?: (route: string) => void;
 };
 
-const trustItems = ['الدفع عند الاستلام', 'تأكيد الطلب بالهاتف', 'توصيل داخل طنجة', 'استبدال حسب الحالة'];
-const policies = [['التوصيل', 'يتم توصيل الطلبات داخل طنجة خلال 24 إلى 48 ساعة حسب المنطقة وتوقيت تأكيد الطلب.'], ['التأكيد', 'يتواصل فريقنا مع العميل قبل الإرسال لتأكيد المنتج واللون والكمية والعنوان.'], ['الدفع', 'لا تحتاج إلى بطاقة بنكية أو دفع مسبق. الدفع يتم عند استلام الطلب.'], ['الاستبدال', 'يمكن طلب الاستبدال خلال 7 أيام إذا وصل المنتج مختلفا أو به عيب واضح.']];
+const trustItems = ['الدفع عند الاستلام', 'تأكيد الطلب بالهاتف', 'توصيل داخل المغرب', 'استبدال حسب الحالة'];
+const policies = [['التوصيل', 'يتم توصيل الطلبات داخل المغرب خلال 24 إلى 48 ساعة حسب المنطقة وتوقيت تأكيد الطلب.'], ['التأكيد', 'يتواصل فريقنا مع العميل قبل الإرسال لتأكيد المنتج واللون والكمية والعنوان.'], ['الدفع', 'لا تحتاج إلى بطاقة بنكية أو دفع مسبق. الدفع يتم عند استلام الطلب.'], ['الاستبدال', 'يمكن طلب الاستبدال خلال 7 أيام إذا وصل المنتج مختلفا أو به عيب واضح.']];
 function scrollToSection(id: string) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -208,7 +208,7 @@ export const CODTangerArabicStoreLanding = ({
           <div className="hidden min-w-0 lg:block">
             <p className="tm-kicker inline-flex rounded-full bg-white px-3 py-1 text-[#b45309]">الدفع عند الاستلام</p>
             <h1 className="tm-heading mt-3 max-w-[680px] font-heading text-[34px] font-black leading-[1.12] sm:text-5xl lg:text-6xl">
-              عروض طنجة اليوم
+              عروض المغرب اليوم
             </h1>
             <p className="tm-copy mt-3 max-w-[580px] text-sm font-semibold leading-7 text-white/78 sm:text-base lg:text-lg">
               خصومات على الإلكترونيات والمنزل والعناية
@@ -228,10 +228,10 @@ export const CODTangerArabicStoreLanding = ({
           <div className="tm-mobile-hero-stage lg:hidden" aria-label="عروض متجر TanjaMall">
             <div className={`tm-mobile-hero-slide tm-mobile-hero-intro rounded-lg bg-[#131921] p-5 text-center shadow-[inset_0_0_0_1px_rgba(255,255,255,0.1)] ${heroSlide === 0 ? 'tm-mobile-hero-slide-active' : ''}`}>
               <p className="tm-kicker inline-flex rounded-full bg-white px-3 py-1 text-[#b45309]">TanjaMall</p>
-              <h1 className="tm-heading mt-4 font-heading text-[2rem] font-black leading-tight text-white">متجر طنجة</h1>
+              <h1 className="tm-heading mt-4 font-heading text-[2rem] font-black leading-tight text-white">متجر المغرب</h1>
               <div className="mt-5 grid gap-2.5 text-sm">
                 <span className="tm-mobile-hero-slogan tm-compact-label rounded-md bg-white/10 px-4 py-3 text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08)]">الدفع عند الاستلام</span>
-                <span className="tm-mobile-hero-slogan tm-compact-label rounded-md bg-white/10 px-4 py-3 text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08)]">توصيل سريع داخل طنجة</span>
+                <span className="tm-mobile-hero-slogan tm-compact-label rounded-md bg-white/10 px-4 py-3 text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08)]">توصيل سريع داخل المغرب</span>
                 <span className="tm-mobile-hero-slogan tm-compact-label rounded-md bg-white/10 px-4 py-3 text-white shadow-[0_0_0_1px_rgba(255,255,255,0.08)]">تأكيد الطلب قبل الإرسال</span>
               </div>
             </div>
@@ -296,7 +296,7 @@ export const CODTangerArabicStoreLanding = ({
             <p className="tm-body-copy mt-4 max-w-[680px] text-base text-white/74 sm:text-lg">لا تحتاج إلى بطاقة بنكية. نؤكد الطلب عبر الواتساب ثم نرسله إلى عنوانك في أسرع وقت.</p>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            {[['24-48h', 'مدة التوصيل'], ['0 DH', 'دفع مسبق'], ['7 أيام', 'استبدال'], ['طنجة', 'نطاق الخدمة']].map(([value, label]) => <div key={label} className="rounded-md bg-white/10 p-4 text-center">
+            {[['24-48h', 'مدة التوصيل'], ['0 DH', 'دفع مسبق'], ['7 أيام', 'استبدال'], ['المغرب', 'نطاق الخدمة']].map(([value, label]) => <div key={label} className="rounded-md bg-white/10 p-4 text-center">
               <p className="tm-num font-heading text-2xl font-black">{value}</p>
               <p className="mt-1 text-xs font-bold text-white/70">{label}</p>
             </div>)}

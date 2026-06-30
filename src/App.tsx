@@ -147,10 +147,10 @@ function upsertJsonLd(id: string, data: Record<string, unknown> | null) {
 function applyPageSeo(product: Product | undefined, settings: StoreSettings, categories: Category[] = defaultCategories) {
   const storeName = settings.storeName || defaultSettings.storeName;
   const baseUrl = window.location.origin;
-  const defaultDescription = `TanjaMol COD store in Tanger with cash on delivery and fast local confirmation.`;
+  const defaultDescription = `TanjaMol COD store in Morocco with cash on delivery and fast local confirmation.`;
 
   if (!product) {
-    document.title = `${storeName} | COD Tanger`;
+    document.title = `${storeName} | COD Morocco`;
     upsertMeta('meta[name="description"]', { name: 'description', content: defaultDescription });
     upsertMeta('meta[property="og:title"]', { property: 'og:title', content: storeName });
     upsertMeta('meta[property="og:description"]', { property: 'og:description', content: defaultDescription });
@@ -168,7 +168,7 @@ function applyPageSeo(product: Product | undefined, settings: StoreSettings, cat
 
   const productUrl = `${baseUrl}${routeToPath(productRoute(product.slug))}`;
   const title = cleanText(`${product.title} | ${storeName}`, 62);
-  const description = cleanText(product.description || `${product.title} available from ${storeName} with cash on delivery in Tanger.`, 158);
+  const description = cleanText(product.description || `${product.title} available from ${storeName} with cash on delivery in Morocco.`, 158);
   const image = absoluteAssetUrl(product.image || product.gallery?.[0] || '/tanjamall-icon.svg');
   const category = categories.find(item => item.title === product.category || product.category.includes(item.title.split(' ')[0]));
   const categoryUrl = category ? `${baseUrl}${routeToPath(`#/category/${encodeURIComponent(category.id)}`)}` : baseUrl;

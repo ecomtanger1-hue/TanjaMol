@@ -49,7 +49,7 @@ function WhatsAppLogo({ className = 'size-12' }: { className?: string }) {
     </svg>
   );
 }
-const specs = [['الشحن', 'من 1 إلى 2 أيام داخل طنجة'], ['الدفع', 'الدفع عند الاستلام'], ['الضمان', 'استبدال خلال 7 أيام'], ['المحتوى', 'ساعة، شاحن، كتيب استعمال']];
+const specs = [['الشحن', 'من 1 إلى 2 أيام داخل المغرب'], ['الدفع', 'الدفع عند الاستلام'], ['الضمان', 'استبدال خلال 7 أيام'], ['المحتوى', 'ساعة، شاحن، كتيب استعمال']];
 const relatedProducts = [{
   title: 'سماعات بلوتوث صغيرة',
   price: '169 درهم',
@@ -481,7 +481,7 @@ export const TanjaMolArabicCODProductPage = ({
               </div>
 
               <div className="mt-4 hidden max-w-[680px] gap-2 md:grid md:grid-cols-1">
-                {[['التوصيل', 'داخل طنجة خلال 24 إلى 48 ساعة حسب المنطقة وتوقيت تأكيد الطلب.'], ['تأكيد الطلب', 'نتصل بك قبل الإرسال للتأكد من اللون، الكمية، والعنوان.'], ['الدفع', 'الدفع عند الاستلام فقط، بدون بطاقة بنكية وبدون دفع مسبق.'], ['الاستبدال', 'يمكن طلب الاستبدال خلال 7 أيام إذا وصل المنتج مختلفا أو به عيب.']].map(([title, copy]) => <details key={title} className="rounded-md border border-white/10 bg-white/[0.07] px-3 py-2.5 text-white/88 open:bg-white/[0.12]">
+                {[['التوصيل', 'داخل المغرب خلال 24 إلى 48 ساعة حسب المنطقة وتوقيت تأكيد الطلب.'], ['تأكيد الطلب', 'نتصل بك قبل الإرسال للتأكد من اللون، الكمية، والعنوان.'], ['الدفع', 'الدفع عند الاستلام فقط، بدون بطاقة بنكية وبدون دفع مسبق.'], ['الاستبدال', 'يمكن طلب الاستبدال خلال 7 أيام إذا وصل المنتج مختلفا أو به عيب.']].map(([title, copy]) => <details key={title} className="rounded-md border border-white/10 bg-white/[0.07] px-3 py-2.5 text-white/88 open:bg-white/[0.12]">
                     <summary className="cursor-pointer text-sm font-extrabold">{title}</summary>
                     <p className="tm-copy mt-2 text-xs font-semibold leading-6 text-white/62">{copy}</p>
                   </details>)}
@@ -611,7 +611,7 @@ export const TanjaMolArabicCODProductPage = ({
 
               <div className="mt-3 grid gap-2 text-sm font-bold text-[var(--tm-ink-soft)]">
                 <div className="flex items-center justify-between rounded-md bg-[var(--tm-surface-tint)] px-3 py-2.5">
-                  <span>التوصيل داخل طنجة</span>
+                  <span>التوصيل داخل المغرب</span>
                   <span className="tm-price-text">24 إلى 48 ساعة</span>
                 </div>
               </div>

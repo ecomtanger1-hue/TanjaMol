@@ -207,7 +207,7 @@ export function SiteFooter({ categories: footerCategories = categories, onNaviga
         <div>
           <TanjaMallLogo textClassName="text-white text-2xl" />
           <p className="tm-copy mt-4 max-w-[360px] text-sm font-semibold leading-7 text-white/68">
-            منتجات مختارة، طلب عبر واتساب، ودفع عند الاستلام داخل طنجة.
+            منتجات مختارة، طلب عبر واتساب، ودفع عند الاستلام داخل المغرب.
           </p>
         </div>
         <nav className="grid gap-2 text-sm font-semibold text-white/72">
@@ -227,7 +227,7 @@ export function SiteFooter({ categories: footerCategories = categories, onNaviga
       </div>
       <div className="mx-auto mt-8 flex w-full max-w-[1180px] flex-col gap-3 border-t border-white/10 pt-5 text-xs font-bold text-white/54 sm:flex-row sm:items-center sm:justify-between">
         <p>© 2026 TanjaMall</p>
-        <p>الدفع عند الاستلام داخل طنجة</p>
+        <p>الدفع عند الاستلام داخل المغرب</p>
       </div>
     </footer>
   );
@@ -668,7 +668,7 @@ export function CartPopup({
               <input id="tm-cart-phone" required name="phone" className="tm-field bg-[var(--tm-surface-soft)]" type="tel" inputMode="tel" autoComplete="tel" enterKeyHint="next" aria-describedby="tm-cart-form-help" />
             </label>
             <label className="grid gap-1" htmlFor="tm-cart-address">
-              <span className="tm-field-label">العنوان داخل طنجة *</span>
+              <span className="tm-field-label">العنوان داخل المغرب *</span>
               <input id="tm-cart-address" required name="address" className="tm-field bg-[var(--tm-surface-soft)]" autoComplete="address-line1" enterKeyHint="next" aria-describedby="tm-cart-form-help" />
             </label>
             <label className="grid gap-1" htmlFor="tm-cart-note">
@@ -1523,7 +1523,7 @@ const infoPages: Record<string, { eyebrow: string; title: string; copy?: string;
   },
   shipping: {
     eyebrow: 'التوصيل',
-    title: 'التوصيل داخل طنجة',
+    title: 'التوصيل داخل المغرب',
     blocks: [
       { title: 'المدة', text: 'غالبا خلال 24 إلى 48 ساعة حسب المنطقة وتوقيت تأكيد الطلب.' },
       { title: 'التأكيد', text: 'لا يرسل الطلب قبل تأكيده على واتساب.' },

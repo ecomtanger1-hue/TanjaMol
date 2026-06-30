@@ -96,9 +96,9 @@ create table if not exists public.store_settings (
   store_name text not null default 'TanjaMall',
   whatsapp_number text not null default '212708012888',
   phone text not null default '06 00 00 00 00',
-  city text not null default 'طنجة',
+  city text not null default 'المغرب',
   delivery_text text not null default '24 إلى 48 ساعة',
-  address text not null default 'طنجة',
+  address text not null default 'المغرب',
   categories jsonb not null default '[]'::jsonb,
   hero_product_slug text not null default '',
   updated_at timestamptz not null default now()
@@ -111,9 +111,9 @@ alter table public.store_settings alter column id set default 'main';
 alter table public.store_settings add column if not exists store_name text default 'TanjaMall';
 alter table public.store_settings add column if not exists whatsapp_number text default '212708012888';
 alter table public.store_settings add column if not exists phone text default '06 00 00 00 00';
-alter table public.store_settings add column if not exists city text default 'طنجة';
+alter table public.store_settings add column if not exists city text default 'المغرب';
 alter table public.store_settings add column if not exists delivery_text text default '24 إلى 48 ساعة';
-alter table public.store_settings add column if not exists address text default 'طنجة';
+alter table public.store_settings add column if not exists address text default 'المغرب';
 alter table public.store_settings add column if not exists categories jsonb default '[]'::jsonb;
 alter table public.store_settings add column if not exists hero_product_slug text default '';
 alter table public.store_settings add column if not exists updated_at timestamptz default now();
