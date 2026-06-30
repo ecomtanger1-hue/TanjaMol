@@ -146,9 +146,9 @@ export type StoredOrder = OrderDraft & {
 };
 
 export function createOrderNumber() {
-  const timePart = Date.now().toString(36).toUpperCase();
-  const randomPart = Math.random().toString(36).slice(2, 6).toUpperCase();
-  return `TM-${timePart}-${randomPart}`;
+  const timePart = Date.now().toString();
+  const randomPart = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+  return `TM-${timePart}${randomPart}`;
 }
 
 export type StoreSettings = {

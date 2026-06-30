@@ -1,11 +1,11 @@
 import type { StoredOrder } from '../storefrontRuntime';
-import { supabase } from './supabase';
+import { publicSupabase } from './supabase';
 
 export async function saveOrderToSupabase(order: StoredOrder) {
-  if (!supabase) throw new Error('Supabase is not configured.');
+  if (!publicSupabase) throw new Error('Supabase is not configured.');
 
   const orderId = crypto.randomUUID();
-  const { error: orderError } = await supabase.from('orders').insert({
+  const { error: orderError } = await publicSupabase.from('orders').insert({
     id: orderId,
     order_number: order.id,
     customer_name: order.name,
@@ -22,7 +22,7 @@ export async function saveOrderToSupabase(order: StoredOrder) {
 
   if (orderError) throw orderError;
 
-  const { error: itemsError } = await supabase.from('order_items').insert(
+  const { error: itemsError } = await publicSupabase.from('order_items').insert(
     order.items.map(item => ({
       order_id: orderId,
       product_slug: item.slug,
