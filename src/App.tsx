@@ -32,7 +32,7 @@ import {
   type StoredOrder,
 } from './storefrontRuntime';
 import { getCurrentRoute, replaceLegacyHashRoute, routeToPath } from './lib/routing';
-import { trackAddToCart, trackInitiateCheckout, trackPageView, trackPurchase, trackSearch, trackViewContent } from './lib/metaPixel';
+import { trackAddToCart, trackInitiateCheckout, trackLead, trackPageView, trackSearch, trackViewContent } from './lib/metaPixel';
 import { TanjaMallLogo } from './components/brand/TanjaMallLogo';
 import { hasProductDetailContent } from './lib/productDetails';
 import { saveOrderToSupabase } from './lib/supabaseOrders';
@@ -548,7 +548,7 @@ export function App() {
       setSubmittedOrder(order);
       setIsCartOpen(true);
       setNotice('تم استلام طلبك');
-      trackPurchase(order);
+      trackLead(order);
       return order;
     } catch (error) {
       console.error('Failed to save order to Supabase', error);

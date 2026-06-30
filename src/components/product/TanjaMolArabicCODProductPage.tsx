@@ -350,7 +350,6 @@ export const TanjaMolArabicCODProductPage = ({
   const submitOrder = (event: FormEvent<HTMLFormElement>) => {
     const draft = parseOrderForm(event, 'product-page', [orderItem]);
     if (draft) {
-      trackInitiateCheckout([orderItem]);
       void onPlaceOrder(draft);
     }
   };

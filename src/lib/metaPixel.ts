@@ -5,7 +5,7 @@ type MetaPixelEvent =
   | 'ViewContent'
   | 'AddToCart'
   | 'InitiateCheckout'
-  | 'Purchase'
+  | 'Lead'
   | 'Search';
 
 type MetaPixelParams = Record<string, string | number | boolean | string[] | Array<Record<string, string | number>>>;
@@ -33,7 +33,7 @@ declare global {
 
 const META_PIXEL_ID = '1024192293463169';
 const CURRENCY = 'MAD';
-const PURCHASE_EVENT_IDS_KEY = 'tanjamall.meta.purchaseEventIds.v1';
+const LEAD_EVENT_IDS_KEY = 'tanjamall.meta.leadEventIds.v1';
 
 let initializedPixelId = '';
 let lastPageView = '';
@@ -93,9 +93,9 @@ function track(event: MetaPixelEvent, params?: MetaPixelParams, options?: MetaPi
   window.fbq?.('track', event, params, options);
 }
 
-function readTrackedPurchaseEventIds() {
+function readTrackedLeadEventIds() {
   try {
-    const raw = window.localStorage.getItem(PURCHASE_EVENT_IDS_KEY);
+    const raw = window.localStorage.getItem(LEAD_EVENT_IDS_KEY);
     const value = raw ? JSON.parse(raw) as unknown : [];
     return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
   } catch {
@@ -103,14 +103,14 @@ function readTrackedPurchaseEventIds() {
   }
 }
 
-function hasTrackedPurchaseEvent(eventId: string) {
-  return readTrackedPurchaseEventIds().includes(eventId);
+function hasTrackedLeadEvent(eventId: string) {
+  return readTrackedLeadEventIds().includes(eventId);
 }
 
-function rememberTrackedPurchaseEvent(eventId: string) {
+function rememberTrackedLeadEvent(eventId: string) {
   try {
-    const next = [eventId, ...readTrackedPurchaseEventIds().filter(item => item !== eventId)].slice(0, 50);
-    window.localStorage.setItem(PURCHASE_EVENT_IDS_KEY, JSON.stringify(next));
+    const next = [eventId, ...readTrackedLeadEventIds().filter(item => item !== eventId)].slice(0, 50);
+    window.localStorage.setItem(LEAD_EVENT_IDS_KEY, JSON.stringify(next));
   } catch {
     // Tracking should never block the order flow.
   }
@@ -185,11 +185,11 @@ export function trackInitiateCheckout(items: CartItem[]) {
   });
 }
 
-export function trackPurchase(order: StoredOrder) {
-  const eventID = `purchase-${order.id}`;
-  if (hasTrackedPurchaseEvent(eventID)) return;
+export function trackLead(order: StoredOrder) {
+  const eventID = `lead-${order.id}`;
+  if (hasTrackedLeadEvent(eventID)) return;
 
-  track('Purchase', {
+  track('Lead', {
     content_ids: order.items.map(item => item.id),
     content_type: 'product',
     contents: cartContents(order.items),
@@ -198,13 +198,13 @@ export function trackPurchase(order: StoredOrder) {
     order_id: order.id,
     value: order.total,
   }, { eventID });
-  rememberTrackedPurchaseEvent(eventID);
+  rememberTrackedLeadEvent(eventID);
 }
 
-export function clearTrackedPurchaseForTesting(orderId: string) {
-  const eventID = `purchase-${orderId}`;
+export function clearTrackedLeadForTesting(orderId: string) {
+  const eventID = `lead-${orderId}`;
   try {
-    window.localStorage.setItem(PURCHASE_EVENT_IDS_KEY, JSON.stringify(readTrackedPurchaseEventIds().filter(item => item !== eventID)));
+    window.localStorage.setItem(LEAD_EVENT_IDS_KEY, JSON.stringify(readTrackedLeadEventIds().filter(item => item !== eventID)));
   } catch {
     // Testing helper only.
   }
