@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ShadcnAdminShell } from './ShadcnAdminShell';
 import type { StoreSettings, StoredOrder } from '../../storefrontRuntime';
+import type { SheetData } from 'write-excel-file/browser';
 
 type OrderStatus = StoredOrder['status'];
 
@@ -81,14 +82,6 @@ function excelDateStamp() {
   return `${year}-${month}-${day}`;
 }
 
-function excelCell(value: string | number) {
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/\r?\n/g, '<br style="mso-data-placement:same-cell;" />');
-}
-
 function orderProductsForDelivery(order: StoredOrder) {
   return order.items
     .map(item => {
@@ -102,7 +95,7 @@ function orderQuantityTotal(order: StoredOrder) {
   return order.items.reduce((sum, item) => sum + item.quantity, 0);
 }
 
-function exportConfirmedOrdersToExcel(orders: StoredOrder[]) {
+async function exportConfirmedOrdersToExcel(orders: StoredOrder[]) {
   const confirmedOrders = orders
     .filter(order => order.status === 'confirmed')
     .sort((a, b) => orderTimestamp(a) - orderTimestamp(b));
@@ -121,47 +114,42 @@ function exportConfirmedOrdersToExcel(orders: StoredOrder[]) {
     'Note',
   ];
 
-  const rows = confirmedOrders.map(order => [
-    order.id,
-    formatDate(order.createdAt),
-    order.name || '',
-    order.phone,
-    order.address,
-    orderProductsForDelivery(order),
-    orderQuantityTotal(order),
-    order.total,
-    order.note || '',
-  ]);
+  const sheetData: SheetData = [
+    columns.map(column => ({
+      value: column,
+      fontWeight: 'bold',
+      backgroundColor: '#F2F2F2',
+      borderColor: '#B7B7B7',
+    })),
+    ...confirmedOrders.map(order => [
+      { value: order.id, type: String, format: '@', borderColor: '#B7B7B7' },
+      { value: formatDate(order.createdAt), type: String, borderColor: '#B7B7B7' },
+      { value: order.name || '', type: String, borderColor: '#B7B7B7' },
+      { value: order.phone, type: String, format: '@', borderColor: '#B7B7B7' },
+      { value: order.address, type: String, borderColor: '#B7B7B7' },
+      { value: orderProductsForDelivery(order), type: String, borderColor: '#B7B7B7' },
+      { value: orderQuantityTotal(order), type: Number, borderColor: '#B7B7B7' },
+      { value: order.total, type: Number, format: '#,##0.00', borderColor: '#B7B7B7' },
+      { value: order.note || '', type: String, borderColor: '#B7B7B7' },
+    ]),
+  ];
 
-  const tableRows = [
-    `<tr>${columns.map(column => `<th>${excelCell(column)}</th>`).join('')}</tr>`,
-    ...rows.map(row => `<tr>${row.map(cell => `<td>${excelCell(cell)}</td>`).join('')}</tr>`),
-  ].join('');
-
-  const workbook = `<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <style>
-    table { border-collapse: collapse; direction: ltr; }
-    th, td { border: 1px solid #b7b7b7; padding: 6px 8px; font-family: Arial, sans-serif; font-size: 12px; vertical-align: top; mso-number-format: "\\@"; }
-    th { background: #f2f2f2; font-weight: 700; }
-  </style>
-</head>
-<body>
-  <table>${tableRows}</table>
-</body>
-</html>`;
-
-  const blob = new Blob(['\ufeff', workbook], { type: 'application/vnd.ms-excel;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `confirmed-orders-${excelDateStamp()}.xls`;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  URL.revokeObjectURL(url);
+  const { default: writeExcelFile } = await import('write-excel-file/browser');
+  await writeExcelFile(sheetData, {
+    sheet: 'Confirmed Orders',
+    stickyRowsCount: 1,
+    columns: [
+      { width: 22 },
+      { width: 22 },
+      { width: 24 },
+      { width: 16 },
+      { width: 38 },
+      { width: 48 },
+      { width: 10 },
+      { width: 14 },
+      { width: 32 },
+    ],
+  }).toFile(`confirmed-orders-${excelDateStamp()}.xlsx`);
 }
 
 function orderMessage(order: StoredOrder, settings: StoreSettings) {
@@ -453,7 +441,9 @@ export function ShadcnAdminOrdersPage({ orders, settings, route, onNavigate, onU
           type="button"
           variant="outline"
           className="h-11 border-white/10 bg-white/5 px-4 text-sm font-black text-zinc-100 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-45"
-          onClick={() => exportConfirmedOrdersToExcel(orders)}
+          onClick={() => {
+            void exportConfirmedOrdersToExcel(orders);
+          }}
           disabled={!confirmedCount}
           title={confirmedCount ? `Export ${confirmedCount} confirmed orders` : 'No confirmed orders to export'}
         >
