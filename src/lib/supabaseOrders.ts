@@ -1,7 +1,16 @@
 import type { StoredOrder } from '../storefrontRuntime';
 import { publicSupabase } from './supabase';
 
-export async function saveOrderToSupabase(order: StoredOrder) {
+type CreateStorefrontOrderRow = {
+  order_number: string;
+  created_at: string;
+};
+
+function isMissingOrderFunctionError(error: { code?: string; message?: string }) {
+  return error.code === 'PGRST202' || (error.message || '').includes('create_storefront_order');
+}
+
+async function saveOrderWithDirectInsert(order: StoredOrder) {
   if (!publicSupabase) throw new Error('Supabase is not configured.');
 
   const orderId = crypto.randomUUID();
@@ -35,4 +44,45 @@ export async function saveOrderToSupabase(order: StoredOrder) {
   );
 
   if (itemsError) throw itemsError;
+  return order;
+}
+
+export async function saveOrderToSupabase(order: StoredOrder): Promise<StoredOrder> {
+  if (!publicSupabase) throw new Error('Supabase is not configured.');
+
+  const { data, error } = await publicSupabase.rpc('create_storefront_order', {
+    order_payload: {
+      customer_name: order.name,
+      phone: order.phone,
+      address: order.address,
+      note: order.note || null,
+      source: order.source,
+      status: order.status,
+      total: order.total,
+      items: order.items.map(item => ({
+        product_slug: item.slug,
+        title: item.title,
+        variant: item.variant || null,
+        price: item.price,
+        quantity: item.quantity,
+        image: item.image || null,
+      })),
+    },
+  });
+
+  if (error) {
+    if (isMissingOrderFunctionError(error)) return saveOrderWithDirectInsert(order);
+    throw error;
+  }
+
+  const savedOrder = (Array.isArray(data) ? data[0] : data) as CreateStorefrontOrderRow | undefined;
+  if (!savedOrder?.order_number || !savedOrder.created_at) {
+    throw new Error('Supabase did not return an order number.');
+  }
+
+  return {
+    ...order,
+    id: savedOrder.order_number,
+    createdAt: savedOrder.created_at,
+  };
 }

@@ -375,6 +375,9 @@ export const TanjaMolArabicCODProductPage = ({
       return;
     }
 
+    event.preventDefault();
+    const linkTarget = event.currentTarget.target || '_blank';
+    const whatsappWindow = window.open('', linkTarget);
     const order: StoredOrder = {
       name,
       phone,
@@ -387,10 +390,20 @@ export const TanjaMolArabicCODProductPage = ({
       status: 'new',
       total: orderTotal([orderItem]),
     };
-    event.currentTarget.href = buildWhatsAppOrderUrl(order, settings);
     whatsappOrderSubmittingRef.current = true;
     void onPlacePreparedOrder(order).then(savedOrder => {
-      if (savedOrder) form.reset();
+      if (savedOrder) {
+        form.reset();
+        const whatsappUrl = buildWhatsAppOrderUrl(savedOrder, settings);
+        if (whatsappWindow) {
+          whatsappWindow.opener = null;
+          whatsappWindow.location.href = whatsappUrl;
+        } else {
+          window.open(whatsappUrl, linkTarget, 'noopener,noreferrer');
+        }
+      } else {
+        whatsappWindow?.close();
+      }
     }).finally(() => {
       whatsappOrderSubmittingRef.current = false;
     });

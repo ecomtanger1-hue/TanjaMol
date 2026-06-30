@@ -537,19 +537,19 @@ export function App() {
 
     setIsOrderSubmitting(true);
     try {
-      await saveOrderToSupabase(order);
+      const savedOrder = await saveOrderToSupabase(order);
 
-      const nextOrders = [order, ...readStored<StoredOrder[]>(ORDERS_KEY, [])];
+      const nextOrders = [savedOrder, ...readStored<StoredOrder[]>(ORDERS_KEY, [])];
       localStorage.setItem(ORDERS_KEY, JSON.stringify(nextOrders));
       setOrders(nextOrders);
 
-      if (order.source === 'cart') setCart([]);
+      if (savedOrder.source === 'cart') setCart([]);
       setDirectItem(null);
-      setSubmittedOrder(order);
+      setSubmittedOrder(savedOrder);
       setIsCartOpen(true);
       setNotice('تم استلام طلبك');
-      trackLead(order);
-      return order;
+      trackLead(savedOrder);
+      return savedOrder;
     } catch (error) {
       console.error('Failed to save order to Supabase', error);
       setNotice('تعذر إرسال الطلب. المرجو المحاولة مرة أخرى.');
