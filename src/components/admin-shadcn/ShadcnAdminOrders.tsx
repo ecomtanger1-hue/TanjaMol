@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { ArrowRight, Copy, MessageCircle, Phone, Search, ShoppingBag, UserRound } from 'lucide-react';
+import { ArrowRight, Copy, Download, MessageCircle, Phone, Search, ShoppingBag, UserRound } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -71,6 +71,97 @@ function orderDateLabel(order: StoredOrder) {
 
 function formatMoney(value: number) {
   return `${value.toLocaleString('ar-MA')} د.م.`;
+}
+
+function excelDateStamp() {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function excelCell(value: string | number) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\r?\n/g, '<br style="mso-data-placement:same-cell;" />');
+}
+
+function orderProductsForDelivery(order: StoredOrder) {
+  return order.items
+    .map(item => {
+      const variant = item.variant ? ` - ${item.variant}` : '';
+      return `${item.title}${variant} x${item.quantity}`;
+    })
+    .join('\n');
+}
+
+function orderQuantityTotal(order: StoredOrder) {
+  return order.items.reduce((sum, item) => sum + item.quantity, 0);
+}
+
+function exportConfirmedOrdersToExcel(orders: StoredOrder[]) {
+  const confirmedOrders = orders
+    .filter(order => order.status === 'confirmed')
+    .sort((a, b) => orderTimestamp(a) - orderTimestamp(b));
+
+  if (!confirmedOrders.length) return;
+
+  const columns = [
+    'Order ID',
+    'Date',
+    'Customer Name',
+    'Phone',
+    'Address',
+    'Products',
+    'Quantity',
+    'COD Amount',
+    'Note',
+  ];
+
+  const rows = confirmedOrders.map(order => [
+    order.id,
+    formatDate(order.createdAt),
+    order.name || '',
+    order.phone,
+    order.address,
+    orderProductsForDelivery(order),
+    orderQuantityTotal(order),
+    order.total,
+    order.note || '',
+  ]);
+
+  const tableRows = [
+    `<tr>${columns.map(column => `<th>${excelCell(column)}</th>`).join('')}</tr>`,
+    ...rows.map(row => `<tr>${row.map(cell => `<td>${excelCell(cell)}</td>`).join('')}</tr>`),
+  ].join('');
+
+  const workbook = `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    table { border-collapse: collapse; direction: ltr; }
+    th, td { border: 1px solid #b7b7b7; padding: 6px 8px; font-family: Arial, sans-serif; font-size: 12px; vertical-align: top; mso-number-format: "\\@"; }
+    th { background: #f2f2f2; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <table>${tableRows}</table>
+</body>
+</html>`;
+
+  const blob = new Blob(['\ufeff', workbook], { type: 'application/vnd.ms-excel;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `confirmed-orders-${excelDateStamp()}.xls`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
 }
 
 function orderMessage(order: StoredOrder, settings: StoreSettings) {
@@ -323,6 +414,7 @@ export function ShadcnAdminOrdersPage({ orders, settings, route, onNavigate, onU
   const mobileOrderGroups = useMemo(() => groupOrdersByDate(filteredOrders), [filteredOrders]);
 
   const pendingCount = orders.filter(order => order.status === 'new' || order.status === 'whatsapp').length;
+  const confirmedCount = orders.filter(order => order.status === 'confirmed').length;
   const deliveryCount = orders.filter(order => order.status === 'delivery').length;
   const revenue = orders.filter(order => order.status !== 'done' && order.status !== 'canceled').reduce((sum, order) => sum + order.total, 0);
   const canceledCount = orders.filter(order => order.status === 'canceled').length;
@@ -357,6 +449,17 @@ export function ShadcnAdminOrdersPage({ orders, settings, route, onNavigate, onU
           <NativeSelectOption value="done">مكتمل</NativeSelectOption>
           <NativeSelectOption value="canceled">ملغي</NativeSelectOption>
         </NativeSelect>
+        <Button
+          type="button"
+          variant="outline"
+          className="h-11 border-white/10 bg-white/5 px-4 text-sm font-black text-zinc-100 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-45"
+          onClick={() => exportConfirmedOrdersToExcel(orders)}
+          disabled={!confirmedCount}
+          title={confirmedCount ? `Export ${confirmedCount} confirmed orders` : 'No confirmed orders to export'}
+        >
+          <Download className="size-4" />
+          تصدير المؤكدة
+        </Button>
         <div className="relative">
           <Button
             type="button"
