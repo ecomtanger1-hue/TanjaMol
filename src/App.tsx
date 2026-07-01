@@ -36,6 +36,7 @@ import { trackAddToCart, trackInitiateCheckout, trackLead, trackPageView, trackS
 import { TanjaMallLogo } from './components/brand/TanjaMallLogo';
 import { hasProductDetailContent } from './lib/productDetails';
 import { saveOrderToSupabase } from './lib/supabaseOrders';
+import { productManifest } from './generated/productManifest';
 
 const TanjaMolAddProductPage = lazy(() => import('./components/magicpath/tanja-mol-add-product-page/TanjaMolAddProductPage').then(module => ({
   default: module.TanjaMolAddProductPage,
@@ -235,7 +236,7 @@ function applyPageSeo(product: Product | undefined, settings: StoreSettings, cat
 export function App() {
   const [route, setRoute] = useState(getRoute);
   const [customProducts, setCustomProducts] = useState<Product[]>(() => readStored<Product[]>(ADMIN_PRODUCTS_KEY, []));
-  const [remoteProducts, setRemoteProducts] = useState<Product[] | null>(() => readStorefrontProductsCache());
+  const [remoteProducts, setRemoteProducts] = useState<Product[] | null>(() => readStorefrontProductsCache() ?? productManifest);
   const [productDetailsBySlug, setProductDetailsBySlug] = useState<Record<string, Product>>({});
   const [loadingProductSlug, setLoadingProductSlug] = useState<string | null>(null);
   const [missingProductSlugs, setMissingProductSlugs] = useState<string[]>([]);
@@ -1065,10 +1066,6 @@ export function App() {
     }
 
     if (productSlug) {
-      if (activeProduct && !cachedProductDetail && !isKnownMissingProduct) {
-        return <ProductRouteLoading />;
-      }
-
       if (!activeProduct) {
         if (loadingProductSlug === productSlug || (remoteProducts === null && !isKnownMissingProduct)) {
           return <ProductRouteLoading />;

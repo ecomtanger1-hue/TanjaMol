@@ -139,7 +139,14 @@ export const TanjaMolArabicCODProductPage = ({
   const productBadge = product?.badge ?? 'متوفر الآن';
   const productSlug = product?.slug ?? 'smart-watch';
   const productWhatsAppUrl = buildProductWhatsAppUrl(productTitle, productSlug, settings);
-  const productGallery = (product?.gallery?.length ? product.gallery : gallery.map(image => image.src)).map((src, index) => ({
+  const fallbackGallery = gallery.map(image => image.src);
+  const productGallerySources = product
+    ? Array.from(new Set([
+      product.image,
+      ...(product.gallery || []),
+    ].filter(Boolean)))
+    : fallbackGallery;
+  const productGallery = (productGallerySources.length ? productGallerySources : fallbackGallery).map((src, index) => ({
     src,
     alt: index === 0 ? productTitle : `${productTitle} - ${index + 1}`,
   }));

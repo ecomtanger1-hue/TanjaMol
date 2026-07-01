@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "encoding:check": "node scripts/check-arabic-encoding.mjs",
-    "build": "npm run encoding:check && tsc -b && vite build",
+    "manifest:products": "node scripts/generate-product-manifest.mjs",
+    "build": "npm run manifest:products && npm run encoding:check && tsc -b && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "storage:check": "node scripts/check-supabase-storage.mjs",
     "r2:setup": "node scripts/setup-cloudflare-r2.mjs",
