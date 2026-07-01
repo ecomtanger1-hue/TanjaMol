@@ -26,63 +26,30 @@ declare global {
   interface Window {
     fbq?: Fbq;
     _fbq?: Fbq;
+    __tmMetaPixelBasePageView?: boolean;
+    __tmMetaPixelInitializedId?: string;
   }
 }
 
 const META_PIXEL_ID = '1024192293463169';
 const CURRENCY = 'MAD';
 const LEAD_EVENT_IDS_KEY = 'tanjamall.meta.leadEventIds.v1';
-const PIXEL_IDLE_TIMEOUT_MS = 8000;
-const PIXEL_SAFE_DELAY_MS = 7000;
 
 let initializedPixelId = '';
 let lastPageView = '';
 let lastViewContent = '';
-let pixelLoadScheduled = false;
 
 function shouldTrack() {
   return Boolean(META_PIXEL_ID) && typeof window !== 'undefined';
 }
 
-function loadMetaPixelScript() {
-  if (!shouldTrack() || !META_PIXEL_ID) return false;
-
-  const hasMetaPixelScript = document.getElementById('meta-pixel-script') || Array.from(document.scripts).some(script => script.src.includes('connect.facebook.net') && script.src.includes('fbevents.js'));
-  if (hasMetaPixelScript) return true;
-
-  const script = document.createElement('script');
-  script.id = 'meta-pixel-script';
-  script.async = true;
-  script.src = 'https://connect.facebook.net/en_US/fbevents.js';
-  document.head.appendChild(script);
-  return true;
-}
-
-function scheduleMetaPixelLoad() {
-  if (pixelLoadScheduled) return;
-  pixelLoadScheduled = true;
-
-  const loadNow = () => loadMetaPixelScript();
-  const loadWhenIdle = () => {
-    const requestIdle = typeof window.requestIdleCallback === 'function'
-      ? window.requestIdleCallback.bind(window)
-      : null;
-
-    if (requestIdle) {
-      requestIdle(loadNow, { timeout: PIXEL_IDLE_TIMEOUT_MS });
-      return;
-    }
-
-    globalThis.setTimeout(loadNow, PIXEL_SAFE_DELAY_MS);
-  };
-
-  window.addEventListener('pointerdown', loadNow, { once: true, passive: true });
-  window.addEventListener('keydown', loadNow, { once: true });
-  globalThis.setTimeout(loadWhenIdle, PIXEL_SAFE_DELAY_MS);
-}
-
 function ensureMetaPixel() {
   if (!shouldTrack() || !META_PIXEL_ID) return false;
+  if (!initializedPixelId && window.__tmMetaPixelInitializedId === META_PIXEL_ID && window.fbq) {
+    initializedPixelId = META_PIXEL_ID;
+  }
+
+  if (initializedPixelId === META_PIXEL_ID && window.fbq) return true;
 
   if (!window.fbq) {
     const fbq: Fbq = function metaPixelQueue(...args: unknown[]) {
@@ -103,12 +70,21 @@ function ensureMetaPixel() {
     window._fbq = fbq;
   }
 
+  const hasMetaPixelScript = document.getElementById('meta-pixel-script') || Array.from(document.scripts).some(script => script.src.includes('connect.facebook.net') && script.src.includes('fbevents.js'));
+
+  if (!hasMetaPixelScript) {
+    const script = document.createElement('script');
+    script.id = 'meta-pixel-script';
+    script.async = true;
+    script.src = 'https://connect.facebook.net/en_US/fbevents.js';
+    document.head.appendChild(script);
+  }
+
   if (initializedPixelId !== META_PIXEL_ID) {
     window.fbq('init', META_PIXEL_ID);
     initializedPixelId = META_PIXEL_ID;
   }
 
-  scheduleMetaPixelLoad();
   return true;
 }
 
@@ -166,6 +142,12 @@ export function trackPageView(route: string) {
   if (lastPageView === currentPage) return;
 
   lastPageView = currentPage;
+  if (window.__tmMetaPixelBasePageView) {
+    window.__tmMetaPixelBasePageView = false;
+    ensureMetaPixel();
+    return;
+  }
+
   track('PageView');
 }
 

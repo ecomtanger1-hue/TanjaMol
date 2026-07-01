@@ -144,25 +144,6 @@ function upsertJsonLd(id: string, data: Record<string, unknown> | null) {
   if (!existing) document.head.appendChild(script);
 }
 
-function upsertProductImagePreload(product: Product | undefined) {
-  const existing = document.querySelector('link[data-tm-product-preload="true"]') as HTMLLinkElement | null;
-  const image = product?.image || product?.gallery?.[0] || '';
-
-  if (!image) {
-    existing?.remove();
-    return;
-  }
-
-  const preload = existing ?? document.createElement('link');
-  preload.rel = 'preload';
-  preload.as = 'image';
-  preload.href = absoluteAssetUrl(image);
-  preload.setAttribute('data-tm-product-preload', 'true');
-  preload.setAttribute('fetchpriority', 'high');
-  preload.setAttribute('imagesizes', '(max-width: 768px) 82vw, 58vw');
-  if (!existing) document.head.appendChild(preload);
-}
-
 function applyPageSeo(product: Product | undefined, settings: StoreSettings, categories: Category[] = defaultCategories) {
   const storeName = settings.storeName || defaultSettings.storeName;
   const baseUrl = window.location.origin;
@@ -485,10 +466,6 @@ export function App() {
   useEffect(() => {
     applyPageSeo(activeProduct, settings, activeCategories);
   }, [activeCategories, activeProduct, settings]);
-
-  useEffect(() => {
-    upsertProductImagePreload(activeProduct);
-  }, [activeProduct]);
 
   useEffect(() => {
     trackPageView(route);
@@ -1088,6 +1065,10 @@ export function App() {
     }
 
     if (productSlug) {
+      if (activeProduct && !cachedProductDetail && !isKnownMissingProduct) {
+        return <ProductRouteLoading />;
+      }
+
       if (!activeProduct) {
         if (loadingProductSlug === productSlug || (remoteProducts === null && !isKnownMissingProduct)) {
           return <ProductRouteLoading />;

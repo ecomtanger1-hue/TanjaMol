@@ -128,7 +128,6 @@ export const TanjaMolArabicCODProductPage = ({
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const [showStickyOrderBar, setShowStickyOrderBar] = useState(false);
-  const [renderDeferredProductSections, setRenderDeferredProductSections] = useState(false);
   const mobileGalleryRef = useRef<HTMLDivElement>(null);
   const orderFormRef = useRef<HTMLFormElement>(null);
   const whatsappOrderSubmittingRef = useRef(false);
@@ -140,14 +139,7 @@ export const TanjaMolArabicCODProductPage = ({
   const productBadge = product?.badge ?? 'متوفر الآن';
   const productSlug = product?.slug ?? 'smart-watch';
   const productWhatsAppUrl = buildProductWhatsAppUrl(productTitle, productSlug, settings);
-  const fallbackGallery = gallery.map(image => image.src);
-  const productGallerySources = product
-    ? Array.from(new Set([
-      product.image,
-      ...(product.gallery || []),
-    ].filter(Boolean)))
-    : fallbackGallery;
-  const productGallery = (productGallerySources.length ? productGallerySources : fallbackGallery).map((src, index) => ({
+  const productGallery = (product?.gallery?.length ? product.gallery : gallery.map(image => image.src)).map((src, index) => ({
     src,
     alt: index === 0 ? productTitle : `${productTitle} - ${index + 1}`,
   }));
@@ -378,30 +370,6 @@ export const TanjaMolArabicCODProductPage = ({
     ? manualSimilarSlugs.flatMap(slug => products.find(item => item.slug === slug || item.id === slug) || []).filter(item => item.id !== orderItem.id && item.slug !== orderItem.slug).slice(0, relatedLimit)
     : products.filter(item => item.id !== orderItem.id && item.slug !== orderItem.slug && item.category === productCategory).slice(0, relatedLimit);
 
-  useEffect(() => {
-    let active = true;
-    setRenderDeferredProductSections(false);
-
-    const revealSections = () => {
-      if (active) setRenderDeferredProductSections(true);
-    };
-
-    const revealAfterScroll = () => {
-      if (window.scrollY > 260) {
-        revealSections();
-        window.removeEventListener('scroll', revealAfterScroll);
-      }
-    };
-
-    revealAfterScroll();
-    window.addEventListener('scroll', revealAfterScroll, { passive: true });
-
-    return () => {
-      active = false;
-      window.removeEventListener('scroll', revealAfterScroll);
-    };
-  }, [product?.id]);
-
   const selectMobileImage = (index: number) => {
     setSelectedImage(index);
     const target = mobileGalleryRef.current?.children[index] as HTMLElement | undefined;
@@ -501,7 +469,7 @@ export const TanjaMolArabicCODProductPage = ({
       window.removeEventListener('scroll', updateStickyOrderBar);
       window.removeEventListener('resize', updateStickyOrderBar);
     };
-  }, [product?.id, renderDeferredProductSections]);
+  }, [product?.id]);
 
   return <div dir="rtl" className={`min-h-screen w-full overflow-x-hidden bg-[#f7f5ef] pt-16 text-[#17201b] ${showStickyOrderBar ? 'pb-[calc(104px+env(safe-area-inset-bottom))]' : 'pb-[calc(86px+env(safe-area-inset-bottom))]'} md:pb-0`}>
     <SiteHeader cartCount={cartCount} onNavigate={navigate} onOpenCart={onOpenCart} onOpenSearch={onOpenSearch} />
@@ -691,7 +659,6 @@ export const TanjaMolArabicCODProductPage = ({
           </div>
         </section>
 
-        {renderDeferredProductSections ? <>
         <section id="product-description-section" className="bg-[#f7f5ef] py-9 sm:py-12 lg:py-16">
           <div className="mx-auto grid w-full max-w-[1440px] gap-5 px-4 sm:px-6 lg:px-10 xl:px-12">
             {productDetails.length ? <section className="grid gap-6 lg:gap-10">
@@ -813,10 +780,9 @@ export const TanjaMolArabicCODProductPage = ({
             </div>
           </div>
         </section> : null}
-        </> : null}
       </main>
 
-      {renderDeferredProductSections ? <SiteFooter categories={categoryList} onNavigate={navigateToRoute} /> : null}
+      <SiteFooter categories={categoryList} onNavigate={navigateToRoute} />
 
       {showStickyOrderBar ? (
         <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 bg-transparent py-3 pl-[76px] pr-3 md:hidden" style={{
