@@ -8,7 +8,7 @@ import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ShadcnAdminShell } from './ShadcnAdminShell';
-import { buildWhatsAppTextUrl, type StoreSettings, type StoredOrder } from '../../storefrontRuntime';
+import { buildCustomerWhatsAppMessage, buildWhatsAppTextUrl, type StoreSettings, type StoredOrder } from '../../storefrontRuntime';
 import type { SheetData } from 'write-excel-file/browser';
 
 type OrderStatus = StoredOrder['status'];
@@ -142,20 +142,8 @@ async function exportConfirmedOrdersToExcel(orders: StoredOrder[], settings: Sto
   }).toFile(`confirmed-orders-${excelDateStamp()}.xlsx`);
 }
 
-function orderMessage(order: StoredOrder, settings: StoreSettings) {
-  const products = order.items.map(item => `${item.title} x${item.quantity}`).join('، ');
-  return [
-    `مرحبا ${order.name || ''}`,
-    `معك ${settings.storeName || 'TanjaMall'} بخصوص الطلب ${order.id}.`,
-    `المنتجات: ${products}`,
-    `المجموع: ${formatMoney(order.total)}`,
-    `العنوان: ${order.address}`,
-    'هل تؤكد الطلب والدفع عند الاستلام؟',
-  ].join('\n');
-}
-
 function whatsappUrl(order: StoredOrder, settings: StoreSettings) {
-  return buildWhatsAppTextUrl(order.phone, orderMessage(order, settings));
+  return buildWhatsAppTextUrl(order.phone, buildCustomerWhatsAppMessage(order, settings));
 }
 
 function orderCopyText(order: StoredOrder, settings: StoreSettings) {

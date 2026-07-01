@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent, type MouseEvent, type ReactNode } from 'react';
 import { CheckCircle2, Copy, Grid3X3, Home, MapPin, Menu, MessageCircle, Phone, Search, ShoppingCart, UserRound, X } from 'lucide-react';
 import {
+  buildCustomerWhatsAppMessage,
   buildWhatsAppTextUrl,
   categories,
   categoryRoute,
@@ -800,40 +801,8 @@ function normalizeOrderText(value: string) {
   return value.trim().toLowerCase();
 }
 
-function orderProductsMessage(order: StoredOrder) {
-  return order.items.map((item, index) => {
-    const variant = item.variant ? ` - ${item.variant}` : '';
-    return `${index + 1}. ${item.title}${variant} x ${item.quantity}`;
-  }).join('\n');
-}
-
-function customerWhatsappMessage(order: StoredOrder, settings: StoreSettings) {
-  const storeName = settings.storeName || defaultSettings.storeName;
-  const greeting = `مرحبا ${order.name}، معك فريق ${storeName}.`;
-  const statusCopy: Record<OrderStatus, string> = {
-    new: `توصلنا بطلبك رقم ${order.id}. المرجو تأكيد العنوان والمنتجات لكي نكمل التحضير.`,
-    whatsapp: `توصلنا بطلبك رقم ${order.id}. هل تؤكد لنا الطلب والعنوان من فضلك؟`,
-    confirmed: `تم تأكيد طلبك رقم ${order.id}. سنحضره للتوصيل ونتواصل معك إذا احتجنا أي توضيح.`,
-    delivery: `طلبك رقم ${order.id} في طريقه للتوصيل. المرجو إبقاء الهاتف قريبا منك.`,
-    done: `نتمنى أن يكون طلبك رقم ${order.id} وصل بخير. شكرا لثقتك في ${storeName}.`,
-    canceled: `تم إلغاء طلبك رقم ${order.id}. شكرا لتواصلك معنا، ومرحبا بك في أي وقت.`,
-  };
-  const details = [
-    greeting,
-    statusCopy[order.status],
-    '',
-    'ملخص الطلب:',
-    orderProductsMessage(order),
-    '',
-    `المجموع: ${order.total.toLocaleString('fr-MA')} درهم`,
-    `العنوان: ${order.address}`,
-  ];
-
-  return details.filter(Boolean).join('\n');
-}
-
 function buildCustomerWhatsappUrl(order: StoredOrder, settings: StoreSettings) {
-  return buildWhatsAppTextUrl(order.phone, customerWhatsappMessage(order, settings));
+  return buildWhatsAppTextUrl(order.phone, buildCustomerWhatsAppMessage(order, settings));
 }
 
 function useOrderWhatsappSent(order: StoredOrder) {

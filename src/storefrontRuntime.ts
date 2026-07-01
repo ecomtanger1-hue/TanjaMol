@@ -187,6 +187,72 @@ export function buildWhatsAppTextUrl(phoneNumber: string, message: string, mode:
   return `https://wa.me/${phone}?text=${encodedMessage}`;
 }
 
+function customerOrderProductsText(order: StoredOrder) {
+  return order.items
+    .map(item => `${item.title}${item.variant ? ` - ${item.variant}` : ''} x${item.quantity}`)
+    .join('، ');
+}
+
+function customerOrderMoney(value: number) {
+  return `${value.toLocaleString('ar-MA')} د.م.`;
+}
+
+export function buildCustomerWhatsAppMessage(order: StoredOrder, settings: StoreSettings) {
+  const storeName = settings.storeName || defaultSettings.storeName;
+
+  if (order.status === 'confirmed') {
+    return [
+      'شكراً لتأكيدك الطلب 🙏',
+      '',
+      'تم تأكيد طلبك، وسنقوم الآن بتحضيره وتسليمه لشركة التوصيل. سيتواصل معك عامل التوصيل لاحقاً لتنسيق التسليم.',
+      '',
+      'الدفع عند الاستلام.',
+      `شكراً لثقتك في ${storeName}.`,
+    ].join('\n');
+  }
+
+  if (order.status === 'delivery') {
+    return [
+      'طلبك الآن مع شركة التوصيل 🚚',
+      '',
+      'سيتواصل معك عامل التوصيل قريباً لتنسيق وقت ومكان التسليم.',
+      '',
+      'المرجو إبقاء الهاتف متاحاً.',
+      'الدفع عند الاستلام.',
+      '',
+      `شكراً لاختيارك ${storeName}.`,
+    ].join('\n');
+  }
+
+  if (order.status === 'done') {
+    return [
+      'تم تسليم طلبك بنجاح ✅',
+      '',
+      `شكراً لثقتك في ${storeName}.`,
+      'نتمنى أن ينال المنتج إعجابك.',
+    ].join('\n');
+  }
+
+  if (order.status === 'canceled') {
+    return [
+      'تم إلغاء طلبك.',
+      '',
+      'إذا كان الإلغاء بالخطأ أو كنت ترغب في إعادة الطلب، يمكنك مراسلتنا في أي وقت.',
+      '',
+      `شكراً لتواصلك مع ${storeName}.`,
+    ].join('\n');
+  }
+
+  return [
+    `مرحبا ${order.name || ''}`,
+    `معك ${storeName} بخصوص الطلب ${order.id}.`,
+    `المنتجات: ${customerOrderProductsText(order)}`,
+    `المجموع: ${customerOrderMoney(order.total)}`,
+    `العنوان: ${order.address}`,
+    'هل تؤكد الطلب والدفع عند الاستلام؟',
+  ].join('\n');
+}
+
 export const categories: Category[] = [
   {
     id: 'home-kitchen',
