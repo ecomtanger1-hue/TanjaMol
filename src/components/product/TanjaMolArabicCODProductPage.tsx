@@ -2,7 +2,7 @@ import { type FormEvent, type MouseEvent, useEffect, useRef, useState } from 're
 import { buildWhatsAppOrderAppUrl, buildWhatsAppOrderUrl, buildWhatsAppTextUrl, categories as defaultCategories, categoryRoute, createOrderNumber, defaultProductDetailsIntro, defaultSettings, orderTotal, parseOrderForm, productRoute, type CartItem, type Category, type OrderDraft, type Product, type ProductVariant, type StoreSettings, type StoredOrder } from '../../storefrontRuntime';
 import { ProductDetailMedia, ProductDetailRichText, ProductDetailTitle } from './ProductDetailRichText';
 import { ProductCard } from '../storefront/ProductCard';
-import { SiteFooter, SiteHeader } from '../storefront/StorefrontChrome';
+import { SiteFooter, SiteHeader } from '../storefront/StorefrontPages';
 import { navigateToRoute, routeToPath } from '../../lib/routing';
 import { trackInitiateCheckout } from '../../lib/metaPixel';
 import { cleanProductDetails } from '../../lib/productDetails';

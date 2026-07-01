@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Grid3X3, Home, PackageSearch, Search, ShoppingCart } from 'lucide-react';
 import { categories as defaultCategories, categoryRoute, collectionRoute, type CartItem, type Category, type OrderDraft, type Product, type StoreSettings } from '../../storefrontRuntime';
 import { ProductCard as StoreProductCard } from './ProductCard';
-import { SiteFooter, SiteHeader } from './StorefrontChrome';
+import { SiteFooter, SiteHeader } from './StorefrontPages';
 import { navigateToRoute } from '../../lib/routing';
 
 type StorefrontProps = {
