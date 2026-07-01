@@ -2,14 +2,6 @@ import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useState, type CSS
 import { CODTangerArabicStoreLanding } from './components/storefront/CODTangerArabicStoreLanding';
 import { TanjaMolArabicCODProductPage } from './components/product/TanjaMolArabicCODProductPage';
 import {
-  CartPopup,
-  CategoryPage,
-  CollectionPage,
-  InfoPage,
-  NotFoundPage,
-  SearchResultsPage,
-} from './components/storefront/StorefrontPages';
-import {
   cartItemFromProduct,
   categories as defaultCategories,
   createOrderNumber,
@@ -67,6 +59,30 @@ const ShadcnAdminSettingsPage = lazy(() => import('./components/admin-shadcn/Sha
 
 const ShadcnAdminLogin = lazy(() => import('./components/admin-shadcn/ShadcnAdminLogin').then(module => ({
   default: module.ShadcnAdminLogin,
+})));
+
+const CartPopup = lazy(() => import('./components/storefront/StorefrontPages').then(module => ({
+  default: module.CartPopup,
+})));
+
+const CategoryPage = lazy(() => import('./components/storefront/StorefrontPages').then(module => ({
+  default: module.CategoryPage,
+})));
+
+const CollectionPage = lazy(() => import('./components/storefront/StorefrontPages').then(module => ({
+  default: module.CollectionPage,
+})));
+
+const InfoPage = lazy(() => import('./components/storefront/StorefrontPages').then(module => ({
+  default: module.InfoPage,
+})));
+
+const NotFoundPage = lazy(() => import('./components/storefront/StorefrontPages').then(module => ({
+  default: module.NotFoundPage,
+})));
+
+const SearchResultsPage = lazy(() => import('./components/storefront/StorefrontPages').then(module => ({
+  default: module.SearchResultsPage,
 })));
 
 const CART_KEY = 'tanjamol.cart.v1';
@@ -1138,21 +1154,25 @@ export function App() {
       <Suspense fallback={route.startsWith('#/tm-office-07') ? <AdminRouteLoading /> : null}>
         {renderedPage}
       </Suspense>
-      <CartPopup
-        open={isCartOpen}
-        cart={cart}
-        directItem={directItem}
-        submittedOrder={submittedOrder}
-        submitting={isOrderSubmitting}
-        onClose={() => {
-          setIsCartOpen(false);
-          setDirectItem(null);
-          setSubmittedOrder(null);
-        }}
-        onQuantityChange={updateQuantity}
-        onRemove={removeCartItem}
-        onPlaceOrder={placeOrderFromForm}
-      />
+      {(isCartOpen || directItem || submittedOrder) ? (
+        <Suspense fallback={null}>
+          <CartPopup
+            open={isCartOpen}
+            cart={cart}
+            directItem={directItem}
+            submittedOrder={submittedOrder}
+            submitting={isOrderSubmitting}
+            onClose={() => {
+              setIsCartOpen(false);
+              setDirectItem(null);
+              setSubmittedOrder(null);
+            }}
+            onQuantityChange={updateQuantity}
+            onRemove={removeCartItem}
+            onPlaceOrder={placeOrderFromForm}
+          />
+        </Suspense>
+      ) : null}
       <SearchPanel
         open={isSearchOpen}
         products={storefrontProducts}
