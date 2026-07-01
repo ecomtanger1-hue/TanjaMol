@@ -1,5 +1,5 @@
 import { type FormEvent, type MouseEvent, useEffect, useRef, useState } from 'react';
-import { buildWhatsAppOrderUrl, categories as defaultCategories, categoryRoute, createOrderNumber, defaultProductDetailsIntro, defaultSettings, orderTotal, parseOrderForm, productRoute, type CartItem, type Category, type OrderDraft, type Product, type ProductVariant, type StoreSettings, type StoredOrder } from '../../storefrontRuntime';
+import { buildWhatsAppOrderAppUrl, buildWhatsAppOrderUrl, buildWhatsAppTextUrl, categories as defaultCategories, categoryRoute, createOrderNumber, defaultProductDetailsIntro, defaultSettings, orderTotal, parseOrderForm, productRoute, type CartItem, type Category, type OrderDraft, type Product, type ProductVariant, type StoreSettings, type StoredOrder } from '../../storefrontRuntime';
 import { ProductDetailMedia, ProductDetailRichText, ProductDetailTitle } from './ProductDetailRichText';
 import { ProductCard } from '../storefront/ProductCard';
 import { SiteFooter, SiteHeader } from '../storefront/StorefrontPages';
@@ -34,12 +34,41 @@ const getPriceFromLabel = (label: string, fallback: number) => {
   return match ? Number(match[0]) : fallback;
 };
 const formatPriceLabel = (value: number) => `${Math.max(0, value).toLocaleString('fr-MA')} درهم`;
-const cleanPhoneNumber = (value: string) => value.replace(/[^\d]/g, '');
 const buildProductWhatsAppUrl = (title: string, slug: string, settings: StoreSettings) => {
-  const phone = cleanPhoneNumber(settings.whatsappNumber || defaultSettings.whatsappNumber) || defaultSettings.whatsappNumber;
   const productUrl = `${window.location.origin}${routeToPath(productRoute(slug))}`;
   const message = `السلام عليكم، أريد معرفة المزيد عن ${title}.\n${productUrl}`;
-  return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+  return buildWhatsAppTextUrl(settings.whatsappNumber || defaultSettings.whatsappNumber, message);
+};
+const isMobileDevice = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+const openWhatsAppOrderLink = (appUrl: string, webUrl: string, openedWindow: Window | null, linkTarget: string) => {
+  if (isMobileDevice()) {
+    openedWindow?.close();
+    let leftPage = false;
+    const markLeftPage = () => {
+      leftPage = true;
+    };
+    const markHidden = () => {
+      if (document.hidden) leftPage = true;
+    };
+
+    window.addEventListener('blur', markLeftPage, { once: true });
+    document.addEventListener('visibilitychange', markHidden, { once: true });
+    window.location.href = appUrl;
+    window.setTimeout(() => {
+      window.removeEventListener('blur', markLeftPage);
+      document.removeEventListener('visibilitychange', markHidden);
+      if (!leftPage && !document.hidden) window.location.href = webUrl;
+    }, 1600);
+    return;
+  }
+
+  if (openedWindow) {
+    openedWindow.opener = null;
+    openedWindow.location.href = webUrl;
+    return;
+  }
+
+  window.open(webUrl, linkTarget, 'noopener,noreferrer');
 };
 function WhatsAppLogo({ className = 'size-12' }: { className?: string }) {
   return (
@@ -377,7 +406,7 @@ export const TanjaMolArabicCODProductPage = ({
 
     event.preventDefault();
     const linkTarget = event.currentTarget.target || '_blank';
-    const whatsappWindow = window.open('', linkTarget);
+    const whatsappWindow = isMobileDevice() ? null : window.open('', linkTarget);
     const order: StoredOrder = {
       name,
       phone,
@@ -394,13 +423,12 @@ export const TanjaMolArabicCODProductPage = ({
     void onPlacePreparedOrder(order).then(savedOrder => {
       if (savedOrder) {
         form.reset();
-        const whatsappUrl = buildWhatsAppOrderUrl(savedOrder, settings);
-        if (whatsappWindow) {
-          whatsappWindow.opener = null;
-          whatsappWindow.location.href = whatsappUrl;
-        } else {
-          window.open(whatsappUrl, linkTarget, 'noopener,noreferrer');
-        }
+        openWhatsAppOrderLink(
+          buildWhatsAppOrderAppUrl(savedOrder, settings),
+          buildWhatsAppOrderUrl(savedOrder, settings),
+          whatsappWindow,
+          linkTarget,
+        );
       } else {
         whatsappWindow?.close();
       }

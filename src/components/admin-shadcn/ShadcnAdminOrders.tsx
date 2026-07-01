@@ -8,7 +8,7 @@ import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ShadcnAdminShell } from './ShadcnAdminShell';
-import type { StoreSettings, StoredOrder } from '../../storefrontRuntime';
+import { buildWhatsAppTextUrl, type StoreSettings, type StoredOrder } from '../../storefrontRuntime';
 import type { SheetData } from 'write-excel-file/browser';
 
 type OrderStatus = StoredOrder['status'];
@@ -30,13 +30,6 @@ const statusStyles: Record<OrderStatus, string> = {
   done: 'border-zinc-500/30 bg-zinc-500/15 text-zinc-200',
   canceled: 'border-red-400/30 bg-red-500/15 text-red-200',
 };
-
-function cleanPhone(phone: string) {
-  const digits = phone.replace(/\D/g, '');
-  if (digits.startsWith('212')) return digits;
-  if (digits.startsWith('0')) return `212${digits.slice(1)}`;
-  return digits;
-}
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat('ar-MA', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
@@ -162,7 +155,7 @@ function orderMessage(order: StoredOrder, settings: StoreSettings) {
 }
 
 function whatsappUrl(order: StoredOrder, settings: StoreSettings) {
-  return `https://wa.me/${cleanPhone(order.phone)}?text=${encodeURIComponent(orderMessage(order, settings))}`;
+  return buildWhatsAppTextUrl(order.phone, orderMessage(order, settings));
 }
 
 function orderCopyText(order: StoredOrder, settings: StoreSettings) {

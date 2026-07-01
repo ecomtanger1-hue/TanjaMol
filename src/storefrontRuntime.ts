@@ -171,6 +171,22 @@ export const defaultSettings: StoreSettings = {
   address: 'المغرب',
 };
 
+export function normalizeWhatsAppPhoneNumber(value: string) {
+  const digits = value.replace(/[^\d]/g, '');
+  if (!digits) return '';
+  if (digits.startsWith('00')) return digits.slice(2);
+  if (digits.startsWith('0') && digits.length === 10) return `212${digits.slice(1)}`;
+  if (digits.length === 9 && /^[5-8]/.test(digits)) return `212${digits}`;
+  return digits;
+}
+
+export function buildWhatsAppTextUrl(phoneNumber: string, message: string, mode: 'web' | 'app' = 'web') {
+  const phone = normalizeWhatsAppPhoneNumber(phoneNumber) || defaultSettings.whatsappNumber;
+  const encodedMessage = encodeURIComponent(message);
+  if (mode === 'app') return `whatsapp://send?phone=${phone}&text=${encodedMessage}`;
+  return `https://wa.me/${phone}?text=${encodedMessage}`;
+}
+
 export const categories: Category[] = [
   {
     id: 'home-kitchen',
@@ -688,8 +704,7 @@ export function searchProducts(productList: Product[], query: string) {
   return productList.filter(product => `${product.title} ${product.category} ${product.badge}`.toLowerCase().includes(normalized));
 }
 
-export function buildWhatsAppOrderUrl(order: StoredOrder, settings: StoreSettings) {
-  const phone = settings.whatsappNumber.replace(/[^\d]/g, '') || defaultSettings.whatsappNumber;
+function buildWhatsAppOrderMessage(order: StoredOrder, settings: StoreSettings) {
   const labels = {
     newOrder: '\u0637\u0644\u0628 \u062c\u062f\u064a\u062f \u0645\u0646',
     orderNumber: '\u0631\u0642\u0645 \u0627\u0644\u0637\u0644\u0628',
@@ -708,7 +723,7 @@ export function buildWhatsAppOrderUrl(order: StoredOrder, settings: StoreSetting
     const variant = item.variant ? `\n   ${labels.options}: ${item.variant}` : '';
     return `${index + 1}. ${item.title}${variant}\n   ${labels.quantity}: ${item.quantity}\n   ${labels.total}: ${item.price * item.quantity} ${labels.currency}`;
   }).join('\n');
-  const message = [
+  return [
     `${labels.newOrder} ${settings.storeName}`,
     `${labels.orderNumber}: ${order.id}`,
     `${labels.name}: ${order.name}`,
@@ -722,8 +737,14 @@ export function buildWhatsAppOrderUrl(order: StoredOrder, settings: StoreSetting
     `${labels.total}: ${order.total} ${labels.currency}`,
     labels.cod,
   ].filter(Boolean).join('\n');
+}
 
-  return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+export function buildWhatsAppOrderUrl(order: StoredOrder, settings: StoreSettings) {
+  return buildWhatsAppTextUrl(settings.whatsappNumber, buildWhatsAppOrderMessage(order, settings));
+}
+
+export function buildWhatsAppOrderAppUrl(order: StoredOrder, settings: StoreSettings) {
+  return buildWhatsAppTextUrl(settings.whatsappNumber, buildWhatsAppOrderMessage(order, settings), 'app');
 }
 export function parseOrderForm(event: FormEvent<HTMLFormElement>, source: string, items: CartItem[]): OrderDraft | null {
   event.preventDefault();

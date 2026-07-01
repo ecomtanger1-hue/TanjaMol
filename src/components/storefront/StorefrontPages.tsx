@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent, type MouseEvent, type ReactNode } from 'react';
 import { CheckCircle2, Copy, Grid3X3, Home, MapPin, Menu, MessageCircle, Phone, Search, ShoppingCart, UserRound, X } from 'lucide-react';
 import {
+  buildWhatsAppTextUrl,
   categories,
   categoryRoute,
   collectionTitle,
@@ -799,16 +800,6 @@ function normalizeOrderText(value: string) {
   return value.trim().toLowerCase();
 }
 
-function normalizeWhatsappPhone(phone: string) {
-  const digits = phone.replace(/[^\d]/g, '');
-  if (!digits) return '';
-  if (digits.startsWith('00')) return digits.slice(2);
-  if (digits.startsWith('0')) return `212${digits.slice(1)}`;
-  if (digits.startsWith('212')) return digits;
-  if (digits.length === 9) return `212${digits}`;
-  return digits;
-}
-
 function orderProductsMessage(order: StoredOrder) {
   return order.items.map((item, index) => {
     const variant = item.variant ? ` - ${item.variant}` : '';
@@ -842,8 +833,7 @@ function customerWhatsappMessage(order: StoredOrder, settings: StoreSettings) {
 }
 
 function buildCustomerWhatsappUrl(order: StoredOrder, settings: StoreSettings) {
-  const phone = normalizeWhatsappPhone(order.phone);
-  return `https://wa.me/${phone}?text=${encodeURIComponent(customerWhatsappMessage(order, settings))}`;
+  return buildWhatsAppTextUrl(order.phone, customerWhatsappMessage(order, settings));
 }
 
 function useOrderWhatsappSent(order: StoredOrder) {
